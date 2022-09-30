@@ -1728,6 +1728,7 @@ public:
 	RegEx reg_json_to = RegEx("\\bto_json\\b");
 	RegEx reg_json_parse = RegEx("([\t ]{0,})([^\n]+)parse_json\\(([^\n]+)");
 	RegEx reg_json_non_new = RegEx("([\t ]{0,})([^\n]+)JSON\\.parse\\(([^\n]+)");
+	RegEx reg_json_print = RegEx("\\bJSON\\b\\.print\\(");
 	RegEx reg_export = RegEx("export\\(([a-zA-Z0-9_]+)\\)[ ]+var[ ]+([a-zA-Z0-9_]+)");
 	RegEx reg_export_advanced = RegEx("export\\(([^)^\n]+)\\)[ ]+var[ ]+([a-zA-Z0-9_]+)([^\n]+)");
 	RegEx reg_setget_setget = RegEx("var[ ]+([a-zA-Z0-9_]+)([^\n]+)setget[ \t]+([a-zA-Z0-9_]+)[ \t]*,[ \t]*([a-zA-Z0-9_]+)");
@@ -3076,6 +3077,10 @@ void ProjectConverter3To4::process_gdscript_line(String &line, const RegExContai
 	if (line.contains("parse_json")) {
 		line = reg_container.reg_json_parse.sub(line, "$1var test_json_conv = JSON.new()\n$1test_json_conv.parse($3\n$1$2test_json_conv.get_data()", true);
 	}
+	// -- JSON.print( -> JSON.stringify(
+	if (line.contains("JSON.print(")) {
+		line = reg_container.reg_json_print.sub(line, "JSON.stringify(", true);
+	}
 
 	// -- get_node(@ -> get_node(       Node
 	if (line.contains("get_node")) {
@@ -3606,6 +3611,9 @@ void ProjectConverter3To4::process_gdscript_line(String &line, const RegExContai
 	}
 	if (line.contains("OS.get_unix_time")) {
 		line = line.replace("OS.get_unix_time", "Time.get_unix_time_from_system");
+	}
+	if (line.contains("OS.get_datetime")) {
+		line = line.replace("OS.get_datetime", "Time.get_datetime_dict_from_system");
 	}
 }
 
