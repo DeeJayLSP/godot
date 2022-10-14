@@ -4,6 +4,11 @@ import sys
 from methods import get_compiler_version, using_gcc
 from platform_methods import detect_arch
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from SCons import Environment
+
 
 def is_active():
     return True
@@ -55,7 +60,7 @@ def get_flags():
     ]
 
 
-def configure(env):
+def configure(env: "Environment"):
     # Validate arch.
     supported_arches = ["x86_32", "x86_64", "arm32", "arm64", "rv64", "ppc32", "ppc64"]
     if env["arch"] not in supported_arches:
@@ -358,7 +363,10 @@ def configure(env):
     if platform.system() == "Linux":
         env.Append(LIBS=["dl"])
 
-    if platform.system().find("BSD") >= 0:
+    if not env["execinfo"] and platform.libc_ver()[0] != "glibc":
+        # The default crash handler depends on glibc, so if the host uses
+        # a different libc (BSD libc, musl), fall back to libexecinfo.
+        print("Note: Using `execinfo=yes` for the crash handler as required on platforms where glibc is missing.")
         env["execinfo"] = True
 
     if env["execinfo"]:

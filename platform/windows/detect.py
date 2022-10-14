@@ -4,6 +4,11 @@ import subprocess
 import sys
 from platform_methods import detect_arch
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from SCons import Environment
+
 # To match other platforms
 STACK_SIZE = 8388608
 
@@ -396,6 +401,7 @@ def configure_msvc(env, vcvars_msvc_config):
         "Avrt",
         "dwmapi",
         "dwrite",
+        "wbemuuid",
     ]
 
     if env["vulkan"]:
@@ -572,6 +578,7 @@ def configure_mingw(env):
             "uuid",
             "dwmapi",
             "dwrite",
+            "wbemuuid",
         ]
     )
 
@@ -588,7 +595,7 @@ def configure_mingw(env):
     env.Append(BUILDERS={"RES": env.Builder(action=build_res_file, suffix=".o", src_suffix=".rc")})
 
 
-def configure(env):
+def configure(env: "Environment"):
     # Validate arch.
     supported_arches = ["x86_32", "x86_64", "arm32", "arm64"]
     if env["arch"] not in supported_arches:

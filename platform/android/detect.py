@@ -3,6 +3,11 @@ import sys
 import platform
 import subprocess
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from SCons import Environment
+
 
 def is_active():
     return True
@@ -17,8 +22,6 @@ def can_build():
 
 
 def get_opts():
-    from SCons.Variables import BoolVariable, EnumVariable
-
     return [
         ("ANDROID_SDK_ROOT", "Path to the Android SDK", get_env_android_sdk_root()),
         ("ndk_platform", 'Target platform (android-<api>, e.g. "android-24")', "android-24"),
@@ -74,7 +77,7 @@ def install_ndk_if_needed(env):
     env["ANDROID_NDK_ROOT"] = get_android_ndk_root(env)
 
 
-def configure(env):
+def configure(env: "Environment"):
     # Validate arch.
     supported_arches = ["x86_32", "x86_64", "arm32", "arm64"]
     if env["arch"] not in supported_arches:
@@ -153,22 +156,16 @@ def configure(env):
     env["RANLIB"] = compiler_path + "/llvm-ranlib"
     env["AS"] = compiler_path + "/clang"
 
-    # Disable exceptions and rtti on non-tools (template) builds
-    if env.editor_build:
-        env.Append(CXXFLAGS=["-frtti"])
-    elif env["builtin_icu"]:
-        env.Append(CXXFLAGS=["-frtti", "-fno-exceptions"])
-    else:
-        env.Append(CXXFLAGS=["-fno-rtti", "-fno-exceptions"])
-        # Don't use dynamic_cast, necessary with no-rtti.
-        env.Append(CPPDEFINES=["NO_SAFE_CAST"])
+    # Disable exceptions on template builds
+    if not env.editor_build:
+        env.Append(CXXFLAGS=["-fno-exceptions"])
 
     env.Append(
         CCFLAGS=(
             "-fpic -ffunction-sections -funwind-tables -fstack-protector-strong -fvisibility=hidden -fno-strict-aliasing".split()
         )
     )
-    env.Append(CPPDEFINES=["NO_STATVFS", "GLES_ENABLED"])
+    env.Append(CPPDEFINES=["GLES_ENABLED"])
 
     if get_min_sdk_version(env["ndk_platform"]) >= 24:
         env.Append(CPPDEFINES=[("_FILE_OFFSET_BITS", 64)])
@@ -190,7 +187,7 @@ def configure(env):
     env.Append(LINKFLAGS="-Wl,-soname,libgodot_android.so")
 
     env.Prepend(CPPPATH=["#platform/android"])
-    env.Append(CPPDEFINES=["ANDROID_ENABLED", "UNIX_ENABLED", "NO_FCNTL"])
+    env.Append(CPPDEFINES=["ANDROID_ENABLED", "UNIX_ENABLED"])
     env.Append(LIBS=["OpenSLES", "EGL", "GLESv2", "android", "log", "z", "dl"])
 
     if env["vulkan"]:

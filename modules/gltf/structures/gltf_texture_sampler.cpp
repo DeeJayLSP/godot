@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  websocket_server.h                                                   */
+/*  gltf_texture_sampler.cpp                                             */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,63 +28,20 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef WEBSOCKET_SERVER_H
-#define WEBSOCKET_SERVER_H
+#include "gltf_texture_sampler.h"
 
-#include "core/crypto/crypto.h"
-#include "core/object/ref_counted.h"
-#include "websocket_multiplayer_peer.h"
-#include "websocket_peer.h"
+void GLTFTextureSampler::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_mag_filter"), &GLTFTextureSampler::get_mag_filter);
+	ClassDB::bind_method(D_METHOD("set_mag_filter", "filter_mode"), &GLTFTextureSampler::set_mag_filter);
+	ClassDB::bind_method(D_METHOD("get_min_filter"), &GLTFTextureSampler::get_min_filter);
+	ClassDB::bind_method(D_METHOD("set_min_filter", "filter_mode"), &GLTFTextureSampler::set_min_filter);
+	ClassDB::bind_method(D_METHOD("get_wrap_s"), &GLTFTextureSampler::get_wrap_s);
+	ClassDB::bind_method(D_METHOD("set_wrap_s", "wrap_mode"), &GLTFTextureSampler::set_wrap_s);
+	ClassDB::bind_method(D_METHOD("get_wrap_t"), &GLTFTextureSampler::get_wrap_t);
+	ClassDB::bind_method(D_METHOD("set_wrap_t", "wrap_mode"), &GLTFTextureSampler::set_wrap_t);
 
-class WebSocketServer : public WebSocketMultiplayerPeer {
-	GDCLASS(WebSocketServer, WebSocketMultiplayerPeer);
-	GDCICLASS(WebSocketServer);
-
-	IPAddress bind_ip;
-
-protected:
-	static void _bind_methods();
-
-	Ref<CryptoKey> private_key;
-	Ref<X509Certificate> tls_cert;
-	Ref<X509Certificate> ca_chain;
-	uint32_t handshake_timeout = 3000;
-
-public:
-	virtual void set_extra_headers(const Vector<String> &p_headers) = 0;
-	virtual Error listen(int p_port, const Vector<String> p_protocols = Vector<String>(), bool gd_mp_api = false) = 0;
-	virtual void stop() = 0;
-	virtual bool is_listening() const = 0;
-	virtual bool has_peer(int p_id) const = 0;
-	virtual bool is_server() const override;
-	ConnectionStatus get_connection_status() const override;
-
-	virtual IPAddress get_peer_address(int p_peer_id) const = 0;
-	virtual int get_peer_port(int p_peer_id) const = 0;
-	virtual void disconnect_peer(int p_peer_id, int p_code = 1000, String p_reason = "") = 0;
-
-	void _on_peer_packet(int32_t p_peer_id);
-	void _on_connect(int32_t p_peer_id, String p_protocol, String p_resource_name);
-	void _on_disconnect(int32_t p_peer_id, bool p_was_clean);
-	void _on_close_request(int32_t p_peer_id, int p_code, String p_reason);
-
-	IPAddress get_bind_ip() const;
-	void set_bind_ip(const IPAddress &p_bind_ip);
-
-	Ref<CryptoKey> get_private_key() const;
-	void set_private_key(Ref<CryptoKey> p_key);
-
-	Ref<X509Certificate> get_tls_certificate() const;
-	void set_tls_certificate(Ref<X509Certificate> p_cert);
-
-	Ref<X509Certificate> get_ca_chain() const;
-	void set_ca_chain(Ref<X509Certificate> p_ca_chain);
-
-	float get_handshake_timeout() const;
-	void set_handshake_timeout(float p_timeout);
-
-	WebSocketServer();
-	~WebSocketServer();
-};
-
-#endif // WEBSOCKET_SERVER_H
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "mag_filter"), "set_mag_filter", "get_mag_filter");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "min_filter"), "set_min_filter", "get_min_filter");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "wrap_s"), "set_wrap_s", "get_wrap_s");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "wrap_t"), "set_wrap_t", "get_wrap_t");
+}

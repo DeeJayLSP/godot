@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  wsl_server.h                                                         */
+/*  openxr_composition_layer_depth_extension.h                           */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,71 +28,26 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef WSL_SERVER_H
-#define WSL_SERVER_H
+#ifndef OPENXR_COMPOSITION_LAYER_DEPTH_EXTENSION_H
+#define OPENXR_COMPOSITION_LAYER_DEPTH_EXTENSION_H
 
-#ifndef WEB_ENABLED
+#include "openxr_composition_layer_provider.h"
+#include "openxr_extension_wrapper.h"
 
-#include "websocket_server.h"
-#include "wsl_peer.h"
+class OpenXRCompositionLayerDepthExtension : public OpenXRExtensionWrapper, public OpenXRCompositionLayerProvider {
+public:
+	static OpenXRCompositionLayerDepthExtension *get_singleton();
 
-#include "core/io/stream_peer_tcp.h"
-#include "core/io/stream_peer_tls.h"
-#include "core/io/tcp_server.h"
+	OpenXRCompositionLayerDepthExtension(OpenXRAPI *p_openxr_api);
+	virtual ~OpenXRCompositionLayerDepthExtension() override;
 
-class WSLServer : public WebSocketServer {
-	GDCIIMPL(WSLServer, WebSocketServer);
+	bool is_available();
+	virtual XrCompositionLayerBaseHeader *get_composition_layer() override;
 
 private:
-	class PendingPeer : public RefCounted {
-	private:
-		bool _parse_request(const Vector<String> p_protocols, String &r_resource_name);
+	static OpenXRCompositionLayerDepthExtension *singleton;
 
-	public:
-		Ref<StreamPeerTCP> tcp;
-		Ref<StreamPeer> connection;
-		bool use_tls = false;
-
-		uint64_t time = 0;
-		uint8_t req_buf[WSL_MAX_HEADER_SIZE] = {};
-		int req_pos = 0;
-		String key;
-		String protocol;
-		bool has_request = false;
-		CharString response;
-		int response_sent = 0;
-
-		Error do_handshake(const Vector<String> p_protocols, uint64_t p_timeout, String &r_resource_name, const Vector<String> &p_extra_headers);
-	};
-
-	int _in_buf_size = DEF_BUF_SHIFT;
-	int _in_pkt_size = DEF_PKT_SHIFT;
-	int _out_buf_size = DEF_BUF_SHIFT;
-	int _out_pkt_size = DEF_PKT_SHIFT;
-
-	List<Ref<PendingPeer>> _pending;
-	Ref<TCPServer> _server;
-	Vector<String> _protocols;
-	Vector<String> _extra_headers;
-
-public:
-	Error set_buffers(int p_in_buffer, int p_in_packets, int p_out_buffer, int p_out_packets) override;
-	void set_extra_headers(const Vector<String> &p_headers) override;
-	Error listen(int p_port, const Vector<String> p_protocols = Vector<String>(), bool gd_mp_api = false) override;
-	void stop() override;
-	bool is_listening() const override;
-	int get_max_packet_size() const override;
-	bool has_peer(int p_id) const override;
-	Ref<WebSocketPeer> get_peer(int p_id) const override;
-	IPAddress get_peer_address(int p_peer_id) const override;
-	int get_peer_port(int p_peer_id) const override;
-	void disconnect_peer(int p_peer_id, int p_code = 1000, String p_reason = "") override;
-	virtual void poll() override;
-
-	WSLServer();
-	~WSLServer();
+	bool available = false;
 };
 
-#endif // WEB_ENABLED
-
-#endif // WSL_SERVER_H
+#endif // OPENXR_COMPOSITION_LAYER_DEPTH_EXTENSION_H

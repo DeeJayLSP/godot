@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  websocket_client.h                                                   */
+/*  forward_id_storage.h                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,48 +28,41 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef WEBSOCKET_CLIENT_H
-#define WEBSOCKET_CLIENT_H
+#ifndef FORWARD_ID_STORAGE_H
+#define FORWARD_ID_STORAGE_H
 
-#include "core/crypto/crypto.h"
-#include "core/error/error_list.h"
-#include "websocket_multiplayer_peer.h"
-#include "websocket_peer.h"
+#include "servers/rendering/storage/utilities.h"
 
-class WebSocketClient : public WebSocketMultiplayerPeer {
-	GDCLASS(WebSocketClient, WebSocketMultiplayerPeer);
-	GDCICLASS(WebSocketClient);
+class RendererSceneRenderRD;
 
-protected:
-	Ref<WebSocketPeer> _peer;
-	bool verify_tls = true;
-	Ref<X509Certificate> tls_cert;
+namespace RendererRD {
 
-	static void _bind_methods();
+typedef int32_t ForwardID;
 
-public:
-	Error connect_to_url(String p_url, const Vector<String> p_protocols = Vector<String>(), bool gd_mp_api = false, const Vector<String> p_custom_headers = Vector<String>());
-
-	void set_verify_tls_enabled(bool p_verify_tls);
-	bool is_verify_tls_enabled() const;
-	Ref<X509Certificate> get_trusted_tls_certificate() const;
-	void set_trusted_tls_certificate(Ref<X509Certificate> p_cert);
-
-	virtual Error connect_to_host(String p_host, String p_path, uint16_t p_port, bool p_tls, const Vector<String> p_protocol = Vector<String>(), const Vector<String> p_custom_headers = Vector<String>()) = 0;
-	virtual void disconnect_from_host(int p_code = 1000, String p_reason = "") = 0;
-	virtual IPAddress get_connected_host() const = 0;
-	virtual uint16_t get_connected_port() const = 0;
-
-	virtual bool is_server() const override;
-
-	void _on_peer_packet();
-	void _on_connect(String p_protocol);
-	void _on_close_request(int p_code, String p_reason);
-	void _on_disconnect(bool p_was_clean);
-	void _on_error();
-
-	WebSocketClient();
-	~WebSocketClient();
+enum ForwardIDType {
+	FORWARD_ID_TYPE_OMNI_LIGHT,
+	FORWARD_ID_TYPE_SPOT_LIGHT,
+	FORWARD_ID_TYPE_REFLECTION_PROBE,
+	FORWARD_ID_TYPE_DECAL,
+	FORWARD_ID_MAX,
 };
 
-#endif // WEBSOCKET_CLIENT_H
+class ForwardIDStorage {
+private:
+	static ForwardIDStorage *singleton;
+
+public:
+	static ForwardIDStorage *get_singleton() { return singleton; }
+
+	ForwardIDStorage();
+	virtual ~ForwardIDStorage();
+
+	virtual RendererRD::ForwardID allocate_forward_id(RendererRD::ForwardIDType p_type) { return -1; }
+	virtual void free_forward_id(RendererRD::ForwardIDType p_type, RendererRD::ForwardID p_id) {}
+	virtual void map_forward_id(RendererRD::ForwardIDType p_type, RendererRD::ForwardID p_id, uint32_t p_index) {}
+	virtual bool uses_forward_ids() const { return false; }
+};
+
+} // namespace RendererRD
+
+#endif // FORWARD_ID_STORAGE_H

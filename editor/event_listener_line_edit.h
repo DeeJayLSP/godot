@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  emws_client.h                                                        */
+/*  event_listener_line_edit.h                                           */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,44 +28,47 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef EMWS_CLIENT_H
-#define EMWS_CLIENT_H
+#ifndef EVENT_LISTENER_LINE_EDIT_H
+#define EVENT_LISTENER_LINE_EDIT_H
 
-#ifdef WEB_ENABLED
+#include "scene/gui/line_edit.h"
 
-#include "core/error/error_list.h"
-#include "emws_peer.h"
-#include "websocket_client.h"
-
-class EMWSClient : public WebSocketClient {
-	GDCIIMPL(EMWSClient, WebSocketClient);
-
-private:
-	int _js_id = 0;
-	bool _is_connecting = false;
-	int _in_buf_size = DEF_BUF_SHIFT;
-	int _in_pkt_size = DEF_PKT_SHIFT;
-	int _out_buf_size = DEF_BUF_SHIFT;
-
-	static void _esws_on_connect(void *obj, char *proto);
-	static void _esws_on_message(void *obj, const uint8_t *p_data, int p_data_size, int p_is_string);
-	static void _esws_on_error(void *obj);
-	static void _esws_on_close(void *obj, int code, const char *reason, int was_clean);
-
-public:
-	Error set_buffers(int p_in_buffer, int p_in_packets, int p_out_buffer, int p_out_packets) override;
-	Error connect_to_host(String p_host, String p_path, uint16_t p_port, bool p_tls, const Vector<String> p_protocol = Vector<String>(), const Vector<String> p_custom_headers = Vector<String>()) override;
-	Ref<WebSocketPeer> get_peer(int p_peer_id) const override;
-	void disconnect_from_host(int p_code = 1000, String p_reason = "") override;
-	IPAddress get_connected_host() const override;
-	uint16_t get_connected_port() const override;
-	virtual ConnectionStatus get_connection_status() const override;
-	int get_max_packet_size() const override;
-	virtual void poll() override;
-	EMWSClient();
-	~EMWSClient();
+enum InputType {
+	INPUT_KEY = 1,
+	INPUT_MOUSE_BUTTON = 2,
+	INPUT_JOY_BUTTON = 4,
+	INPUT_JOY_MOTION = 8
 };
 
-#endif // WEB_ENABLED
+class EventListenerLineEdit : public LineEdit {
+	GDCLASS(EventListenerLineEdit, LineEdit)
 
-#endif // EMWS_CLIENT_H
+	int allowed_input_types = INPUT_KEY | INPUT_MOUSE_BUTTON | INPUT_JOY_BUTTON | INPUT_JOY_MOTION;
+	bool ignore = true;
+	bool share_keycodes = false;
+	Ref<InputEvent> event;
+
+	bool _is_event_allowed(const Ref<InputEvent> &p_event) const;
+
+	void gui_input(const Ref<InputEvent> &p_event) override;
+	void _on_text_changed(const String &p_text);
+
+	void _on_focus();
+	void _on_unfocus();
+
+protected:
+	void _notification(int p_what);
+	static void _bind_methods();
+
+public:
+	Ref<InputEvent> get_event() const;
+	void clear_event();
+
+	void set_allowed_input_types(int input_types);
+	int get_allowed_input_types() const;
+
+public:
+	EventListenerLineEdit();
+};
+
+#endif // EVENT_LISTENER_LINE_EDIT_H

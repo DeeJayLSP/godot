@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  wsl_client.h                                                         */
+/*  forward_id_storage.cpp                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,64 +28,16 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef WSL_CLIENT_H
-#define WSL_CLIENT_H
+#include "forward_id_storage.h"
 
-#ifndef WEB_ENABLED
+using namespace RendererRD;
 
-#include "core/error/error_list.h"
-#include "core/io/stream_peer_tcp.h"
-#include "core/io/stream_peer_tls.h"
-#include "websocket_client.h"
-#include "wsl_peer.h"
-#include "wslay/wslay.h"
+ForwardIDStorage *ForwardIDStorage::singleton = nullptr;
 
-class WSLClient : public WebSocketClient {
-	GDCIIMPL(WSLClient, WebSocketClient);
+ForwardIDStorage::ForwardIDStorage() {
+	singleton = this;
+}
 
-private:
-	int _in_buf_size = DEF_BUF_SHIFT;
-	int _in_pkt_size = DEF_PKT_SHIFT;
-	int _out_buf_size = DEF_BUF_SHIFT;
-	int _out_pkt_size = DEF_PKT_SHIFT;
-
-	Ref<WSLPeer> _peer;
-	Ref<StreamPeerTCP> _tcp;
-	Ref<StreamPeer> _connection;
-	ConnectionStatus _status = CONNECTION_DISCONNECTED;
-
-	CharString _request;
-	int _requested = 0;
-
-	uint8_t _resp_buf[WSL_MAX_HEADER_SIZE];
-	int _resp_pos = 0;
-
-	String _key;
-	String _host;
-	uint16_t _port = 0;
-	Array _ip_candidates;
-	Vector<String> _protocols;
-	bool _use_tls = false;
-	IP::ResolverID _resolver_id = IP::RESOLVER_INVALID_ID;
-
-	void _do_handshake();
-	bool _verify_headers(String &r_protocol);
-
-public:
-	Error set_buffers(int p_in_buffer, int p_in_packets, int p_out_buffer, int p_out_packets) override;
-	Error connect_to_host(String p_host, String p_path, uint16_t p_port, bool p_tls, const Vector<String> p_protocol = Vector<String>(), const Vector<String> p_custom_headers = Vector<String>()) override;
-	int get_max_packet_size() const override;
-	Ref<WebSocketPeer> get_peer(int p_peer_id) const override;
-	void disconnect_from_host(int p_code = 1000, String p_reason = "") override;
-	IPAddress get_connected_host() const override;
-	uint16_t get_connected_port() const override;
-	virtual ConnectionStatus get_connection_status() const override;
-	virtual void poll() override;
-
-	WSLClient();
-	~WSLClient();
-};
-
-#endif // WEB_ENABLED
-
-#endif // WSL_CLIENT_H
+ForwardIDStorage::~ForwardIDStorage() {
+	singleton = nullptr;
+}
