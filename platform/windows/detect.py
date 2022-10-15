@@ -500,7 +500,11 @@ def configure_mingw(env):
         env["x86_libtheora_opt_gcc"] = True
         
     if env["arch"] in ["arm32", "arm64"]:
+<<<<<<< HEAD
         env["arm_libtheora_opt_gcc"] = True
+=======
+        env["x86_libtheora_opt_arm"] = True
+>>>>>>> update_theora_test
 
     mingw_bin_prefix = get_mingw_bin_prefix(env["mingw_prefix"], env["arch"])
 
