@@ -248,7 +248,7 @@ def configure(env: "Environment"):
             env["x86_libtheora_opt_gcc"] = True
 
         if env["arch"] in ["arm32", "arm64"]:
-            env["x86_libtheora_opt_arm"] = True
+            env["arm_libtheora_opt_gcc"] = True
 
     if not env["builtin_libvorbis"]:
         env["builtin_libogg"] = False  # Needed to link against system libvorbis

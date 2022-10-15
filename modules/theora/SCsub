@@ -73,7 +73,7 @@ if env["builtin_libtheora"]:
         "x86_vc/x86state.c",
     ]
     
-    if env["x86_libtheora_opt_arm"]:
+    if env["arm_libtheora_opt_gcc"]:
         thirdparty_sources += thirdparty_sources_arm
         env_theora.Append(CPPDEFINES=["OC_ARM_ASM"])
 

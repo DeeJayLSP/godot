@@ -142,6 +142,7 @@ env_base.__class__.force_optimization_on_debug = methods.force_optimization_on_d
 env_base.__class__.module_add_dependencies = methods.module_add_dependencies
 env_base.__class__.module_check_dependencies = methods.module_check_dependencies
 
+env_base["arm_libtheora_opt_gcc"] = False
 env_base["x86_libtheora_opt_gcc"] = False
 env_base["x86_libtheora_opt_vc"] = False
 
