@@ -194,8 +194,11 @@ def configure(env: "Environment"):
 
     ## Dependencies
 
-    if env["builtin_libtheora"] and env["arch"] == "x86_64":
-        env["x86_libtheora_opt_gcc"] = True
+    if env["builtin_libtheora"]:
+        if env["arch"] == "x86_64":
+            env["x86_libtheora_opt_gcc"] = True
+        if env["arch"] in ["arm64"]:
+            env["x86_libtheora_opt_arm"] = True
 
     ## Flags
 

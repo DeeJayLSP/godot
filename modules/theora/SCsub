@@ -13,10 +13,10 @@ if env["builtin_libtheora"]:
     thirdparty_dir = "#thirdparty/libtheora/"
     thirdparty_sources = [
         # "analyze.c",
-        # "apiwrapper.c",
+        "apiwrapper.c",
         "bitpack.c",
         # "collect.c",
-        # "decapiwrapper.c",
+        "decapiwrapper.c",
         "decinfo.c",
         "decode.c",
         "dequant.c",
@@ -39,6 +39,12 @@ if env["builtin_libtheora"]:
         # "rate.c",
         "state.c",
         # "tokenize.c",
+    ]
+    
+    thirdparty_sources_arm = [
+        "arm/armcpu.c",
+        # "arm/armenc.c,
+        "arm/armstate.c"
     ]
 
     thirdparty_sources_x86 = [
@@ -66,6 +72,10 @@ if env["builtin_libtheora"]:
         # "x86_vc/x86enc.c",
         "x86_vc/x86state.c",
     ]
+    
+    if env["x86_libtheora_opt_arm"]:
+        thirdparty_sources += thirdparty_sources_arm
+        env_theora.Append(CPPDEFINES=["OC_ARM_ASM"])
 
     if env["x86_libtheora_opt_gcc"]:
         thirdparty_sources += thirdparty_sources_x86
@@ -75,6 +85,7 @@ if env["builtin_libtheora"]:
 
     if env["x86_libtheora_opt_gcc"] or env["x86_libtheora_opt_vc"]:
         env_theora.Append(CPPDEFINES=["OC_X86_ASM"])
+        
 
     thirdparty_sources = [thirdparty_dir + file for file in thirdparty_sources]
 
