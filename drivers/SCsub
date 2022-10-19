@@ -32,6 +32,7 @@ if env["opengl3"]:
 
 # Core dependencies
 SConscript("png/SCsub")
+SConscript("webp/SCsub")
 
 env.add_source_files(env.drivers_sources, "*.cpp")
 

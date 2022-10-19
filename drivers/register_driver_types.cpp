@@ -33,24 +33,40 @@
 #include "core/extension/native_extension_manager.h"
 #include "drivers/png/image_loader_png.h"
 #include "drivers/png/resource_saver_png.h"
+#include "drivers/webp/image_loader_webp.h"
+#include "drivers/webp/resource_saver_webp.h"
 
 static Ref<ImageLoaderPNG> image_loader_png;
 static Ref<ResourceSaverPNG> resource_saver_png;
+static Ref<ImageLoaderWebP> image_loader_webp;
+static Ref<ResourceSaverWebP> resource_saver_webp;
 
 void register_core_driver_types() {
 	image_loader_png.instantiate();
 	ImageLoader::add_image_format_loader(image_loader_png);
 
+	image_loader_webp.instantiate();
+	ImageLoader::add_image_format_loader(image_loader_webp);
+
 	resource_saver_png.instantiate();
 	ResourceSaver::add_resource_format_saver(resource_saver_png);
+
+	resource_saver_webp.instantiate();
+	ResourceSaver::add_resource_format_saver(resource_saver_webp);
 }
 
 void unregister_core_driver_types() {
 	ImageLoader::remove_image_format_loader(image_loader_png);
 	image_loader_png.unref();
 
+	ImageLoader::remove_image_format_loader(image_loader_webp);
+	image_loader_webp.unref();
+
 	ResourceSaver::remove_resource_format_saver(resource_saver_png);
 	resource_saver_png.unref();
+
+	ResourceSaver::remove_resource_format_saver(resource_saver_webp);
+	resource_saver_webp.unref();
 }
 
 void register_driver_types() {
