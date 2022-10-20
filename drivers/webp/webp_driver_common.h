@@ -42,4 +42,4 @@ Ref<Image> _webp_unpack(const Vector<uint8_t> &p_buffer);
 Error webp_load_image_from_buffer(Image *p_image, const uint8_t *p_buffer, int p_buffer_len);
 } //namespace WebPCommon
 
-#endif // WEBP_COMMON_H
+#endif // WEBP_DRIVER_COMMON_H
