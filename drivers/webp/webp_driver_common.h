@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  webp_common.h                                                        */
+/*  webp_driver_common.h                                                 */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,12 +28,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#ifndef WEBP_COMMON_H
-#define WEBP_COMMON_H
+#ifndef WEBP_DRIVER_COMMON_H
+#define WEBP_DRIVER_COMMON_H
 
 #include "core/io/image.h"
 
-namespace WebPCommon {
+namespace WebPDriverCommon {
 // Given an image, pack this data into a WebP file.
 Vector<uint8_t> _webp_lossy_pack(const Ref<Image> &p_image, float p_quality);
 Vector<uint8_t> _webp_lossless_pack(const Ref<Image> &p_image);

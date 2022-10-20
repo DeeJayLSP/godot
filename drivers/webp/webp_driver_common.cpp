@@ -1,5 +1,5 @@
 /*************************************************************************/
-/*  webp_common.cpp                                                      */
+/*  webp_driver_common.cpp                                               */
 /*************************************************************************/
 /*                       This file is part of:                           */
 /*                           GODOT ENGINE                                */
@@ -28,7 +28,7 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                */
 /*************************************************************************/
 
-#include "webp_common.h"
+#include "webp_driver_common.h"
 
 #include "core/config/project_settings.h"
 #include "core/os/os.h"
@@ -37,7 +37,7 @@
 #include <webp/decode.h>
 #include <webp/encode.h>
 
-namespace WebPCommon {
+namespace WebPDriverCommon {
 Vector<uint8_t> _webp_lossy_pack(const Ref<Image> &p_image, float p_quality) {
 	ERR_FAIL_COND_V(p_image.is_null() || p_image->is_empty(), Vector<uint8_t>());
 
