@@ -187,4 +187,4 @@ Error webp_load_image_from_buffer(Image *p_image, const uint8_t *p_buffer, int p
 
 	return OK;
 }
-} // namespace WebPCommon
+} //namespace WebPDriverCommon
