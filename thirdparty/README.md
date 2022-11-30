@@ -416,7 +416,7 @@ that file when upgrading.
 ## minizip
 
 - Upstream: https://www.zlib.net
-- Version: 1.2.12 (zlib contrib, 2022)
+- Version: 1.2.13 (zlib contrib, 2022)
 - License: zlib
 
 Files extracted from the upstream source:
