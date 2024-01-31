@@ -33,8 +33,12 @@
 #include "core/error/error_macros.h"
 #include "core/templates/safe_refcount.h"
 
+#ifdef __EMSCRIPTEN__
 #include <stdio.h>
 #include <stdlib.h>
+#else
+#include "thirdparty/mimalloc/include/mimalloc-override.h"
+#endif
 
 void *operator new(size_t p_size, const char *p_description) {
 	return Memory::alloc_static(p_size, false);

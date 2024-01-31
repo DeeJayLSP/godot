@@ -2,4 +2,41 @@
 
 Import("env")
 
+if env["platform"] != "web":
+    thirdparty_obj = []
+
+    env_thirdparty = env.Clone()
+    env_thirdparty.disable_warnings()
+
+    thirdparty_mimalloc_dir = "#thirdparty/mimalloc/"
+    thirdparty_mimalloc_sources = [
+        "src/alloc-aligned.c",
+        # "src/alloc-override.c",
+        "src/alloc-posix.c",
+        "src/alloc.c",
+        "src/arena.c",
+        "src/bitmap.c",
+        "src/heap.c",
+        "src/init.c",
+        "src/options.c",
+        "src/os.c",
+        # "src/page-queue.c",
+        "src/page.c",
+        "src/random.c",
+        "src/segment-map.c",
+        "src/segment.c",
+        # "src/static.c",
+        "src/stats.c",
+        "src/prim/prim.c",
+    ]
+
+    thirdparty_mimalloc_sources = [thirdparty_mimalloc_dir + file for file in thirdparty_mimalloc_sources]
+
+    env_thirdparty.Prepend(CPPPATH=[thirdparty_mimalloc_dir + "include"])
+    env.Prepend(CPPPATH=[thirdparty_mimalloc_dir + "include"])
+
+    env_thirdparty.add_source_files(thirdparty_obj, thirdparty_mimalloc_sources)
+
+    env.core_sources += thirdparty_obj
+
 env.add_source_files(env.core_sources, "*.cpp")
