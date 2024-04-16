@@ -32,6 +32,7 @@
 #define AUDIO_STREAM_WAV_H
 
 #include "servers/audio/audio_stream.h"
+#include "thirdparty/misc/qoa.h"
 
 class AudioStreamWAV;
 
@@ -88,7 +89,8 @@ public:
 	enum Format {
 		FORMAT_8_BITS,
 		FORMAT_16_BITS,
-		FORMAT_IMA_ADPCM
+		FORMAT_IMA_ADPCM,
+		FORMAT_QOA
 	};
 
 	// Keep the ResourceImporterWAV `edit/loop_mode` enum hint in sync with these options.

@@ -28,6 +28,9 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#define QOA_IMPLEMENTATION
+#define QOA_NO_STDIO
+
 #include "audio_stream_wav.h"
 
 #include "core/io/file_access.h"
@@ -235,6 +238,7 @@ int AudioStreamPlaybackWAV::mix(AudioFrame *p_buffer, float p_rate_scale, int p_
 			len /= 1;
 			break;
 		case AudioStreamWAV::FORMAT_16_BITS:
+		case AudioStreamWAV::FORMAT_QOA:
 			len /= 2;
 			break;
 		case AudioStreamWAV::FORMAT_IMA_ADPCM:
@@ -373,7 +377,8 @@ int AudioStreamPlaybackWAV::mix(AudioFrame *p_buffer, float p_rate_scale, int p_
 					do_resample<int8_t, false, false>((int8_t *)data, dst_buff, offset, increment, target, ima_adpcm);
 				}
 			} break;
-			case AudioStreamWAV::FORMAT_16_BITS: {
+			case AudioStreamWAV::FORMAT_16_BITS:
+			case AudioStreamWAV::FORMAT_QOA: {
 				if (is_stereo) {
 					do_resample<int16_t, true, false>((int16_t *)data, dst_buff, offset, increment, target, ima_adpcm);
 				} else {
@@ -470,6 +475,7 @@ double AudioStreamWAV::get_length() const {
 			len /= 1;
 			break;
 		case AudioStreamWAV::FORMAT_16_BITS:
+		case AudioStreamWAV::FORMAT_QOA:
 			len /= 2;
 			break;
 		case AudioStreamWAV::FORMAT_IMA_ADPCM:
@@ -499,12 +505,25 @@ void AudioStreamWAV::set_data(const Vector<uint8_t> &p_data) {
 	int datalen = p_data.size();
 	if (datalen) {
 		const uint8_t *r = p_data.ptr();
-		int alloc_len = datalen + DATA_PAD * 2;
-		data = memalloc(alloc_len); //alloc with some padding for interpolation
-		memset(data, 0, alloc_len);
-		uint8_t *dataptr = (uint8_t *)data;
-		memcpy(dataptr + DATA_PAD, r, datalen);
-		data_bytes = datalen;
+		qoa_desc qoad;
+		int alloc_len = 0;
+		if (qoa_decode_header(r, datalen, &qoad) == 8) { // QOA
+			int16_t *sample_data = qoa_decode(r, datalen, &qoad);
+			int qoa_datalen = qoad.samples * qoad.channels * sizeof(int16_t);
+			alloc_len = qoa_datalen + DATA_PAD * 2;
+			data = memalloc(alloc_len);
+			memset(data, 0, alloc_len);
+			int16_t *dataptr = (int16_t *)data;
+			memcpy(dataptr + DATA_PAD, sample_data, qoa_datalen);
+			data_bytes = qoa_datalen;
+		} else {
+			alloc_len = datalen + DATA_PAD * 2;
+			data = memalloc(alloc_len); //alloc with some padding for interpolation
+			memset(data, 0, alloc_len);
+			uint8_t *dataptr = (uint8_t *)data;
+			memcpy(dataptr + DATA_PAD, r, datalen);
+			data_bytes = datalen;
+		}
 	}
 
 	AudioServer::get_singleton()->unlock();
@@ -548,6 +567,7 @@ Error AudioStreamWAV::save_to_wav(const String &p_path) {
 			byte_pr_sample = 1;
 			break;
 		case AudioStreamWAV::FORMAT_16_BITS:
+		case AudioStreamWAV::FORMAT_QOA:
 			byte_pr_sample = 2;
 			break;
 		case AudioStreamWAV::FORMAT_IMA_ADPCM:
@@ -590,6 +610,7 @@ Error AudioStreamWAV::save_to_wav(const String &p_path) {
 			}
 			break;
 		case AudioStreamWAV::FORMAT_16_BITS:
+		case AudioStreamWAV::FORMAT_QOA:
 			for (unsigned int i = 0; i < data_bytes / 2; i++) {
 				uint16_t data_point = decode_uint16(&read_data[i * 2]);
 				file->store_16(data_point);
@@ -639,7 +660,7 @@ void AudioStreamWAV::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("save_to_wav", "path"), &AudioStreamWAV::save_to_wav);
 
 	ADD_PROPERTY(PropertyInfo(Variant::PACKED_BYTE_ARRAY, "data", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_NO_EDITOR), "set_data", "get_data");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "format", PROPERTY_HINT_ENUM, "8-Bit,16-Bit,IMA-ADPCM"), "set_format", "get_format");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "format", PROPERTY_HINT_ENUM, "8-Bit,16-Bit,IMA-ADPCM,QOA"), "set_format", "get_format");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "loop_mode", PROPERTY_HINT_ENUM, "Disabled,Forward,Ping-Pong,Backward"), "set_loop_mode", "get_loop_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "loop_begin"), "set_loop_begin", "get_loop_begin");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "loop_end"), "set_loop_end", "get_loop_end");
@@ -649,6 +670,7 @@ void AudioStreamWAV::_bind_methods() {
 	BIND_ENUM_CONSTANT(FORMAT_8_BITS);
 	BIND_ENUM_CONSTANT(FORMAT_16_BITS);
 	BIND_ENUM_CONSTANT(FORMAT_IMA_ADPCM);
+	BIND_ENUM_CONSTANT(FORMAT_QOA);
 
 	BIND_ENUM_CONSTANT(LOOP_DISABLED);
 	BIND_ENUM_CONSTANT(LOOP_FORWARD);
