@@ -56,6 +56,9 @@
 		<constant name="FORMAT_IMA_ADPCM" value="2" enum="Format">
 			Audio is compressed using IMA ADPCM.
 		</constant>
+		<constant name="FORMAT_QOA" value="3" enum="Format">
+			Audio is compressed as QOA.
+		</constant>
 		<constant name="LOOP_DISABLED" value="0" enum="LoopMode">
 			Audio does not loop.
 		</constant>
