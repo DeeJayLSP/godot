@@ -259,6 +259,18 @@ Ref<AudioStreamWAV> AudioEffectRecord::get_recording() const {
 			w[i * 2 + 0] = rl[i];
 			w[i * 2 + 1] = rr[i];
 		}
+	} else if (dst_format == AudioStreamWAV::FORMAT_QOA) {
+
+#ifdef TOOLS_ENABLED
+		qoa_desc desc = {};
+
+		desc.samplerate = AudioServer::get_singleton()->get_mix_rate();
+		desc.samples = current_instance->recording_data.size();
+		desc.channels = 2;
+		ResourceImporterWAV::_compress_qoa(current_instance->recording_data, dst_data, &desc);
+#else
+		ERR_PRINT("AudioEffectRecord cannot do Quite OK Audio compression at runtime.");
+#endif
 	} else {
 		ERR_PRINT("Format not implemented.");
 	}
@@ -283,7 +295,7 @@ void AudioEffectRecord::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_format"), &AudioEffectRecord::get_format);
 	ClassDB::bind_method(D_METHOD("get_recording"), &AudioEffectRecord::get_recording);
 
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "format", PROPERTY_HINT_ENUM, "8-Bit,16-Bit,IMA-ADPCM"), "set_format", "get_format");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "format", PROPERTY_HINT_ENUM, "8-Bit,16-Bit,IMA ADPCM,Quite OK Audio"), "set_format", "get_format");
 }
 
 AudioEffectRecord::AudioEffectRecord() {
