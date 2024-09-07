@@ -529,7 +529,7 @@ Error ResourceImporterWAV::import(const String &p_source_file, const String &p_s
 		if (encoded) {
 			dst_data.resize(qoa_len);
 			memcpy(dst_data.ptrw(), encoded, qoa_len);
-			QOA_FREE(encoded);
+			free(encoded);
 		}
 	} else {
 		dst_data = pcm_data;
