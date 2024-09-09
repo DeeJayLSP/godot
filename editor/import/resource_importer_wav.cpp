@@ -33,6 +33,7 @@
 #include "core/io/file_access.h"
 #include "core/io/marshalls.h"
 #include "core/io/resource_saver.h"
+#include "scene/resources/audio_stream_wav.h"
 
 const float TRIM_DB_LIMIT = -50;
 const int TRIM_FADE_OUT_FRAMES = 500;

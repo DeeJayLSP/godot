@@ -32,7 +32,7 @@
 #define RESOURCE_IMPORTER_WAV_H
 
 #include "core/io/resource_importer.h"
-#include "scene/resources/audio_stream_wav.h"
+#include "thirdparty/misc/qoa.h"
 
 class ResourceImporterWAV : public ResourceImporter {
 	GDCLASS(ResourceImporterWAV, ResourceImporter);
