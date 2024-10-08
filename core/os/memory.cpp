@@ -37,6 +37,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "thirdparty/mimalloc/include/mimalloc-override.h"
+
 void *operator new(size_t p_size, const char *p_description) {
 	return Memory::alloc_static(p_size, false);
 }

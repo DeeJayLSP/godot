@@ -77,6 +77,18 @@ if env["builtin_clipper2"]:
 
     env_thirdparty.add_source_files(thirdparty_obj, thirdparty_clipper_sources)
 
+# mimalloc
+thirdparty_mimalloc_dir = "#thirdparty/mimalloc/"
+thirdparty_mimalloc_source = thirdparty_mimalloc_dir + "src/static.c"
+
+if env["platform"] == "linuxbsd" or env["platform"] == "macos" and env["use_tsan"]:
+    env_thirdparty.Append(CPPDEFINES=["MI_TSAN"])
+
+env_thirdparty.Prepend(CPPPATH=[thirdparty_mimalloc_dir + "include"])
+env.Prepend(CPPPATH=[thirdparty_mimalloc_dir + "include"])
+
+env_thirdparty.add_source_files(thirdparty_obj, thirdparty_mimalloc_source)
+
 # Zlib library, can be unbundled
 if env["builtin_zlib"]:
     thirdparty_zlib_dir = "#thirdparty/zlib/"
