@@ -436,6 +436,11 @@ Comment: Minimal PCG32 implementation
 Copyright: 2014, M.E. O'Neill
 License: Apache-2.0
 
+Files: thirdparty/misc/pl_mpeg.h
+Comment: PL_MPEG
+Copyright: 2025, Dominic Szablewski
+License: Expat
+
 Files: thirdparty/misc/polypartition.cpp
  thirdparty/misc/polypartition.h
 Comment: PolyPartition / Triangulator

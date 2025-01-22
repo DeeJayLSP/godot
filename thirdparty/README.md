@@ -728,6 +728,10 @@ Collection of single-file libraries used in Godot components.
   * Upstream: http://www.pcg-random.org
   * Version: minimal C implementation, http://www.pcg-random.org/download.html
   * License: Apache 2.0
+- `pl_mpeg.h`
+  * Upstream: https://github.com/phoboslab/pl_mpeg
+  * Version: git (e11f01449cf5d6615b4e356f0672674c8484134b, 2025)
+  * License: MIT
 - `polypartition.{cpp,h}`
   * Upstream: https://github.com/ivanfratric/polypartition (`src/polypartition.{cpp,h}`)
   * Version: git (7bdffb428b2b19ad1c43aa44c714dcc104177e84, 2021)
