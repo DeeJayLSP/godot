@@ -32,6 +32,15 @@
 
 #include "core/io/resource_saver.h"
 
+// Disable dr_flac warnings
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wimplicit-fallthrough"
+#endif
+
 #define DRFLAC_MALLOC(size) memalloc(size)
 #define DRFLAC_REALLOC(ptr, size) memrealloc(ptr, size)
 #define DRFLAC_FREE(ptr) memfree(ptr)
