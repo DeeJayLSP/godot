@@ -124,6 +124,7 @@
 #include "editor/import/resource_importer_bmfont.h"
 #include "editor/import/resource_importer_csv_translation.h"
 #include "editor/import/resource_importer_dynamic_font.h"
+#include "editor/import/resource_importer_flac.h"
 #include "editor/import/resource_importer_image.h"
 #include "editor/import/resource_importer_imagefont.h"
 #include "editor/import/resource_importer_layered_texture.h"
@@ -7152,6 +7153,10 @@ EditorNode::EditorNode() {
 		Ref<ResourceImporterWAV> import_wav;
 		import_wav.instantiate();
 		ResourceFormatImporter::get_singleton()->add_importer(import_wav);
+
+		Ref<ResourceImporterFLAC> import_flac;
+		import_flac.instantiate();
+		ResourceFormatImporter::get_singleton()->add_importer(import_flac);
 
 		Ref<ResourceImporterOBJ> import_obj;
 		import_obj.instantiate();

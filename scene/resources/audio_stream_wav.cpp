@@ -868,6 +868,16 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		file->seek(file_pos + chunksize + (chunksize & 1));
 	}
 
+	return load_step_2(data, p_options, format_bits, format_freq, format_channels, frames, loop_mode, loop_begin, loop_end, import_loop_mode);
+}
+
+Ref<AudioStreamWAV> AudioStreamWAV::load_from_file(const String &p_path, const Dictionary &p_options) {
+	const Vector<uint8_t> stream_data = FileAccess::get_file_as_bytes(p_path);
+	ERR_FAIL_COND_V_MSG(stream_data.is_empty(), Ref<AudioStreamWAV>(), vformat("Cannot open file '%s'.", p_path));
+	return load_from_buffer(stream_data, p_options);
+}
+
+Ref<AudioStreamWAV> AudioStreamWAV::load_step_2(Vector<float> &p_data, const Dictionary &p_options, int format_bits, int format_freq, int format_channels, int frames, AudioStreamWAV::LoopMode loop_mode, int loop_begin, int loop_end, int import_loop_mode) {
 	// STEP 2, APPLY CONVERSIONS
 
 	bool is16 = format_bits != 8;
@@ -901,10 +911,10 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 			for (int i = 0; i < new_data_frames; i++) {
 				// Cubic interpolation should be enough.
 
-				float y0 = data[MAX(0, ipos - 1) * format_channels + c];
-				float y1 = data[ipos * format_channels + c];
-				float y2 = data[MIN(frames - 1, ipos + 1) * format_channels + c];
-				float y3 = data[MIN(frames - 1, ipos + 2) * format_channels + c];
+				float y0 = p_data[MAX(0, ipos - 1) * format_channels + c];
+				float y1 = p_data[ipos * format_channels + c];
+				float y2 = p_data[MIN(frames - 1, ipos + 1) * format_channels + c];
+				float y3 = p_data[MIN(frames - 1, ipos + 2) * format_channels + c];
 
 				new_data.write[i * format_channels + c] = Math::cubic_interpolate(y1, y2, y0, y3, frac);
 
@@ -923,7 +933,7 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 			loop_end = (int)(loop_end * (float)new_data_frames / (float)frames);
 		}
 
-		data = new_data;
+		p_data = new_data;
 		rate = limit_rate_hz;
 		frames = new_data_frames;
 	}
@@ -932,8 +942,8 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 
 	if (normalize) {
 		float max = 0.0;
-		for (int i = 0; i < data.size(); i++) {
-			float amp = Math::abs(data[i]);
+		for (int i = 0; i < p_data.size(); i++) {
+			float amp = Math::abs(p_data[i]);
 			if (amp > max) {
 				max = amp;
 			}
@@ -941,8 +951,8 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 
 		if (max > 0) {
 			float mult = 1.0 / max;
-			for (int i = 0; i < data.size(); i++) {
-				data.write[i] *= mult;
+			for (int i = 0; i < p_data.size(); i++) {
+				p_data.write[i] *= mult;
 			}
 		}
 	}
@@ -955,10 +965,10 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		bool found = false;
 		float limit = Math::db_to_linear(TRIM_DB_LIMIT);
 
-		for (int i = 0; i < data.size() / format_channels; i++) {
+		for (int i = 0; i < p_data.size() / format_channels; i++) {
 			float amp_channel_sum = 0.0;
 			for (int j = 0; j < format_channels; j++) {
-				amp_channel_sum += Math::abs(data[(i * format_channels) + j]);
+				amp_channel_sum += Math::abs(p_data[(i * format_channels) + j]);
 			}
 
 			float amp = Math::abs(amp_channel_sum / (float)format_channels);
@@ -984,12 +994,12 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 				}
 
 				for (int j = 0; j < format_channels; j++) {
-					new_data.write[((i - first) * format_channels) + j] = data[(i * format_channels) + j] * fade_out_mult;
+					new_data.write[((i - first) * format_channels) + j] = p_data[(i * format_channels) + j] * fade_out_mult;
 				}
 			}
 
-			data = new_data;
-			frames = data.size() / format_channels;
+			p_data = new_data;
+			frames = p_data.size() / format_channels;
 		}
 	}
 
@@ -1011,12 +1021,12 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 
 	if (force_mono && format_channels == 2) {
 		Vector<float> new_data;
-		new_data.resize(data.size() / 2);
+		new_data.resize(p_data.size() / 2);
 		for (int i = 0; i < frames; i++) {
-			new_data.write[i] = (data[i * 2 + 0] + data[i * 2 + 1]) / 2.0;
+			new_data.write[i] = (p_data[i * 2 + 0] + p_data[i * 2 + 1]) / 2.0;
 		}
 
-		data = new_data;
+		p_data = new_data;
 		format_channels = 1;
 	}
 
@@ -1031,19 +1041,19 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 	if (compression == 1) {
 		dst_format = AudioStreamWAV::FORMAT_IMA_ADPCM;
 		if (format_channels == 1) {
-			_compress_ima_adpcm(data, dst_data);
+			_compress_ima_adpcm(p_data, dst_data);
 		} else {
 			//byte interleave
 			Vector<float> left;
 			Vector<float> right;
 
-			int tframes = data.size() / 2;
+			int tframes = p_data.size() / 2;
 			left.resize(tframes);
 			right.resize(tframes);
 
 			for (int i = 0; i < tframes; i++) {
-				left.write[i] = data[i * 2 + 0];
-				right.write[i] = data[i * 2 + 1];
+				left.write[i] = p_data[i * 2 + 0];
+				right.write[i] = p_data[i * 2 + 1];
 			}
 
 			Vector<uint8_t> bleft;
@@ -1073,20 +1083,20 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		desc.samples = frames;
 		desc.channels = format_channels;
 
-		_compress_qoa(data, dst_data, &desc);
+		_compress_qoa(p_data, dst_data, &desc);
 	} else {
 		dst_format = is16 ? AudioStreamWAV::FORMAT_16_BITS : AudioStreamWAV::FORMAT_8_BITS;
-		dst_data.resize(data.size() * (is16 ? 2 : 1));
+		dst_data.resize(p_data.size() * (is16 ? 2 : 1));
 		{
 			uint8_t *w = dst_data.ptrw();
 
-			int ds = data.size();
+			int ds = p_data.size();
 			for (int i = 0; i < ds; i++) {
 				if (is16) {
-					int16_t v = CLAMP(data[i] * 32768, -32768, 32767);
+					int16_t v = CLAMP(p_data[i] * 32768, -32768, 32767);
 					encode_uint16(v, &w[i * 2]);
 				} else {
-					int8_t v = CLAMP(data[i] * 128, -128, 127);
+					int8_t v = CLAMP(p_data[i] * 128, -128, 127);
 					w[i] = v;
 				}
 			}
@@ -1103,12 +1113,6 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 	sample->set_loop_end(loop_end);
 	sample->set_stereo(format_channels == 2);
 	return sample;
-}
-
-Ref<AudioStreamWAV> AudioStreamWAV::load_from_file(const String &p_path, const Dictionary &p_options) {
-	const Vector<uint8_t> stream_data = FileAccess::get_file_as_bytes(p_path);
-	ERR_FAIL_COND_V_MSG(stream_data.is_empty(), Ref<AudioStreamWAV>(), vformat("Cannot open file '%s'.", p_path));
-	return load_from_buffer(stream_data, p_options);
 }
 
 void AudioStreamWAV::_bind_methods() {

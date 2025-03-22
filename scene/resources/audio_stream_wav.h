@@ -133,6 +133,7 @@ protected:
 public:
 	static Ref<AudioStreamWAV> load_from_buffer(const Vector<uint8_t> &p_stream_data, const Dictionary &p_options);
 	static Ref<AudioStreamWAV> load_from_file(const String &p_path, const Dictionary &p_options);
+	static Ref<AudioStreamWAV> load_step_2(Vector<float> &p_data, const Dictionary &p_options, int format_bits, int format_freq, int format_channels, int frames, AudioStreamWAV::LoopMode loop_mode, int loop_begin, int loop_end, int import_loop_mode);
 
 	void set_format(Format p_format);
 	Format get_format() const;
