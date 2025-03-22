@@ -32,16 +32,25 @@
 
 #include "core/io/resource_saver.h"
 
+#define DRFLAC_MALLOC(size) memalloc(size)
+#define DRFLAC_REALLOC(ptr, size) memrealloc(ptr, size)
+#define DRFLAC_FREE(ptr) memfree(ptr)
+#define DR_FLAC_NO_STDIO
+#define DR_FLAC_NO_OGG
+#define DR_FLAC_IMPLEMENTATION
+#include "thirdparty/dr_libs/dr_flac.h"
+
 String ResourceImporterWAV::get_importer_name() const {
 	return "wav";
 }
 
 String ResourceImporterWAV::get_visible_name() const {
-	return "Microsoft WAV";
+	return "Microsoft WAV/FLAC";
 }
 
 void ResourceImporterWAV::get_recognized_extensions(List<String> *p_extensions) const {
 	p_extensions->push_back("wav");
+	p_extensions->push_back("flac");
 }
 
 String ResourceImporterWAV::get_save_extension() const {
@@ -94,7 +103,57 @@ Error ResourceImporterWAV::import(ResourceUID::ID p_source_id, const String &p_s
 		options[pair.key] = pair.value;
 	}
 
-	Ref<AudioStreamWAV> sample = AudioStreamWAV::load_from_file(p_source_file, options);
+	Ref<AudioStreamWAV> sample;
+	if (p_source_file.ends_with(".flac")) {
+		Error err;
+		Ref<FileAccess> file = FileAccess::open(p_source_file, FileAccess::READ, &err);
+		ERR_FAIL_COND_V_MSG(err != OK, err, vformat("Cannot open file '%s'.", p_source_file));
+
+		drflac_read_proc read_fa = [](void *p_user_data, void *p_out, size_t to_read) -> size_t {
+			Ref<FileAccess> fa = *(Ref<FileAccess> *)p_user_data;
+			return fa->get_buffer((uint8_t *)p_out, to_read);
+		};
+
+		drflac_seek_proc seek_fa = [](void *p_user_data, int p_offset, drflac_seek_origin origin) -> drflac_bool32 {
+			Ref<FileAccess> fa = *(Ref<FileAccess> *)p_user_data;
+			uint64_t new_offset = p_offset + (origin == drflac_seek_origin_current ? fa->get_position() : 0);
+
+			if (new_offset > fa->get_length() || (p_offset < 0 && (size_t)-p_offset > fa->get_position())) {
+				return DRFLAC_FALSE;
+			}
+
+			fa->seek(new_offset);
+			return DRFLAC_TRUE;
+		};
+
+		drflac *flac = drflac_open(read_fa, seek_fa, &file, nullptr);
+
+		if (flac == nullptr) {
+			ERR_FAIL_V_MSG(ERR_CANT_OPEN, "Cannot read data from file '" + p_source_file + "'. Data is invalid or corrupted.");
+		}
+
+		int format_bits = flac->bitsPerSample;
+		int format_channels = flac->channels;
+		int format_freq = flac->sampleRate;
+		int frames = flac->totalPCMFrameCount;
+
+		int import_loop_mode = p_options["edit/loop_mode"];
+
+		int loop_begin = 0;
+		int loop_end = 0;
+		AudioStreamWAV::LoopMode loop_mode = AudioStreamWAV::LoopMode::LOOP_DISABLED;
+
+		Vector<float> data;
+		data.resize(frames * format_channels);
+
+		drflac_read_pcm_frames_f32(flac, frames, data.ptrw());
+
+		drflac_close(flac);
+
+		sample = AudioStreamWAV::load_step_2(data, options, format_bits, format_freq, format_channels, frames, loop_mode, loop_begin, loop_end, import_loop_mode);
+	} else {
+		sample = AudioStreamWAV::load_from_file(p_source_file, options);
+	}
 	ResourceSaver::save(sample, p_save_path + ".sample");
 	return OK;
 }

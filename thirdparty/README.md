@@ -194,6 +194,10 @@ Files extracted from upstream source:
 - `dr_flac.h`
 - `LICENSE`
 
+Patches:
+
+- `flac_missing_breaks.patch` (GH-Pending)
+
 
 ## embree
 
