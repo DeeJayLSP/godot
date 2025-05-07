@@ -187,16 +187,18 @@ public:
 			if (p_dict.has("arguments")) {
 				arguments = p_dict["arguments"];
 			}
+			doc.arguments.resize(arguments.size());
 			for (int i = 0; i < arguments.size(); i++) {
-				doc.arguments.push_back(ArgumentDoc::from_dict(arguments[i]));
+				doc.arguments.write[i] = (ArgumentDoc::from_dict(arguments[i]));
 			}
 
 			Array errors_returned;
 			if (p_dict.has("errors_returned")) {
 				errors_returned = p_dict["errors_returned"];
 			}
+			doc.errors_returned.resize(errors_returned.size());
 			for (int i = 0; i < errors_returned.size(); i++) {
-				doc.errors_returned.push_back(errors_returned[i]);
+				doc.errors_returned.write[i] = errors_returned[i];
 			}
 
 			if (p_dict.has("keywords")) {
@@ -243,16 +245,18 @@ public:
 
 			if (!p_doc.arguments.is_empty()) {
 				Array arguments;
+				arguments.resize(p_doc.arguments.size());
 				for (int i = 0; i < p_doc.arguments.size(); i++) {
-					arguments.push_back(ArgumentDoc::to_dict(p_doc.arguments[i]));
+					arguments[i] = ArgumentDoc::to_dict(p_doc.arguments[i]);
 				}
 				dict["arguments"] = arguments;
 			}
 
 			if (!p_doc.errors_returned.is_empty()) {
 				Array errors_returned;
+				errors_returned.resize(p_doc.errors_returned.size());
 				for (int i = 0; i < p_doc.errors_returned.size(); i++) {
-					errors_returned.push_back(p_doc.errors_returned[i]);
+					errors_returned[i] = p_doc.errors_returned[i];
 				}
 				dict["errors_returned"] = errors_returned;
 			}
@@ -746,48 +750,54 @@ public:
 			if (p_dict.has("tutorials")) {
 				tutorials = p_dict["tutorials"];
 			}
+			doc.tutorials.resize(tutorials.size());
 			for (int i = 0; i < tutorials.size(); i++) {
-				doc.tutorials.push_back(TutorialDoc::from_dict(tutorials[i]));
+				doc.tutorials.write[i] = TutorialDoc::from_dict(tutorials[i]);
 			}
 
 			Array constructors;
 			if (p_dict.has("constructors")) {
 				constructors = p_dict["constructors"];
 			}
+			doc.constructors.resize(constructors.size());
 			for (int i = 0; i < constructors.size(); i++) {
-				doc.constructors.push_back(MethodDoc::from_dict(constructors[i]));
+				doc.constructors.write[i] = MethodDoc::from_dict(constructors[i]);
 			}
 
 			Array methods;
 			if (p_dict.has("methods")) {
 				methods = p_dict["methods"];
 			}
+			doc.methods.resize(methods.size());
 			for (int i = 0; i < methods.size(); i++) {
-				doc.methods.push_back(MethodDoc::from_dict(methods[i]));
+				doc.methods.write[i] = MethodDoc::from_dict(methods[i]);
 			}
 
 			Array operators;
 			if (p_dict.has("operators")) {
 				operators = p_dict["operators"];
 			}
+			doc.operators.resize(operators.size());
 			for (int i = 0; i < operators.size(); i++) {
-				doc.operators.push_back(MethodDoc::from_dict(operators[i]));
+				doc.operators.write[i] = MethodDoc::from_dict(operators[i]);
 			}
 
 			Array signals;
 			if (p_dict.has("signals")) {
 				signals = p_dict["signals"];
 			}
+			doc.signals.resize(signals.size());
 			for (int i = 0; i < signals.size(); i++) {
-				doc.signals.push_back(MethodDoc::from_dict(signals[i]));
+				doc.signals.write[i] = MethodDoc::from_dict(signals[i]);
 			}
 
 			Array constants;
 			if (p_dict.has("constants")) {
 				constants = p_dict["constants"];
 			}
+			doc.constants.resize(constants.size());
 			for (int i = 0; i < constants.size(); i++) {
-				doc.constants.push_back(ConstantDoc::from_dict(constants[i]));
+				doc.constants.write[i] = ConstantDoc::from_dict(constants[i]);
 			}
 
 			Dictionary enums;
@@ -802,24 +812,27 @@ public:
 			if (p_dict.has("properties")) {
 				properties = p_dict["properties"];
 			}
+			doc.properties.resize(properties.size());
 			for (int i = 0; i < properties.size(); i++) {
-				doc.properties.push_back(PropertyDoc::from_dict(properties[i]));
+				doc.properties.write[i] = PropertyDoc::from_dict(properties[i]);
 			}
 
 			Array annotations;
 			if (p_dict.has("annotations")) {
 				annotations = p_dict["annotations"];
 			}
+			doc.annotations.resize(annotations.size());
 			for (int i = 0; i < annotations.size(); i++) {
-				doc.annotations.push_back(MethodDoc::from_dict(annotations[i]));
+				doc.annotations.write[i] = MethodDoc::from_dict(annotations[i]);
 			}
 
 			Array theme_properties;
 			if (p_dict.has("theme_properties")) {
 				theme_properties = p_dict["theme_properties"];
 			}
+			doc.theme_properties.resize(theme_properties.size());
 			for (int i = 0; i < theme_properties.size(); i++) {
-				doc.theme_properties.push_back(ThemeItemDoc::from_dict(theme_properties[i]));
+				doc.theme_properties.write[i] = ThemeItemDoc::from_dict(theme_properties[i]);
 			}
 
 #ifndef DISABLE_DEPRECATED
@@ -873,48 +886,54 @@ public:
 
 			if (!p_doc.tutorials.is_empty()) {
 				Array tutorials;
+				tutorials.resize(p_doc.tutorials.size());
 				for (int i = 0; i < p_doc.tutorials.size(); i++) {
-					tutorials.push_back(TutorialDoc::to_dict(p_doc.tutorials[i]));
+					tutorials[i] = TutorialDoc::to_dict(p_doc.tutorials[i]);
 				}
 				dict["tutorials"] = tutorials;
 			}
 
 			if (!p_doc.constructors.is_empty()) {
 				Array constructors;
+				constructors.resize(p_doc.constructors.size());
 				for (int i = 0; i < p_doc.constructors.size(); i++) {
-					constructors.push_back(MethodDoc::to_dict(p_doc.constructors[i]));
+					constructors[i] = MethodDoc::to_dict(p_doc.constructors[i]);
 				}
 				dict["constructors"] = constructors;
 			}
 
 			if (!p_doc.methods.is_empty()) {
 				Array methods;
+				methods.resize(p_doc.methods.size());
 				for (int i = 0; i < p_doc.methods.size(); i++) {
-					methods.push_back(MethodDoc::to_dict(p_doc.methods[i]));
+					methods[i] = MethodDoc::to_dict(p_doc.methods[i]);
 				}
 				dict["methods"] = methods;
 			}
 
 			if (!p_doc.operators.is_empty()) {
 				Array operators;
+				operators.resize(p_doc.operators.size());
 				for (int i = 0; i < p_doc.operators.size(); i++) {
-					operators.push_back(MethodDoc::to_dict(p_doc.operators[i]));
+					operators[i] = MethodDoc::to_dict(p_doc.operators[i]);
 				}
 				dict["operators"] = operators;
 			}
 
 			if (!p_doc.signals.is_empty()) {
 				Array signals;
+				signals.resize(p_doc.signals.size());
 				for (int i = 0; i < p_doc.signals.size(); i++) {
-					signals.push_back(MethodDoc::to_dict(p_doc.signals[i]));
+					signals[i] = MethodDoc::to_dict(p_doc.signals[i]);
 				}
 				dict["signals"] = signals;
 			}
 
 			if (!p_doc.constants.is_empty()) {
 				Array constants;
+				constants.resize(p_doc.constants.size());
 				for (int i = 0; i < p_doc.constants.size(); i++) {
-					constants.push_back(ConstantDoc::to_dict(p_doc.constants[i]));
+					constants[i] = ConstantDoc::to_dict(p_doc.constants[i]);
 				}
 				dict["constants"] = constants;
 			}
@@ -929,24 +948,27 @@ public:
 
 			if (!p_doc.properties.is_empty()) {
 				Array properties;
+				properties.resize(p_doc.properties.size());
 				for (int i = 0; i < p_doc.properties.size(); i++) {
-					properties.push_back(PropertyDoc::to_dict(p_doc.properties[i]));
+					properties[i] = PropertyDoc::to_dict(p_doc.properties[i]);
 				}
 				dict["properties"] = properties;
 			}
 
 			if (!p_doc.annotations.is_empty()) {
 				Array annotations;
+				annotations.resize(p_doc.annotations.size());
 				for (int i = 0; i < p_doc.annotations.size(); i++) {
-					annotations.push_back(MethodDoc::to_dict(p_doc.annotations[i]));
+					annotations[i] = MethodDoc::to_dict(p_doc.annotations[i]);
 				}
 				dict["annotations"] = annotations;
 			}
 
 			if (!p_doc.theme_properties.is_empty()) {
 				Array theme_properties;
+				theme_properties.resize(p_doc.theme_properties.size());
 				for (int i = 0; i < p_doc.theme_properties.size(); i++) {
-					theme_properties.push_back(ThemeItemDoc::to_dict(p_doc.theme_properties[i]));
+					theme_properties[i] = ThemeItemDoc::to_dict(p_doc.theme_properties[i]);
 				}
 				dict["theme_properties"] = theme_properties;
 			}

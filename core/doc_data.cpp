@@ -136,14 +136,14 @@ void DocData::method_doc_from_methodinfo(DocData::MethodDoc &p_method, const Met
 
 	return_doc_from_retinfo(p_method, p_methodinfo.return_val);
 
+	p_method.arguments.resize(p_methodinfo.arguments.size());
 	for (int64_t i = 0; i < p_methodinfo.arguments.size(); ++i) {
-		DocData::ArgumentDoc argument;
+		DocData::ArgumentDoc &argument = p_method.arguments.write[i];
 		argument_doc_from_arginfo(argument, p_methodinfo.arguments[i]);
 		int64_t default_arg_index = i - (p_methodinfo.arguments.size() - p_methodinfo.default_arguments.size());
 		if (default_arg_index >= 0) {
 			Variant default_arg = p_methodinfo.default_arguments[default_arg_index];
 			argument.default_value = get_default_value_string(default_arg);
 		}
-		p_method.arguments.push_back(argument);
 	}
 }
