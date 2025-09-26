@@ -41,6 +41,8 @@ if env.editor_build:
 
 mimalloc_dir = "#thirdparty/mimalloc/"
 env.Prepend(CPPPATH=[mimalloc_dir + "include"])
+env.Append(CPPDEFINES=["MI_OSX_INTERPOSE"])
+env.Append(CPPDEFINES=["MI_OSX_ZONE"])
 env.Append(CPPDEFINES=[("MI_TRACK_ASAN", 1 if env["use_asan"] else 0)])
 if env["use_tsan"]:
     env.Append(CPPDEFINES=["MI_TSAN"])
