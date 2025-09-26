@@ -35,6 +35,14 @@ if env["dbus"]:
     if env["use_sowrap"]:
         common_linuxbsd.append("dbus-so_wrap.c")
 
+if env["builtin_mimalloc"]:
+    mimalloc_dir = "#thirdparty/mimalloc/"
+    env.Prepend(CPPPATH=[mimalloc_dir + "include"])
+    env.Append(CPPDEFINES=["MI_MALLOC_OVERRIDE"])
+    env.Append(CPPDEFINES=[("MI_TRACK_ASAN", 1 if env["use_asan"] else 0)])
+    env.Append(CPPDEFINES=[("MI_TSAN", 1 if env["use_tsan"] else 0)])
+    common_linuxbsd.append(mimalloc_dir + "src/static.c")
+
 prog = env.add_program("#bin/godot", ["godot_linuxbsd.cpp"] + common_linuxbsd)
 
 if env["debug_symbols"] and env["separate_debug_symbols"]:

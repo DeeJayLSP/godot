@@ -221,6 +221,9 @@ def configure(env: "SConsEnvironment"):
         env.Append(CPPDEFINES=["TOUCH_ENABLED"])
 
     # FIXME: Check for existence of the libs before parsing their flags with pkg-config
+    
+    if not env["builtin_mimalloc"]:
+        env.ParseConfig("pkg-config mimalloc --cflags --libs")
 
     if not env["builtin_freetype"]:
         env.ParseConfig("pkg-config freetype2 --cflags --libs")
