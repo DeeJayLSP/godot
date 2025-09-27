@@ -38,11 +38,13 @@ if env["dbus"]:
 if env["builtin_mimalloc"]:
     mimalloc_dir = "#thirdparty/mimalloc/"
     env.Prepend(CPPPATH=[mimalloc_dir + "include"])
+    if env["use_ubsan"]:
+        env.Append(CCFLAGS=["-fno-sanitize-recover=undefined"])
     env.Append(CPPDEFINES=[("MI_TRACK_ASAN", 1 if env["use_asan"] else 0)])
     if env["use_tsan"]:
         env.Append(CPPDEFINES=["MI_TSAN"])
     else:
-        env.Append(CFLAGS=["-fno-builtin-malloc"])
+        env.Append(CCFLAGS=["-fno-builtin-malloc"])
         env.Append(CPPDEFINES=["MI_MALLOC_OVERRIDE"])
     common_linuxbsd.append(mimalloc_dir + "src/static.c")
 
