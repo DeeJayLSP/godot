@@ -47,6 +47,7 @@ env.Append(CPPDEFINES=[("MI_TRACK_ASAN", 1 if env["use_asan"] else 0)])
 if env["use_tsan"]:
     env.Append(CPPDEFINES=["MI_TSAN"])
 else:
+    env.Append(CFLAGS=["-fno-builtin-malloc"])
     env.Append(CPPDEFINES=["MI_MALLOC_OVERRIDE"])
 files.append(mimalloc_dir + "src/static.c")
 

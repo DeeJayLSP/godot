@@ -42,6 +42,7 @@ if env["builtin_mimalloc"]:
     if env["use_tsan"]:
         env.Append(CPPDEFINES=["MI_TSAN"])
     else:
+        env.Append(CFLAGS=["-fno-builtin-malloc"])
         env.Append(CPPDEFINES=["MI_MALLOC_OVERRIDE"])
     common_linuxbsd.append(mimalloc_dir + "src/static.c")
 
