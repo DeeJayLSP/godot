@@ -31,11 +31,14 @@ if env["builtin_mimalloc"]:
     thirdparty_dir = "#thirdparty/mimalloc/"
     if override_type == "static":
         thirdparty_sources = ["src/static.c"]
-        if env["use_ubsan"]:
+        asan_ubsan_platform = env["platform"] in ["windows", "linuxbsd", "macos", "web"]
+        if asan_ubsan_platform and env["use_ubsan"]:
             env_thirdparty.Append(CCFLAGS=["-fno-sanitize-recover=undefined"])
-        if env["use_asan"] or env["use_tsan"]:  # These don't work with override.
-            env_thirdparty.Append(CPPDEFINES=[("MI_TRACK_ASAN", 1 if env["use_asan"] else 0)])
-            env_thirdparty.Append(CPPDEFINES=[("MI_TSAN", 1 if env["use_tsan"] else 0)])
+        use_asan = asan_ubsan_platform and env["use_asan"]
+        use_tsan = env["platform"] in ["linuxbsd", "macos"] and env["use_tsan"]
+        if use_asan or use_tsan:  # These don't work with override.
+            env_thirdparty.Append(CPPDEFINES=[("MI_TRACK_ASAN", 1 if use_asan else 0)])
+            env_thirdparty.Append(CPPDEFINES=[("MI_TSAN", 1 if use_tsan else 0)])
         else:
             if env["platform"] == "macos":
                 env_thirdparty.Append(CPPDEFINES=["MI_OSX_INTERPOSE"])
@@ -82,7 +85,6 @@ if env["builtin_mimalloc"]:
     env_thirdparty.Append(CPPPATH=[f"{thirdparty_dir}include/"])
 
     mimalloc_sources += thirdparty_obj
-
 
     # Godot source files
 
