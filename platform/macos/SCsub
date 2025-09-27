@@ -50,6 +50,8 @@ if env["use_asan"] or env["use_tsan"]:  # Can't override with these sanitizers.
 else:
     env.Append(CCFLAGS=["-fno-builtin-malloc"])
     env.Append(CPPDEFINES=["MI_MALLOC_OVERRIDE"])
+    env.Append(CPPDEFINES=["MI_OSX_INTERPOSE"])
+    env.Append(CPPDEFINES=["MI_OSX_ZONE"])
 files.append(mimalloc_dir + "src/static.c")
 
 prog = env.add_program("#bin/godot", files)
