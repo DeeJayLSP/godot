@@ -34,7 +34,7 @@ if env["fontconfig"]:
 if env["dbus"]:
     if env["use_sowrap"]:
         common_linuxbsd.append("dbus-so_wrap.c")
-        
+
 if env["builtin_mimalloc"]:
     mimalloc_dir = "#thirdparty/mimalloc/"
     env.Prepend(CPPPATH=[mimalloc_dir + "include"])
@@ -45,7 +45,7 @@ if env["builtin_mimalloc"]:
         if env["use_tsan"]:
             env.Append(CPPDEFINES=["MI_TSAN"])
     else:
-        env.Append(CCFLAGS=["-fno-builtin-malloc"])
+        env.Append(CCFLAGS=["-fno-builtin-malloc", "-fno-builtin-calloc", "-fno-builtin-realloc", "-fno-builtin-free"])
         env.Append(CPPDEFINES=["MI_MALLOC_OVERRIDE"])
     common_linuxbsd.append(mimalloc_dir + "src/static.c")
 
