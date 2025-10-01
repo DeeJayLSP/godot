@@ -688,6 +688,19 @@ Files extracted from upstream repository:
 - `LICENSE.md`
 
 
+## mimalloc
+
+- Upstream: https://github.com/microsoft/mimalloc
+- Version: v2.2.4 (fbd8b99c2b828428947d70fdc046bb55609be93e, 2025)
+- License: MIT
+
+Files extracted from upstream repository:
+
+- All files in `include/`
+- All files in `src/`
+- `LICENSE`
+
+
 ## mingw-std-threads
 
 - Upstream: https://github.com/meganz/mingw-std-threads

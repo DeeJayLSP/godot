@@ -34,6 +34,20 @@ if env["fontconfig"]:
 if env["dbus"]:
     if env["use_sowrap"]:
         common_linuxbsd.append("dbus-so_wrap.c")
+        
+if env["builtin_mimalloc"]:
+    mimalloc_dir = "#thirdparty/mimalloc/"
+    env.Prepend(CPPPATH=[mimalloc_dir + "include"])
+    if env["use_ubsan"]:
+        env.Append(CCFLAGS=["-fno-sanitize-recover=undefined"])
+    if env["use_asan"] or env["use_tsan"]:  # Can't override with these sanitizers
+        env.Append(CPPDEFINES=[("MI_TRACK_ASAN", 1 if env["use_asan"] else 0)])
+        if env["use_tsan"]:
+            env.Append(CPPDEFINES=["MI_TSAN"])
+    else:
+        env.Append(CCFLAGS=["-fno-builtin-malloc"])
+        env.Append(CPPDEFINES=["MI_MALLOC_OVERRIDE"])
+    common_linuxbsd.append(mimalloc_dir + "src/static.c")
 
 prog = env.add_program("#bin/godot", ["godot_linuxbsd.cpp"] + common_linuxbsd)
 

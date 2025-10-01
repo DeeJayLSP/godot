@@ -410,6 +410,11 @@ Comment: meshoptimizer
 Copyright: 2016-2024, Arseny Kapoulkine
 License: Expat
 
+Files: thirdparty/mimalloc/*
+Comment: mimalloc
+Copyright: 2018-2025 Microsoft Corporation, Daan Leijen
+License: Expat
+
 Files: thirdparty/mingw-std-threads/*
 Comment: mingw-std-threads
 Copyright: 2016, Mega Limited
