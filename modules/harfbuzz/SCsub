@@ -11,6 +11,9 @@ env_harfbuzz.disable_warnings()
 
 thirdparty_obj = []
 freetype_enabled = "freetype" in env.module_list
+text_server_adv_enabled = "text_server_adv" in env.module_list
+icu_enabled = text_server_adv_enabled
+graphite_enabled = freetype_enabled and text_server_adv_enabled and env["graphite"]
 
 if env["builtin_harfbuzz"]:
     thirdparty_dir = "#thirdparty/harfbuzz/"
@@ -94,11 +97,11 @@ if env["builtin_harfbuzz"]:
         thirdparty_sources += [
             "src/hb-ft.cc",
         ]
-        if env["graphite"]:
+        if graphite_enabled:
             thirdparty_sources += [
                 "src/hb-graphite2.cc",
             ]
-    if "text_server_adv" in env.module_list:
+    if icu_enabled:
         thirdparty_sources += [
             "src/hb-icu.cc"
         ]
@@ -106,7 +109,7 @@ if env["builtin_harfbuzz"]:
 
     env_harfbuzz.Prepend(CPPPATH=["#thirdparty/harfbuzz/src"])
 
-    if "text_server_adv" in env.module_list:
+    if icu_enabled:
         env_harfbuzz.Append(CPPDEFINES=["HAVE_ICU"])
         if env["builtin_icu4c"]:
             env_harfbuzz.Prepend(CPPPATH=["#thirdparty/icu4c/common/", "#thirdparty/icu4c/i18n/"])
@@ -121,11 +124,11 @@ if env["builtin_harfbuzz"]:
 
     if freetype_enabled:
         env_harfbuzz.Append(CPPDEFINES=["HAVE_FREETYPE"])
-        if env["graphite"]:
+        if graphite_enabled:
             env_harfbuzz.Append(CPPDEFINES=["HAVE_GRAPHITE2"])
         if env["builtin_freetype"]:
             env_harfbuzz.Prepend(CPPPATH=["#thirdparty/freetype/include"])
-        if env["builtin_graphite"] and env["graphite"]:
+        if env["builtin_graphite"] and graphite_enabled:
             env_harfbuzz.Prepend(CPPPATH=["#thirdparty/graphite/include"])
             env_harfbuzz.Append(CPPDEFINES=["GRAPHITE2_STATIC"])
     if env["platform"] in ["android", "linuxbsd", "web"]:
