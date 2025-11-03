@@ -4356,7 +4356,7 @@ bool RichTextLabel::remove_paragraph(int p_paragraph, bool p_no_invalidate) {
 				_remove_frame(erase_list, main, i, false, off, 1);
 			}
 		}
-		for (HashSet<Item *>::Iterator E = erase_list.begin(); E; ++E) {
+		for (HashSet<Item *>::ConstIterator E = erase_list.begin(); E; ++E) {
 			Item *it = *E;
 			if (current_frame == it) {
 				current_frame = main;

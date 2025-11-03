@@ -2267,7 +2267,7 @@ Variant ClassDB::class_get_default_property_value(const StringName &p_class, con
 			}
 		}
 
-		default_values_cached.insert(p_class);
+		default_values_cached.insert_new(p_class);
 	}
 
 	if (!default_values.has(p_class)) {

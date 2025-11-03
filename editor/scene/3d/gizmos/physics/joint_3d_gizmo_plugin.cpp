@@ -293,7 +293,7 @@ Joint3DGizmoPlugin::Joint3DGizmoPlugin() {
 
 void Joint3DGizmoPlugin::incremental_update_gizmos() {
 	if (!current_gizmos.is_empty()) {
-		HashSet<EditorNode3DGizmo *>::Iterator E = current_gizmos.find(last_drawn);
+		HashSet<EditorNode3DGizmo *>::ConstIterator E = current_gizmos.find(last_drawn);
 		if (E) {
 			++E;
 		}

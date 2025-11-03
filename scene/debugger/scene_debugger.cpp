@@ -1386,8 +1386,8 @@ void LiveEditor::_restore_node_func(ObjectID p_id, const NodePath &p_at, int p_a
 		return; //scene not editable
 	}
 
-	for (HashSet<Node *>::Iterator F = E->value.begin(); F;) {
-		HashSet<Node *>::Iterator N = F;
+	for (HashSet<Node *>::ConstIterator F = E->value.begin(); F;) {
+		HashSet<Node *>::ConstIterator N = F;
 		++N;
 
 		Node *n = *F;

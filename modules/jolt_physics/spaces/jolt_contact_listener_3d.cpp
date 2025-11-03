@@ -261,7 +261,7 @@ bool JoltContactListener3D::_try_evaluate_area_overlap(const JPH::Body &p_body1,
 
 		if (p_area.can_monitor(p_object)) {
 			if (!area_overlaps.has(p_shape_pair)) {
-				area_overlaps.insert(p_shape_pair);
+				area_overlaps.insert_new(p_shape_pair);
 				area_enters.insert(p_shape_pair);
 			} else if (has_shifted(p_area, p_shape_pair.GetSubShapeID1()) || has_shifted(p_object, p_shape_pair.GetSubShapeID2())) {
 				// A shape has taken on the `JPH::SubShapeID` value of another shape, likely because of the other shape having been replaced or moved

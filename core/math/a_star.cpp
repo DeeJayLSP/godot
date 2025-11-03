@@ -230,7 +230,7 @@ Vector<int64_t> AStar3D::get_point_connections(int64_t p_id) {
 
 bool AStar3D::are_points_connected(int64_t p_id, int64_t p_with_id, bool bidirectional) const {
 	Segment s(p_id, p_with_id);
-	const HashSet<Segment, Segment>::Iterator element = segments.find(s);
+	const HashSet<Segment, Segment>::ConstIterator element = segments.find(s);
 
 	return element &&
 			(bidirectional || (element->direction & s.direction) == s.direction);

@@ -3991,7 +3991,7 @@ int Main::start() {
 				String name = _doc_data_class_paths[i].name;
 				doc_data_classes[name] = path;
 				if (!checked_paths.has(path)) {
-					checked_paths.insert(path);
+					checked_paths.insert_new(path);
 
 					// Create the module documentation directory if it doesn't exist
 					Ref<DirAccess> da = DirAccess::create_for_path(path);

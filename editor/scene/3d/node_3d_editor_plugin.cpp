@@ -8563,7 +8563,7 @@ void Node3DEditor::_snap_selected_nodes_to_floor() {
 
 			if (cs.size()) {
 				AABB aabb;
-				HashSet<CollisionShape3D *>::Iterator I = cs.begin();
+				HashSet<CollisionShape3D *>::ConstIterator I = cs.begin();
 				if ((*I)->get_shape().is_valid()) {
 					CollisionShape3D *collision_shape = *cs.begin();
 					aabb = collision_shape->get_global_transform().xform(collision_shape->get_shape()->get_debug_mesh()->get_aabb());

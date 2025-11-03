@@ -2319,7 +2319,7 @@ Node *Node::find_common_parent_with(const Node *p_node) const {
 	const Node *n = this;
 
 	while (n) {
-		visited.insert(n);
+		visited.insert_new(n);
 		n = n->data.parent;
 	}
 
@@ -2351,7 +2351,7 @@ NodePath Node::get_path_to(const Node *p_node, bool p_use_unique_path) const {
 	const Node *n = this;
 
 	while (n) {
-		visited.insert(n);
+		visited.insert_new(n);
 		n = n->data.parent;
 	}
 

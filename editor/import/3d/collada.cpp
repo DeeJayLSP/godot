@@ -2046,7 +2046,7 @@ void Collada::_merge_skeletons(VisualScene *p_vscene, Node *p_node) {
 
 			if (skeletons.size() > 1) {
 				//do the merger!!
-				HashSet<NodeSkeleton *>::Iterator E = skeletons.begin();
+				HashSet<NodeSkeleton *>::ConstIterator E = skeletons.begin();
 				NodeSkeleton *base = *E;
 
 				for (++E; E; ++E) {

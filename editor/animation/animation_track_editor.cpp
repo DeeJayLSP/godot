@@ -9172,7 +9172,7 @@ void AnimationMarkerEdit::_move_selection_commit() {
 	EditorUndoRedoManager *undo_redo = EditorUndoRedoManager::get_singleton();
 	undo_redo->create_action(TTR("Animation Move Markers"));
 
-	for (HashSet<StringName>::Iterator E = selection.last(); E; --E) {
+	for (HashSet<StringName>::ConstIterator E = selection.last(); E; --E) {
 		StringName name = *E;
 		double time = animation->get_marker_time(name);
 		float newpos = time + moving_selection_offset;

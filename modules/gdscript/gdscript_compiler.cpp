@@ -2699,7 +2699,7 @@ Error GDScriptCompiler::_prepare_compilation(GDScript *p_script, const GDScriptP
 		return ERR_PARSE_ERROR;
 	}
 
-	parsing_classes.insert(p_script);
+	parsing_classes.insert_new(p_script);
 
 	p_script->clearing = true;
 
@@ -2959,7 +2959,7 @@ Error GDScriptCompiler::_prepare_compilation(GDScript *p_script, const GDScriptP
 
 	p_script->static_variables.resize(p_script->static_variables_indices.size());
 
-	parsed_classes.insert(p_script);
+	parsed_classes.insert_new(p_script);
 	parsing_classes.erase(p_script);
 
 	// Populate inner classes.

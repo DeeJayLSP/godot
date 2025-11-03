@@ -938,7 +938,7 @@ void RendererSceneCull::instance_set_layer_mask(RID p_instance, uint32_t p_mask)
 		geom->geometry_instance->set_layer_mask(p_mask);
 
 		if (geom->can_cast_shadows) {
-			for (HashSet<RendererSceneCull::Instance *>::Iterator I = geom->lights.begin(); I != geom->lights.end(); ++I) {
+			for (HashSet<RendererSceneCull::Instance *>::ConstIterator I = geom->lights.begin(); I != geom->lights.end(); ++I) {
 				InstanceLightData *light = static_cast<InstanceLightData *>((*I)->base_data);
 				light->make_shadow_dirty();
 			}

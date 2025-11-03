@@ -48,7 +48,7 @@ static Array to_array(const Vector<T> &p_inp) {
 template <typename T>
 static TypedArray<T> to_array(const HashSet<T> &p_inp) {
 	TypedArray<T> ret;
-	typename HashSet<T>::Iterator elem = p_inp.begin();
+	typename HashSet<T>::ConstIterator elem = p_inp.begin();
 	while (elem) {
 		ret.push_back(*elem);
 		++elem;
