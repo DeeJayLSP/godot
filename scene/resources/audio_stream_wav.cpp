@@ -693,9 +693,16 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		ERR_FAIL_V_MSG(Ref<AudioStreamWAV>(), vformat("Not a WAV file. Header should contain 'WAVE', but found '%s', in file of size %d bytes", wave, file->get_length()));
 	}
 
-	// Let users override potential loop points from the WAV.
-	// We parse the WAV loop points only with "Detect From WAV" (0).
+	// Get all options to check the need for conversions.
 	int import_loop_mode = p_options.get("edit/loop_mode", 0);
+	bool limit_rate = p_options.get("force/max_rate", false);
+	uint32_t limit_rate_hz = p_options.get("force/max_rate_hz", 0);
+	bool normalize = p_options.get("edit/normalize", false);
+	bool trim = p_options.get("edit/trim", false);
+	int compression = p_options.get("compress/mode", 0);
+	bool force_mono = p_options.get("force/mono", false);
+	bool force_8_bit = p_options.get("force/8_bit", false);
+	bool has_conversions = false;
 
 	uint16_t format_bits = 0;
 	uint16_t format_channels = 0;
@@ -710,6 +717,7 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 	int64_t frames = 0;
 
 	Vector<float> data;
+	Vector<uint8_t> dst_data;
 
 	HashMap<String, String> tag_map;
 
@@ -777,14 +785,29 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 			}
 
 			ERR_FAIL_COND_V(format_channels == 0, Ref<AudioStreamWAV>());
-			frames /= format_channels;
-			frames /= (format_bits >> 3);
 
 			/*print_line("chunksize: "+itos(chunksize));
 			print_line("channels: "+itos(format_channels));
 			print_line("bits: "+itos(format_bits));
 			*/
 
+			has_conversions = (limit_rate && limit_rate_hz != format_freq) || normalize || trim || compression != 0 || force_mono || force_8_bit || compression_code != 1 || (format_bits != 8 && format_bits != 16);
+
+			if (!has_conversions) {
+				// No conversion needed, just copy data to destination.
+				ERR_FAIL_COND_V(dst_data.resize(chunksize), Ref<AudioStreamWAV>());
+				file->get_buffer(dst_data.ptrw(), frames);
+				if (format_bits == 8) {
+					for (int64_t i = 0; i < frames; i++) {
+						dst_data.write[i] -= 128;
+					}
+				}
+				continue;
+			}
+
+			frames /= format_channels;
+			frames /= (format_bits >> 3);
+	
 			ERR_FAIL_COND_V(data.resize(frames * format_channels) != OK, Ref<AudioStreamWAV>());
 
 			if (compression_code == 1) {
@@ -915,10 +938,23 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		file->seek(file_pos + chunksize + (chunksize & 1));
 	}
 
-	// STEP 2, APPLY CONVERSIONS
-
 	bool is16 = format_bits != 8;
 	uint32_t rate = format_freq;
+	AudioStreamWAV::Format dst_format;
+
+	if (compression == 1) {
+		dst_format = AudioStreamWAV::FORMAT_IMA_ADPCM;
+	} else if (compression == 2) {
+		dst_format = AudioStreamWAV::FORMAT_QOA;
+	} else {
+		dst_format = is16 ? AudioStreamWAV::FORMAT_16_BITS : AudioStreamWAV::FORMAT_8_BITS;
+	}
+
+	if (!has_conversions) {
+		goto finish_load;
+	}
+
+	// STEP 2, APPLY CONVERSIONS
 
 	/*
 	print_line("Input Sample: ");
@@ -933,8 +969,6 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 
 	//apply frequency limit
 
-	bool limit_rate = p_options.get("force/max_rate", false);
-	uint32_t limit_rate_hz = p_options.get("force/max_rate_hz", 0);
 	if (limit_rate && rate > limit_rate_hz && rate > 0 && frames > 0) {
 		// resample!
 		int64_t new_data_frames = (int64_t)(frames * (float)limit_rate_hz / (float)rate);
@@ -975,8 +1009,6 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		frames = new_data_frames;
 	}
 
-	bool normalize = p_options.get("edit/normalize", false);
-
 	if (normalize) {
 		float max = 0.0;
 		for (int i = 0; i < data.size(); i++) {
@@ -993,8 +1025,6 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 			}
 		}
 	}
-
-	bool trim = p_options.get("edit/trim", false);
 
 	if (trim && (loop_mode == AudioStreamWAV::LOOP_DISABLED) && format_channels > 0) {
 		int64_t first = 0;
@@ -1053,9 +1083,6 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		}
 	}
 
-	int compression = p_options.get("compress/mode", 0);
-	bool force_mono = p_options.get("force/mono", false);
-
 	if (force_mono && format_channels == 2) {
 		Vector<float> new_data;
 		ERR_FAIL_COND_V(new_data.resize(data.size() / 2) != OK, Ref<AudioStreamWAV>());
@@ -1067,16 +1094,12 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		format_channels = 1;
 	}
 
-	bool force_8_bit = p_options.get("force/8_bit", false);
 	if (force_8_bit) {
 		is16 = false;
 	}
 
-	Vector<uint8_t> dst_data;
-	AudioStreamWAV::Format dst_format;
 
 	if (compression == 1) {
-		dst_format = AudioStreamWAV::FORMAT_IMA_ADPCM;
 		if (format_channels == 1) {
 			_compress_ima_adpcm(data, dst_data);
 		} else {
@@ -1113,8 +1136,6 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		}
 
 	} else if (compression == 2) {
-		dst_format = AudioStreamWAV::FORMAT_QOA;
-
 		qoa_desc desc = {};
 		desc.samplerate = rate;
 		desc.samples = frames;
@@ -1122,7 +1143,6 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 
 		_compress_qoa(data, dst_data, &desc);
 	} else {
-		dst_format = is16 ? AudioStreamWAV::FORMAT_16_BITS : AudioStreamWAV::FORMAT_8_BITS;
 		ERR_FAIL_COND_V(dst_data.resize(data.size() * (is16 ? 2 : 1)) != OK, Ref<AudioStreamWAV>());
 		{
 			uint8_t *w = dst_data.ptrw();
@@ -1140,6 +1160,9 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 		}
 	}
 
+	goto finish_load;
+
+finish_load:
 	Ref<AudioStreamWAV> sample;
 	sample.instantiate();
 	sample->set_data(dst_data);
