@@ -108,15 +108,6 @@ public:
 	};
 
 public:
-	struct PropertySetGet {
-		int index;
-		StringName setter;
-		StringName getter;
-		MethodBind *_setptr = nullptr;
-		MethodBind *_getptr = nullptr;
-		Variant::Type type;
-	};
-
 	struct ClassInfo {
 		APIType api = API_NONE;
 		ClassInfo *inherits_ptr = nullptr;
@@ -144,7 +135,6 @@ public:
 		List<StringName> dependency_list;
 #endif
 
-		AHashMap<StringName, PropertySetGet> property_setget;
 		HashMap<StringName, Vector<uint32_t>> virtual_methods_compat;
 
 		bool disabled = false;
