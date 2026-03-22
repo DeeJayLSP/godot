@@ -35,6 +35,8 @@
 #include "core/templates/a_hash_map.h"
 #include "core/templates/vector.h"
 
+class MethodBind;
+
 class GDType {
 public:
 	enum class InitState {
@@ -47,6 +49,15 @@ public:
 		StringName name;
 		AHashMap<StringName, int64_t> values;
 		bool is_bitfield = false;
+	};
+
+	struct PropertySetGet {
+		int index;
+		StringName setter;
+		StringName getter;
+		MethodBind *_setptr = nullptr;
+		MethodBind *_getptr = nullptr;
+		Variant::Type type;
 	};
 
 protected:
@@ -66,6 +77,9 @@ protected:
 
 	AHashMap<StringName, const MethodInfo *> signal_map;
 	AHashMap<StringName, const MethodInfo *> self_signal_map;
+
+	AHashMap<StringName, const PropertySetGet *> property_setget;
+	AHashMap<StringName, const PropertySetGet *> self_property_setget;
 
 public:
 	GDType(const GDType *p_super_type, StringName p_name);
@@ -89,4 +103,7 @@ public:
 
 	void add_signal(MethodInfo p_signal);
 	const AHashMap<StringName, const MethodInfo *> &get_signal_map(bool p_no_inheritance = false) const { return p_no_inheritance ? self_signal_map : signal_map; }
+
+	void add_property_setget(const StringName &p_name, PropertySetGet p_setget);
+	const AHashMap<StringName, const PropertySetGet *> &get_property_setget_map(bool p_no_inheritance = false) const { return p_no_inheritance ? self_property_setget : property_setget; }
 };
