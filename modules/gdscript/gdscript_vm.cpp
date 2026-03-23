@@ -1307,9 +1307,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				bool valid;
 #ifndef DEBUG_ENABLED
-				ClassDB::set_property(p_instance->owner, *index, *src, &valid);
+				p_instance->owner->set_property(*index, *src, &valid);
 #else
-				bool ok = ClassDB::set_property(p_instance->owner, *index, *src, &valid);
+				bool ok = p_instance->owner->set_property(*index, *src, &valid);
 				if (!ok) {
 					err_text = "Internal error setting property: " + String(*index);
 					OPCODE_BREAK;
@@ -1329,9 +1329,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				GD_ERR_BREAK(indexname < 0 || indexname >= _global_names_count);
 				const StringName *index = &_global_names_ptr[indexname];
 #ifndef DEBUG_ENABLED
-				ClassDB::get_property(p_instance->owner, *index, *dst);
+				p_instance->owner->get_property(*index, *dst);
 #else
-				bool ok = ClassDB::get_property(p_instance->owner, *index, *dst);
+				bool ok = p_instance->owner->get_property(*index, *dst);
 				if (!ok) {
 					err_text = "Internal error getting property: " + String(*index);
 					OPCODE_BREAK;

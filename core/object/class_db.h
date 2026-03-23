@@ -108,15 +108,6 @@ public:
 	};
 
 public:
-	struct PropertySetGet {
-		int index;
-		StringName setter;
-		StringName getter;
-		const MethodBind *_setptr = nullptr;
-		const MethodBind *_getptr = nullptr;
-		Variant::Type type;
-	};
-
 	struct ClassInfo {
 		APIType api = API_NONE;
 		ClassInfo *inherits_ptr = nullptr;
@@ -142,7 +133,6 @@ public:
 		List<StringName> dependency_list;
 #endif
 
-		AHashMap<StringName, PropertySetGet> property_setget;
 		HashMap<StringName, Vector<uint32_t>> virtual_methods_compat;
 
 		bool disabled = false;
@@ -466,8 +456,6 @@ public:
 	static void get_property_list(const StringName &p_class, List<PropertyInfo> *p_list, bool p_no_inheritance = false, const Object *p_validator = nullptr);
 	static bool get_property_info(const StringName &p_class, const StringName &p_property, PropertyInfo *r_info, bool p_no_inheritance = false, const Object *p_validator = nullptr);
 	static void get_linked_properties_info(const StringName &p_class, const StringName &p_property, List<StringName> *r_properties, bool p_no_inheritance = false);
-	static bool set_property(Object *p_object, const StringName &p_property, const Variant &p_value, bool *r_valid = nullptr);
-	static bool get_property(Object *p_object, const StringName &p_property, Variant &r_value);
 	static bool has_property(const StringName &p_class, const StringName &p_property, bool p_no_inheritance = false);
 	static int get_property_index(const StringName &p_class, const StringName &p_property, bool *r_is_valid = nullptr);
 	static Variant::Type get_property_type(const StringName &p_class, const StringName &p_property, bool *r_is_valid = nullptr);

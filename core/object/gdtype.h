@@ -51,6 +51,15 @@ public:
 		bool is_bitfield = false;
 	};
 
+	struct PropertySetGet {
+		int index;
+		StringName setter;
+		StringName getter;
+		const MethodBind *_setptr = nullptr;
+		const MethodBind *_getptr = nullptr;
+		Variant::Type type;
+	};
+
 protected:
 	const GDType *super_type;
 	mutable InitState init_state = InitState::UNINITIALIZED;
@@ -71,6 +80,9 @@ protected:
 
 	AHashMap<StringName, const MethodBind *> method_map;
 	AHashMap<StringName, const MethodBind *> self_method_map;
+
+	AHashMap<StringName, const PropertySetGet *> property_setget;
+	AHashMap<StringName, const PropertySetGet *> self_property_setget;
 
 	// Lifecycle
 	friend class ClassDB;
@@ -102,4 +114,7 @@ public:
 	bool bind_method(MethodBind *p_method);
 	void set_method_flags(const StringName &p_method, int p_flags);
 	const AHashMap<StringName, const MethodBind *> &get_method_map(bool p_no_inheritance = false) const { return p_no_inheritance ? self_method_map : method_map; }
+
+	void add_property_setget(const StringName &p_name, PropertySetGet p_setget);
+	const AHashMap<StringName, const PropertySetGet *> &get_property_setget_map(bool p_no_inheritance = false) const { return p_no_inheritance ? self_property_setget : property_setget; }
 };

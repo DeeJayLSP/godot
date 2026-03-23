@@ -55,6 +55,9 @@ GDType::~GDType() {
 	for (const KeyValue<StringName, const MethodBind *> &kv : self_method_map) {
 		memdelete(const_cast<MethodBind *>(kv.value));
 	}
+	for (const KeyValue<StringName, const PropertySetGet *> &kv : self_property_setget) {
+		memdelete(const_cast<PropertySetGet *>(kv.value));
+	}
 }
 
 void GDType::initialize() {
@@ -71,6 +74,7 @@ void GDType::initialize() {
 		enum_map = super_type->enum_map;
 		signal_map = super_type->signal_map;
 		method_map = super_type->method_map;
+		property_setget = super_type->property_setget;
 	}
 
 	init_state = InitState::MUTABLE;
@@ -155,4 +159,16 @@ void GDType::set_method_flags(const StringName &p_method, int p_flags) {
 	ERR_FAIL_COND(init_state != InitState::MUTABLE);
 
 	(const_cast<MethodBind *>(self_method_map[p_method]))->set_hint_flags(p_flags);
+}
+
+void GDType::add_property_setget(const StringName &p_name, PropertySetGet p_setget) {
+	ERR_FAIL_COND(!Thread::is_main_thread());
+	ERR_FAIL_COND(init_state != InitState::MUTABLE);
+
+	ERR_FAIL_COND_MSG(property_setget.has(p_name), vformat("Class '%s' already has property '%s'.", String(name), String(p_name)));
+
+	const PropertySetGet *ptr = memnew(PropertySetGet(std::move(p_setget)));
+
+	property_setget[p_name] = ptr;
+	self_property_setget[std::move(p_name)] = ptr;
 }

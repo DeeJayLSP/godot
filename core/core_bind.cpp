@@ -1668,14 +1668,14 @@ StringName ClassDB::class_get_property_setter(const StringName &p_class, const S
 
 Variant ClassDB::class_get_property(Object *p_object, const StringName &p_property) const {
 	Variant ret;
-	::ClassDB::get_property(p_object, p_property, ret);
+	p_object->get_property(p_property, ret);
 	return ret;
 }
 
 Error ClassDB::class_set_property(Object *p_object, const StringName &p_property, const Variant &p_value) const {
 	Variant ret;
 	bool valid;
-	if (!::ClassDB::set_property(p_object, p_property, p_value, &valid)) {
+	if (!p_object->set_property(p_property, p_value, &valid)) {
 		return ERR_UNAVAILABLE;
 	} else if (!valid) {
 		return ERR_INVALID_DATA;

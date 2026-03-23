@@ -179,7 +179,7 @@ void class_db_api_to_json(const String &p_output_file, ClassDB::APIType p_api) {
 
 			List<StringName> snames;
 
-			for (const KeyValue<StringName, ClassDB::PropertySetGet> &F : t->property_setget) {
+			for (const KeyValue<StringName, const GDType::PropertySetGet *> &F : t->gdtype->get_property_setget_map(true)) {
 				snames.push_back(F.key);
 			}
 
@@ -191,11 +191,11 @@ void class_db_api_to_json(const String &p_output_file, ClassDB::APIType p_api) {
 				Dictionary property_dict;
 				properties.push_back(property_dict);
 
-				ClassDB::PropertySetGet *psg = t->property_setget.getptr(F);
+				const GDType::PropertySetGet *const *psg = t->gdtype->get_property_setget_map(true).getptr(F);
 
 				property_dict["name"] = F;
-				property_dict["setter"] = psg->setter;
-				property_dict["getter"] = psg->getter;
+				property_dict["setter"] = (*psg)->setter;
+				property_dict["getter"] = (*psg)->getter;
 			}
 
 			if (!properties.is_empty()) {

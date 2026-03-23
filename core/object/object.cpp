@@ -242,7 +242,7 @@ void Object::set(const StringName &p_name, const Variant &p_value, bool *r_valid
 
 	// Try built-in setter.
 	{
-		if (ClassDB::set_property(this, p_name, p_value, r_valid)) {
+		if (set_property(p_name, p_value, r_valid)) {
 			return;
 		}
 	}
@@ -321,7 +321,7 @@ Variant Object::get(const StringName &p_name, bool *r_valid) const {
 
 	// Try built-in getter.
 	{
-		if (ClassDB::get_property(const_cast<Object *>(this), p_name, ret)) {
+		if (const_cast<Object *>(this)->get_property(p_name, ret)) {
 			if (r_valid) {
 				*r_valid = true;
 			}
@@ -456,6 +456,125 @@ Variant Object::get_indexed(const Vector<StringName> &p_names, bool *r_valid) co
 	}
 
 	return current_value;
+}
+
+bool Object::set_property(const StringName &p_property, const Variant &p_value, bool *r_valid) {
+	const GDType *gdtype = &(get_gdtype());
+
+	if (unlikely(gdtype->get_init_state() == GDType::InitState::UNINITIALIZED)) { // GDType not initialized, get from ClassDB.
+		ClassDB::ClassInfo *type = ClassDB::classes.getptr(get_class_name());
+		if (likely(type)) {
+			gdtype = type->gdtype;
+		} else {
+			if (r_valid) {
+				*r_valid = false;
+			}
+			return false;
+		}
+	}
+
+	const GDType::PropertySetGet *const *psg_ptr = gdtype->get_property_setget_map(false).getptr(p_property);
+	if (psg_ptr && *psg_ptr) {
+		const GDType::PropertySetGet *psg = *psg_ptr;
+		if (!psg->setter) {
+			if (r_valid) {
+				*r_valid = false;
+			}
+			return true; //return true but do nothing
+		}
+
+		Callable::CallError ce;
+
+		if (psg->index >= 0) {
+			Variant index = psg->index;
+			const Variant *arg[2] = { &index, &p_value };
+			//p_object->call(psg->setter,arg,2,ce);
+			if (psg->_setptr) {
+				psg->_setptr->call(this, arg, 2, ce);
+			} else {
+				callp(psg->setter, arg, 2, ce);
+			}
+
+		} else {
+			const Variant *arg[1] = { &p_value };
+			if (psg->_setptr) {
+				psg->_setptr->call(this, arg, 1, ce);
+			} else {
+				callp(psg->setter, arg, 1, ce);
+			}
+		}
+
+		if (r_valid) {
+			*r_valid = ce.error == Callable::CallError::CALL_OK;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool Object::get_property(const StringName &p_property, Variant &r_value) {
+	const GDType *gdtype = &(get_gdtype());
+
+	if (unlikely(gdtype->get_init_state() == GDType::InitState::UNINITIALIZED)) { // GDType not initialized, get from ClassDB.
+		ClassDB::ClassInfo *type = ClassDB::classes.getptr(get_class_name());
+		if (likely(type)) {
+			gdtype = type->gdtype;
+		} else {
+			return false;
+		}
+	}
+
+	const GDType::PropertySetGet *const *psg_ptr = gdtype->get_property_setget_map(false).getptr(p_property);
+	if (psg_ptr && *psg_ptr) {
+		const GDType::PropertySetGet *psg = *psg_ptr;
+		if (!psg->getter) {
+			return true; //return true but do nothing
+		}
+
+		if (psg->index >= 0) {
+			Variant index = psg->index;
+			const Variant *arg[1] = { &index };
+			Callable::CallError ce;
+			const Variant value = callp(psg->getter, arg, 1, ce);
+			r_value = (ce.error == Callable::CallError::CALL_OK) ? value : Variant();
+
+		} else {
+			Callable::CallError ce;
+			if (psg->_getptr) {
+				r_value = psg->_getptr->call(this, nullptr, 0, ce);
+			} else {
+				const Variant value = callp(psg->getter, nullptr, 0, ce);
+				r_value = (ce.error == Callable::CallError::CALL_OK) ? value : Variant();
+			}
+		}
+		return true;
+	}
+
+	const int64_t *c = gdtype->get_integer_constant_map(false).getptr(p_property); //constants count
+	if (c) {
+		r_value = *c;
+		return true;
+	}
+
+	if (gdtype->get_method_map(false).has(p_property)) { //methods count
+		r_value = Callable(this, p_property);
+		return true;
+	}
+
+	if (gdtype->get_signal_map(false).has(p_property)) { //signals count
+		r_value = Signal(this, p_property);
+		return true;
+	}
+
+	// The "free()" method is special, so we assume it exists and return a Callable.
+	if (p_property == CoreStringName(free_)) {
+		r_value = Callable(this, p_property);
+		return true;
+	}
+
+	return false;
 }
 
 void Object::get_property_list(List<PropertyInfo> *p_list, bool p_reversed) const {
