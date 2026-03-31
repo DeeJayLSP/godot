@@ -1397,7 +1397,7 @@ void GDScriptByteCodeGenerator::write_lambda(const Address &p_target, GDScriptFu
 void GDScriptByteCodeGenerator::write_construct(const Address &p_target, Variant::Type p_type, const Vector<Address> &p_arguments) {
 	// Try to find an appropriate constructor.
 	bool all_have_type = true;
-	Vector<Variant::Type> arg_types;
+	LocalVector<Variant::Type> arg_types;
 	for (int i = 0; i < p_arguments.size(); i++) {
 		if (!HAS_BUILTIN_TYPE(p_arguments[i])) {
 			all_have_type = false;
@@ -1412,7 +1412,7 @@ void GDScriptByteCodeGenerator::write_construct(const Address &p_target, Variant
 				continue;
 			}
 			int types_correct = true;
-			for (int j = 0; j < arg_types.size(); j++) {
+			for (uint32_t j = 0; j < arg_types.size(); j++) {
 				if (arg_types[j] != Variant::get_constructor_argument_type(p_type, i, j)) {
 					types_correct = false;
 					break;

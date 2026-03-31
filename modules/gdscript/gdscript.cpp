@@ -317,7 +317,7 @@ void GDScript::_get_script_property_list(List<PropertyInfo> *r_list, bool p_incl
 	List<PropertyInfo> props;
 
 	while (sptr) {
-		Vector<_GDScriptMemberSort> msort;
+		LocalVector<_GDScriptMemberSort> msort;
 		for (const KeyValue<StringName, MemberInfo> &E : sptr->member_indices) {
 			if (!sptr->members.has(E.key)) {
 				continue; // Skip base class members.
@@ -330,7 +330,7 @@ void GDScript::_get_script_property_list(List<PropertyInfo> *r_list, bool p_incl
 
 		msort.sort();
 		msort.reverse();
-		for (int i = 0; i < msort.size(); i++) {
+		for (uint32_t i = 0; i < msort.size(); i++) {
 			props.push_front(sptr->member_indices[msort[i].name].property_info);
 		}
 
@@ -503,11 +503,11 @@ String GDScript::get_class_icon_path() const {
 bool GDScript::_update_exports(bool *r_err, bool p_recursive_call, PlaceHolderScriptInstance *p_instance_to_update, bool p_base_exports_changed) {
 #ifdef TOOLS_ENABLED
 
-	static Vector<GDScript *> base_caches;
+	static LocalVector<GDScript *> base_caches;
 	if (!p_recursive_call) {
 		base_caches.clear();
 	}
-	base_caches.append(this);
+	base_caches.push_back(this);
 
 	bool changed = p_base_exports_changed;
 
@@ -589,7 +589,7 @@ bool GDScript::_update_exports(bool *r_err, bool p_recursive_call, PlaceHolderSc
 	placeholder_fallback_enabled = false;
 
 	if (base_cache.is_valid() && base_cache->is_valid()) {
-		for (int i = 0; i < base_caches.size(); i++) {
+		for (uint32_t i = 0; i < base_caches.size(); i++) {
 			if (base_caches[i] == base_cache.ptr()) {
 				if (r_err) {
 					*r_err = true;
@@ -1065,7 +1065,8 @@ void GDScript::_get_property_list(List<PropertyInfo> *p_properties) const {
 	}
 
 	for (const List<const GDScript *>::Element *E = classes.back(); E; E = E->prev()) {
-		Vector<_GDScriptMemberSort> msort;
+		TightLocalVector<_GDScriptMemberSort> msort;
+		msort.reserve(E->get()->static_variables_indices.size());
 		for (const KeyValue<StringName, MemberInfo> &F : E->get()->static_variables_indices) {
 			_GDScriptMemberSort ms;
 			ms.index = F.value.index;
@@ -1074,7 +1075,7 @@ void GDScript::_get_property_list(List<PropertyInfo> *p_properties) const {
 		}
 		msort.sort();
 
-		for (int i = 0; i < msort.size(); i++) {
+		for (uint32_t i = 0; i < msort.size(); i++) {
 			p_properties->push_back(E->get()->static_variables_indices[msort[i].name].property_info);
 		}
 	}
@@ -1132,7 +1133,7 @@ Error GDScript::load_source_code(const String &p_path) {
 		return OK;
 	}
 
-	Vector<uint8_t> sourcef;
+	TightLocalVector<uint8_t> sourcef;
 	Error err;
 	Ref<FileAccess> f = FileAccess::open(p_path, FileAccess::READ, &err);
 	if (err) {
@@ -1147,7 +1148,7 @@ Error GDScript::load_source_code(const String &p_path) {
 
 	uint64_t len = f->get_length();
 	sourcef.resize(len + 1);
-	uint8_t *w = sourcef.ptrw();
+	uint8_t *w = sourcef.ptr();
 	uint64_t r = f->get_buffer(w, len);
 	ERR_FAIL_COND_V(r != len, ERR_CANT_OPEN);
 	w[len] = 0;
@@ -1333,7 +1334,8 @@ void GDScript::_save_orphaned_subclasses() {
 		ObjectID id;
 		String fully_qualified_name;
 	};
-	Vector<ClassRefWithName> weak_subclasses;
+	TightLocalVector<ClassRefWithName> weak_subclasses;
+	weak_subclasses.reserve(subclasses.size());
 	// collect subclasses ObjectID and name
 	for (KeyValue<StringName, Ref<GDScript>> &E : subclasses) {
 		E.value->_owner = nullptr; //bye, you are no longer owned cause I died
@@ -1349,7 +1351,7 @@ void GDScript::_save_orphaned_subclasses() {
 	constants.clear();
 
 	// keep orphan subclass only for subclasses that are still in use
-	for (int i = 0; i < weak_subclasses.size(); i++) {
+	for (uint32_t i = 0; i < weak_subclasses.size(); i++) {
 		ClassRefWithName subclass = weak_subclasses[i];
 		Object *obj = ObjectDB::get_instance(subclass.id);
 		if (!obj) {
@@ -1782,7 +1784,7 @@ void GDScriptInstance::get_property_list(List<PropertyInfo> *p_properties) const
 
 		//instance a fake script for editing the values
 
-		Vector<_GDScriptMemberSort> msort;
+		LocalVector<_GDScriptMemberSort> msort;
 		for (const KeyValue<StringName, GDScript::MemberInfo> &F : sptr->member_indices) {
 			if (!sptr->members.has(F.key)) {
 				continue; // Skip base class members.
@@ -1795,7 +1797,7 @@ void GDScriptInstance::get_property_list(List<PropertyInfo> *p_properties) const
 
 		msort.sort();
 		msort.reverse();
-		for (int i = 0; i < msort.size(); i++) {
+		for (uint32_t i = 0; i < msort.size(); i++) {
 			props.push_front(sptr->member_indices[msort[i].name].property_info);
 		}
 

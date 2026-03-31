@@ -197,13 +197,13 @@ String GDScriptFunction::_get_callable_call_error(const String &p_where, const C
 	if (p_argcount - args_unbound < 0) {
 		return "Callable unbinds " + itos(args_unbound) + " arguments, but called with " + itos(p_argcount);
 	} else {
-		Vector<const Variant *> argptrs;
+		TightLocalVector<const Variant *> argptrs;
 		argptrs.resize(p_argcount - args_unbound + binds.size());
 		for (int i = 0; i < p_argcount - args_unbound; i++) {
-			argptrs.write[i] = p_argptrs[i];
+			argptrs[i] = p_argptrs[i];
 		}
 		for (int i = 0; i < binds.size(); i++) {
-			argptrs.write[i + p_argcount - args_unbound] = &binds[i];
+			argptrs[i + p_argcount - args_unbound] = &binds[i];
 		}
 		return _get_call_error(p_where, (const Variant **)argptrs.ptr(), argptrs.size(), p_ret, p_err);
 	}

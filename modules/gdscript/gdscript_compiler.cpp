@@ -2055,11 +2055,11 @@ Error GDScriptCompiler::_parse_block(CodeGen &codegen, const GDScriptParser::Sui
 				gen->start_for(iterator.type, _gdtype_from_datatype(for_n->list->get_datatype(), codegen.script), range_call != nullptr);
 
 				if (range_call != nullptr) {
-					Vector<GDScriptCodeGenerator::Address> args;
+					TightLocalVector<GDScriptCodeGenerator::Address> args;
 					args.resize(range_call->arguments.size());
 
-					for (int j = 0; j < args.size(); j++) {
-						args.write[j] = _parse_expression(codegen, err, range_call->arguments[j]);
+					for (uint32_t j = 0; j < args.size(); j++) {
+						args[j] = _parse_expression(codegen, err, range_call->arguments[j]);
 						if (err) {
 							return err;
 						}
@@ -2080,7 +2080,7 @@ Error GDScriptCompiler::_parse_block(CodeGen &codegen, const GDScriptParser::Sui
 							return ERR_BUG;
 					}
 
-					for (int j = 0; j < args.size(); j++) {
+					for (uint32_t j = 0; j < args.size(); j++) {
 						if (args[j].mode == GDScriptCodeGenerator::Address::TEMPORARY) {
 							codegen.generator->pop_temporary();
 						}

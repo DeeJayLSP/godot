@@ -170,14 +170,14 @@ Error GDScriptTokenizerBuffer::set_code_buffer(const Vector<uint8_t> &p_buffer) 
 		total_len -= 4;
 		ERR_FAIL_COND_V((len * 4u) > (uint32_t)total_len, ERR_INVALID_DATA);
 		b += 4;
-		Vector<uint32_t> cs;
+		TightLocalVector<uint32_t> cs;
 		cs.resize(len);
 		for (uint32_t j = 0; j < len; j++) {
 			uint8_t tmp[4];
 			for (uint32_t k = 0; k < 4; k++) {
 				tmp[k] = b[j * 4 + k] ^ 0xb6;
 			}
-			cs.write[j] = decode_uint32(tmp);
+			cs[j] = decode_uint32(tmp);
 		}
 
 		String s = String::utf32(Span(reinterpret_cast<const char32_t *>(cs.ptr()), len));
@@ -266,15 +266,15 @@ Vector<uint8_t> GDScriptTokenizerBuffer::parse_code_string(const String &p_code,
 	}
 
 	// Reverse maps.
-	Vector<StringName> rev_identifier_map;
+	TightLocalVector<StringName> rev_identifier_map;
 	rev_identifier_map.resize(identifier_map.size());
 	for (const KeyValue<StringName, uint32_t> &E : identifier_map) {
-		rev_identifier_map.write[E.value] = E.key;
+		rev_identifier_map[E.value] = E.key;
 	}
-	Vector<Variant> rev_constant_map;
+	TightLocalVector<Variant> rev_constant_map;
 	rev_constant_map.resize(constant_map.size());
 	for (const KeyValue<Variant, uint32_t> &E : constant_map) {
-		rev_constant_map.write[E.value] = E.key;
+		rev_constant_map[E.value] = E.key;
 	}
 	HashMap<uint32_t, uint32_t> rev_token_lines;
 	for (const KeyValue<uint32_t, uint32_t> &E : token_lines) {

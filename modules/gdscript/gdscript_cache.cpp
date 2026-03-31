@@ -268,16 +268,16 @@ void GDScriptCache::remove_parser(const String &p_path) {
 }
 
 String GDScriptCache::get_source_code(const String &p_path) {
-	Vector<uint8_t> source_file;
+	TightLocalVector<uint8_t> source_file;
 	Error err;
 	Ref<FileAccess> f = FileAccess::open(p_path, FileAccess::READ, &err);
 	ERR_FAIL_COND_V(err, "");
 
 	uint64_t len = f->get_length();
 	source_file.resize(len + 1);
-	uint64_t r = f->get_buffer(source_file.ptrw(), len);
+	uint64_t r = f->get_buffer(source_file.ptr(), len);
 	ERR_FAIL_COND_V(r != len, "");
-	source_file.write[len] = 0;
+	source_file[len] = 0;
 
 	String source;
 	if (source.append_utf8((const char *)source_file.ptr(), len) != OK) {

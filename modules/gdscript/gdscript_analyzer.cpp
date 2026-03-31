@@ -3271,7 +3271,8 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 			// Because in this case they would be the same reference in all constructed values.
 			if (all_is_constant && !Variant::is_type_shared(builtin_type)) {
 				// Construct here.
-				Vector<const Variant *> args;
+				TightLocalVector<const Variant *> args;
+				args.reserve(p_call->arguments.size());
 				for (int i = 0; i < p_call->arguments.size(); i++) {
 					args.push_back(&(p_call->arguments[i]->reduced_value));
 				}
@@ -3325,7 +3326,7 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 #ifdef DEBUG_ENABLED
 						mark_node_unsafe(p_call);
 						// Constructors support overloads.
-						Vector<String> types;
+						LocalVector<String> types;
 						for (int i = 0; i < Variant::VARIANT_MAX; i++) {
 							if (i != builtin_type && Variant::can_convert_strict((Variant::Type)i, builtin_type)) {
 								types.push_back(Variant::get_type_name((Variant::Type)i));
@@ -3335,7 +3336,7 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 						if (types.size() == 1) {
 							expected_types += "\" or \"" + types[0];
 						} else if (types.size() >= 2) {
-							for (int i = 0; i < types.size() - 1; i++) {
+							for (uint32_t i = 0; i < types.size() - 1; i++) {
 								expected_types += "\", \"" + types[i];
 							}
 							expected_types += "\", or \"" + types[types.size() - 1];
@@ -3441,7 +3442,8 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 
 			if (all_is_constant && GDScriptUtilityFunctions::is_function_constant(function_name)) {
 				// Can call on compilation.
-				Vector<const Variant *> args;
+				TightLocalVector<const Variant *> args;
+				args.reserve(p_call->arguments.size());
 				for (int i = 0; i < p_call->arguments.size(); i++) {
 					args.push_back(&(p_call->arguments[i]->reduced_value));
 				}
@@ -3492,7 +3494,8 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 
 			if (all_is_constant && Variant::get_utility_function_type(function_name) == Variant::UTILITY_FUNC_TYPE_MATH) {
 				// Can call on compilation.
-				Vector<const Variant *> args;
+				TightLocalVector<const Variant *> args;
+				args.reserve(p_call->arguments.size());
 				for (int i = 0; i < p_call->arguments.size(); i++) {
 					args.push_back(&(p_call->arguments[i]->reduced_value));
 				}
@@ -5387,7 +5390,7 @@ Variant GDScriptAnalyzer::make_call_reduced_value(GDScriptParser::CallNode *p_ca
 			return Variant();
 		}
 
-		Vector<Variant> args;
+		TightLocalVector<Variant> args;
 		args.resize(p_call->arguments.size());
 		const Variant **argptrs = (const Variant **)alloca(sizeof(const Variant *) * args.size());
 		for (int i = 0; i < p_call->arguments.size(); i++) {
@@ -5396,7 +5399,7 @@ Variant GDScriptAnalyzer::make_call_reduced_value(GDScriptParser::CallNode *p_ca
 			if (!is_arg_value_reduced) {
 				return Variant();
 			}
-			args.write[i] = arg_value;
+			args[i] = arg_value;
 			argptrs[i] = &args[i];
 		}
 
