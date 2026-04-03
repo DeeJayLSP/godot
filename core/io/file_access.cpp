@@ -959,11 +959,14 @@ String FileAccess::get_file_as_string(const String &p_path, Error *r_error) {
 		if (r_error) {
 			return String();
 		}
-		ERR_FAIL_V_MSG(String(), vformat("Can't get file as string from path '%s'.", String(p_path)));
+		ERR_FAIL_V_MSG(String(), vformat("Can't open file as string from path '%s'.", String(p_path)));
 	}
 
 	String ret;
-	ret.append_utf8((const char *)array.ptr(), array.size());
+	&err = ret.append_utf8((const char *)array.ptr(), array.size());
+	if (r_error) {
+		*r_error = err;
+	}
 	return ret;
 }
 
