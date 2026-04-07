@@ -35,6 +35,8 @@
 #include "core/templates/a_hash_map.h"
 #include "core/templates/vector.h"
 
+class MethodBind;
+
 class GDType {
 public:
 	enum class InitState {
@@ -67,6 +69,9 @@ protected:
 	AHashMap<StringName, const MethodInfo *> signal_map;
 	AHashMap<StringName, const MethodInfo *> self_signal_map;
 
+	AHashMap<StringName, const LocalVector<const MethodBind *> *> method_map_compatibility;
+	AHashMap<StringName, const LocalVector<const MethodBind *> *> self_method_map_compatibility;
+
 public:
 	GDType(const GDType *p_super_type, StringName p_name);
 	~GDType();
@@ -89,4 +94,7 @@ public:
 
 	void add_signal(MethodInfo p_signal);
 	const AHashMap<StringName, const MethodInfo *> &get_signal_map(bool p_no_inheritance = false) const { return p_no_inheritance ? self_signal_map : signal_map; }
+
+	void bind_method_compatibility(MethodBind *p_bind);
+	const AHashMap<StringName, const LocalVector<const MethodBind *> *> &get_method_map_compatibility(bool p_no_inheritance = false) const { return p_no_inheritance ? self_method_map_compatibility : method_map_compatibility; }
 };

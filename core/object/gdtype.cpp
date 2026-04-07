@@ -30,6 +30,7 @@
 
 #include "gdtype.h"
 
+#include "core/object/method_bind.h"
 #include "core/os/memory.h"
 #include "core/os/thread.h"
 
@@ -51,6 +52,9 @@ GDType::~GDType() {
 	for (const KeyValue<StringName, const MethodInfo *> &kv : self_signal_map) {
 		memdelete(const_cast<MethodInfo *>(kv.value));
 	}
+	for (const KeyValue<StringName, const LocalVector<const MethodBind *> *> &kv : self_method_map_compatibility) {
+		memdelete(const_cast<LocalVector<const MethodBind *> *>(kv.value));
+	}
 }
 
 void GDType::initialize() {
@@ -66,6 +70,7 @@ void GDType::initialize() {
 		constant_map = super_type->constant_map;
 		enum_map = super_type->enum_map;
 		signal_map = super_type->signal_map;
+		method_map_compatibility = super_type->method_map_compatibility;
 	}
 
 	init_state = InitState::MUTABLE;
@@ -123,4 +128,21 @@ void GDType::add_signal(MethodInfo p_signal) {
 
 	signal_map[signal_name] = ptr;
 	self_signal_map[signal_name] = ptr;
+}
+
+void GDType::bind_method_compatibility(MethodBind *p_bind) {
+	ERR_FAIL_COND(!Thread::is_main_thread());
+	ERR_FAIL_COND(init_state != InitState::MUTABLE);
+
+	const StringName method_name(p_bind->get_name());
+	LocalVector<const MethodBind *> *ptr = nullptr;
+	if (method_map_compatibility.has(method_name)) {
+		ptr = const_cast<LocalVector<const MethodBind *> *>(method_map_compatibility[method_name]);
+	} else {
+		ptr = memnew(LocalVector<const MethodBind *>);
+		method_map_compatibility.insert_new(method_name, ptr);
+		self_method_map_compatibility.insert_new(method_name, ptr);
+	}
+
+	ptr->push_back(p_bind);
 }

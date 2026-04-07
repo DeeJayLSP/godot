@@ -892,7 +892,7 @@ void ClassDB::_add_class(GDType &p_class, const GDType *p_inherits) {
 	}
 }
 
-static MethodInfo info_from_bind(MethodBind *p_method) {
+static MethodInfo info_from_bind(const MethodBind *p_method) {
 	MethodInfo minfo;
 	minfo.name = p_method->get_name();
 	minfo.id = p_method->get_method_id();
@@ -1001,9 +1001,9 @@ void ClassDB::get_method_list_with_compatibility(const StringName &p_class, List
 		}
 #endif // DEBUG_ENABLED
 
-		for (const KeyValue<StringName, LocalVector<MethodBind *, unsigned int, false, false>> &E : type->method_map_compatibility) {
-			LocalVector<MethodBind *> compat(E.value);
-			for (MethodBind *method : compat) {
+		for (const KeyValue<StringName, const LocalVector<const MethodBind *> *> &E : type->gdtype->get_method_map_compatibility(true)) {
+			const LocalVector<const MethodBind *> *compat = E.value;
+			for (const MethodBind *method : *compat) {
 				MethodInfo minfo = info_from_bind(method);
 
 				Pair<MethodInfo, uint32_t> pair(minfo, method->get_hash());
@@ -1088,17 +1088,13 @@ Vector<uint32_t> ClassDB::get_method_compatibility_hashes(const StringName &p_cl
 	Locker::Lock lock(Locker::STATE_READ);
 
 	ClassInfo *type = classes.getptr(p_class);
-
-	while (type) {
-		if (type->method_map_compatibility.has(p_name)) {
-			LocalVector<MethodBind *> *c = type->method_map_compatibility.getptr(p_name);
-			Vector<uint32_t> ret;
-			for (uint32_t i = 0; i < c->size(); i++) {
-				ret.push_back((*c)[i]->get_hash());
-			}
-			return ret;
+	if (type && type->gdtype->get_method_map_compatibility(false).has(p_name)) {
+		const LocalVector<const MethodBind *> *const *c = type->gdtype->get_method_map_compatibility(false).getptr(p_name);
+		Vector<uint32_t> ret;
+		for (uint32_t i = 0; i < (*c)->size(); i++) {
+			ret.push_back((**c)[i]->get_hash());
 		}
-		type = type->inherits_ptr;
+		return ret;
 	}
 	return Vector<uint32_t>();
 }
@@ -1119,17 +1115,17 @@ MethodBind *ClassDB::get_method_with_compatibility(const StringName &p_class, co
 			}
 		}
 
-		LocalVector<MethodBind *> *compat = type->method_map_compatibility.getptr(p_name);
+		const LocalVector<const MethodBind *> *const *compat = type->gdtype->get_method_map_compatibility(true).getptr(p_name);
 		if (compat) {
 			if (r_method_exists) {
 				*r_method_exists = true;
 			}
-			for (uint32_t i = 0; i < compat->size(); i++) {
-				if ((*compat)[i]->get_hash() == p_hash) {
+			for (uint32_t i = 0; i < (*compat)->size(); i++) {
+				if ((**compat)[i]->get_hash() == p_hash) {
 					if (r_is_deprecated) {
 						*r_is_deprecated = true;
 					}
-					return (*compat)[i];
+					return const_cast<MethodBind *>((*compat)->operator[](i));
 				}
 			}
 		}
@@ -1763,10 +1759,7 @@ void ClassDB::bind_compatibility_method_custom(const StringName &p_class, Method
 }
 
 void ClassDB::_bind_compatibility(ClassInfo *type, MethodBind *p_method) {
-	if (!type->method_map_compatibility.has(p_method->get_name())) {
-		type->method_map_compatibility.insert(p_method->get_name(), LocalVector<MethodBind *>());
-	}
-	type->method_map_compatibility[p_method->get_name()].push_back(p_method);
+	type->gdtype->bind_method_compatibility(p_method);
 }
 
 void ClassDB::_bind_method_custom(const StringName &p_class, MethodBind *p_method, bool p_compatibility) {
@@ -2290,9 +2283,9 @@ void ClassDB::cleanup() {
 		for (KeyValue<StringName, MethodBind *> &F : ti.method_map) {
 			memdelete(F.value);
 		}
-		for (KeyValue<StringName, LocalVector<MethodBind *>> &F : ti.method_map_compatibility) {
-			for (uint32_t i = 0; i < F.value.size(); i++) {
-				memdelete(F.value[i]);
+		for (const KeyValue<StringName, const LocalVector<const MethodBind *> *> &F : ti.gdtype->get_method_map_compatibility(true)) {
+			for (uint32_t i = 0; i < F.value->size(); i++) {
+				memdelete(const_cast<MethodBind *>((*F.value)[i]));
 			}
 		}
 	}
