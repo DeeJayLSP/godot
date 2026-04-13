@@ -3178,7 +3178,7 @@ void AnimationTrackEdit::gui_input(const Ref<InputEvent> &p_event) {
 						if (nd) {
 							StringName prop = npath.get_concatenated_subnames();
 							PropertyInfo prop_info;
-							ClassDB::get_property_info(nd->get_class(), prop, &prop_info);
+							nd->get_property_info(prop, &prop_info);
 #ifdef DISABLE_DEPRECATED
 							bool is_angle = prop_info.type == Variant::FLOAT && prop_info.hint_string.contains("radians_as_degrees");
 #else
@@ -6915,7 +6915,7 @@ bool AnimationTrackEditor::_is_track_compatible(int p_target_track_idx, Variant:
 							if (nd) {
 								StringName prop = npath.get_concatenated_subnames();
 								PropertyInfo prop_info;
-								path_valid = ClassDB::get_property_info(nd->get_class(), prop, &prop_info);
+								path_valid = nd->get_property_info(prop, &prop_info);
 								property_type = prop_info.type;
 							}
 						}

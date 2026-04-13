@@ -242,7 +242,7 @@ void Object::set(const StringName &p_name, const Variant &p_value, bool *r_valid
 
 	// Try built-in setter.
 	{
-		if (ClassDB::set_property(this, p_name, p_value, r_valid)) {
+		if (set_property(p_name, p_value, r_valid)) {
 			return;
 		}
 	}
@@ -321,7 +321,7 @@ Variant Object::get(const StringName &p_name, bool *r_valid) const {
 
 	// Try built-in getter.
 	{
-		if (ClassDB::get_property(const_cast<Object *>(this), p_name, ret)) {
+		if (const_cast<Object *>(this)->get_property(p_name, ret)) {
 			if (r_valid) {
 				*r_valid = true;
 			}
@@ -468,7 +468,10 @@ void Object::get_property_list(List<PropertyInfo> *p_list, bool p_reversed) cons
 		while (current_extension) {
 			p_list->push_back(PropertyInfo(Variant::NIL, current_extension->class_name, PROPERTY_HINT_NONE, current_extension->class_name, PROPERTY_USAGE_CATEGORY));
 
-			ClassDB::get_property_list(current_extension->class_name, p_list, true, this);
+			for (const PropertyInfo *const &pi : get_gdtype().get_property_list(true)) {
+				p_list->push_back(*pi);
+				validate_property(p_list->back()->get());
+			}
 
 			if (current_extension->get_property_list) {
 #ifdef TOOLS_ENABLED
@@ -521,6 +524,157 @@ void Object::get_property_list(List<PropertyInfo> *p_list, bool p_reversed) cons
 		}
 		p_list->push_back(pi);
 	}
+}
+
+bool Object::get_property_info(const StringName &p_property, PropertyInfo *r_info, bool p_no_inheritance) const {
+	if (get_gdtype().get_property_map(p_no_inheritance).has(p_property)) {
+		const PropertyInfo *const pinfo = get_gdtype().get_property_map(p_no_inheritance)[p_property];
+		PropertyInfo non_const_pinfo = *pinfo;
+		validate_property(non_const_pinfo);
+
+		if (r_info) {
+			*r_info = *pinfo;
+		}
+		return true;
+	}
+
+	return false;
+}
+
+void Object::get_linked_properties_info(const StringName &p_property, List<StringName> *r_properties, bool p_no_inheritance) const {
+#ifdef TOOLS_ENABLED
+	if (!get_gdtype().get_linked_properties(p_no_inheritance).has(p_property)) {
+		return;
+	}
+	for (const StringName &E : *get_gdtype().get_linked_properties(p_no_inheritance)[p_property]) {
+		r_properties->push_back(E);
+	}
+#endif
+}
+
+bool Object::set_property(const StringName &p_property, const Variant &p_value, bool *r_valid) {
+	const GDType::PropertySetGet *const *psg = get_gdtype().get_property_setget(false).getptr(p_property);
+	if (psg && *psg) {
+		if (!(*psg)->setter) {
+			if (r_valid) {
+				*r_valid = false;
+			}
+			return true; //return true but do nothing
+		}
+
+		Callable::CallError ce;
+
+		if ((*psg)->index >= 0) {
+			Variant index = (*psg)->index;
+			const Variant *arg[2] = { &index, &p_value };
+			if ((*psg)->_setptr) {
+				(*psg)->_setptr->call(this, arg, 2, ce);
+			} else {
+				callp((*psg)->setter, arg, 2, ce);
+			}
+
+		} else {
+			const Variant *arg[1] = { &p_value };
+			if ((*psg)->_setptr) {
+				(*psg)->_setptr->call(this, arg, 1, ce);
+			} else {
+				callp((*psg)->setter, arg, 1, ce);
+			}
+		}
+
+		if (r_valid) {
+			*r_valid = ce.error == Callable::CallError::CALL_OK;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool Object::get_property(const StringName &p_property, Variant &r_value) {
+	const GDType::PropertySetGet *const *psg = get_gdtype().get_property_setget(false).getptr(p_property);
+	if (psg) {
+		if (!(*psg)->getter) {
+			return true; //return true but do nothing
+		}
+
+		if ((*psg)->index >= 0) {
+			Variant index = (*psg)->index;
+			const Variant *arg[1] = { &index };
+			Callable::CallError ce;
+			const Variant value = callp((*psg)->getter, arg, 1, ce);
+			r_value = (ce.error == Callable::CallError::CALL_OK) ? value : Variant();
+
+		} else {
+			Callable::CallError ce;
+			if ((*psg)->_getptr) {
+				r_value = (*psg)->_getptr->call(this, nullptr, 0, ce);
+			} else {
+				const Variant value = callp((*psg)->getter, nullptr, 0, ce);
+				r_value = (ce.error == Callable::CallError::CALL_OK) ? value : Variant();
+			}
+		}
+		return true;
+	}
+
+	const int64_t *c = get_gdtype().get_integer_constant_map(false).getptr(p_property); //constants count
+	if (c) {
+		r_value = *c;
+		return true;
+	}
+
+	if (get_gdtype().get_method_map(false).has(p_property)) { //methods count
+		r_value = Callable(this, p_property);
+		return true;
+	}
+
+	if (get_gdtype().get_signal_map(false).has(p_property)) { //signals count
+		r_value = Signal(this, p_property);
+		return true;
+	}
+
+	// The "free()" method is special, so we assume it exists and return a Callable.
+	if (p_property == CoreStringName(free_)) {
+		r_value = Callable(this, p_property);
+		return true;
+	}
+
+	return false;
+}
+
+Variant::Type Object::get_property_type(const StringName &p_property, bool *r_is_valid) const {
+	const GDType::PropertySetGet *const *psg = get_gdtype().get_property_setget(false).getptr(p_property);
+	if (psg && *psg) {
+		if (r_is_valid) {
+			*r_is_valid = true;
+		}
+		return (*psg)->type;
+	}
+
+	if (r_is_valid) {
+		*r_is_valid = false;
+	}
+
+	return Variant::NIL;
+}
+
+StringName Object::get_property_setter(const StringName &p_property) const {
+	const GDType::PropertySetGet *const *psg = get_gdtype().get_property_setget(false).getptr(p_property);
+	if (psg && *psg) {
+		return (*psg)->setter;
+	}
+
+	return StringName();
+}
+
+StringName Object::get_property_getter(const StringName &p_property) const {
+	const GDType::PropertySetGet *const *psg = get_gdtype().get_property_setget(false).getptr(p_property);
+	if (psg && *psg) {
+		return (*psg)->getter;
+	}
+
+	return StringName();
 }
 
 void Object::validate_property(PropertyInfo &p_property) const {
@@ -1998,7 +2152,7 @@ bool Object::is_blocking_signals() const {
 
 Variant::Type Object::get_static_property_type(const StringName &p_property, bool *r_valid) const {
 	bool valid;
-	Variant::Type t = ClassDB::get_property_type(get_class_name(), p_property, &valid);
+	Variant::Type t = get_property_type(p_property, &valid);
 	if (valid) {
 		if (r_valid) {
 			*r_valid = true;

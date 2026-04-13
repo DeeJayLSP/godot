@@ -32,7 +32,7 @@
 #include "gdscript_function.h"
 #include "gdscript_lambda_callable.h"
 
-#include "core/object/class_db.h"
+#include "core/object/method_bind.h"
 #include "core/os/os.h"
 #include "core/profiling/profiling.h"
 
@@ -42,11 +42,10 @@ static bool _profile_count_as_native(const Object *p_base_obj, const StringName 
 	if (!p_base_obj) {
 		return false;
 	}
-	StringName cname = p_base_obj->get_class_name();
-	if ((p_methodname == "new" && cname == "GDScript") || p_methodname == "call") {
+	if ((p_methodname == "new" && p_base_obj->get_class_name() == "GDScript") || p_methodname == "call") {
 		return false;
 	}
-	return ClassDB::class_exists(cname) && ClassDB::has_method(cname, p_methodname, false);
+	return p_base_obj->get_gdtype().get_method_map(false).has(p_methodname);
 }
 
 static String _get_element_type(Variant::Type builtin_type, const StringName &native_type, const Ref<Script> &script_type) {
@@ -946,7 +945,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					OPCODE_BREAK;
 				}
 
-				*dst = object && ClassDB::is_parent_class(object->get_class_name(), native_type);
+				*dst = object && object->get_gdtype().get_name_hierarchy().has(native_type);
 				ip += 4;
 			}
 			DISPATCH_OPCODE;
@@ -1008,7 +1007,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 						String v = index->operator String();
 						bool read_only_property = false;
 						if (obj) {
-							read_only_property = ClassDB::has_property(obj->get_class_name(), v) && (ClassDB::get_property_setter(obj->get_class_name(), v) == StringName());
+							read_only_property = obj->get_gdtype().get_property_setget().has(v) && obj->get_property_setter(v) == StringName();
 						}
 						if (read_only_property) {
 							err_text = vformat(R"(Cannot set value into property "%s" (on base "%s") because it is read-only.)", v, _get_var_type(dst));
@@ -1227,7 +1226,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 						Object *obj = dst->get_validated_object();
 						bool read_only_property = false;
 						if (obj) {
-							read_only_property = ClassDB::has_property(obj->get_class_name(), *index) && (ClassDB::get_property_setter(obj->get_class_name(), *index) == StringName());
+							read_only_property = obj->get_gdtype().get_property_setget().has(*index) && obj->get_property_setter(*index) == StringName();
 						}
 						if (read_only_property) {
 							err_text = vformat(R"(Cannot set value into property "%s" (on base "%s") because it is read-only.)", String(*index), _get_var_type(dst));
@@ -1311,9 +1310,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				bool valid;
 #ifndef DEBUG_ENABLED
-				ClassDB::set_property(p_instance->owner, *index, *src, &valid);
+				p_instance->owner->set_property(*index, *src, &valid);
 #else
-				bool ok = ClassDB::set_property(p_instance->owner, *index, *src, &valid);
+				bool ok = p_instance->owner->set_property(*index, *src, &valid);
 				if (!ok) {
 					err_text = "Internal error setting property: " + String(*index);
 					OPCODE_BREAK;
@@ -1333,9 +1332,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				GD_ERR_BREAK(indexname < 0 || indexname >= _global_names_count);
 				const StringName *index = &_global_names_ptr[indexname];
 #ifndef DEBUG_ENABLED
-				ClassDB::get_property(p_instance->owner, *index, *dst);
+				p_instance->owner->get_property(*index, *dst);
 #else
-				bool ok = ClassDB::get_property(p_instance->owner, *index, *dst);
+				bool ok = p_instance->owner->get_property(*index, *dst);
 				if (!ok) {
 					err_text = "Internal error getting property: " + String(*index);
 					OPCODE_BREAK;
@@ -1553,7 +1552,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 						OPCODE_BREAK;
 					}
 
-					if (src_obj && !ClassDB::is_parent_class(src_obj->get_class_name(), nc->get_name())) {
+					if (src_obj && !src_obj->get_gdtype().get_name_hierarchy().has(nc->get_name())) {
 						err_text = "Trying to assign value of type '" + src_obj->get_class_name() +
 								"' to a variable of type '" + nc->get_name() + "'.";
 						OPCODE_BREAK;
@@ -1674,7 +1673,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 #endif
 				Object *src_obj = src->operator Object *();
 
-				if (src_obj && !ClassDB::is_parent_class(src_obj->get_class_name(), nc->get_name())) {
+				if (src_obj && !src_obj->get_gdtype().get_name_hierarchy().has(nc->get_name())) {
 					*dst = Variant(); // invalid cast, assign NULL
 				} else {
 					*dst = *src;
@@ -1943,8 +1942,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					if (ret->get_type() == Variant::NIL) {
 						if (base_type == Variant::OBJECT) {
 							if (base_obj) {
-								const MethodBind *method = ClassDB::get_method(base_class, *methodname);
-								if (*methodname == CoreStringName(free_) || (method && !method->has_return())) {
+								const MethodBind *const *method = base_obj->get_gdtype().get_method_map().getptr(*methodname);
+								if (*methodname == CoreStringName(free_) || (method && *method && !(*method)->has_return())) {
 									err_text = R"(Trying to get a return value of a method that returns "void")";
 									OPCODE_BREAK;
 								}
@@ -2532,11 +2531,11 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					*dst = E->value->call(p_instance, (const Variant **)argptrs, argc, err);
 				} else if (gds->native.ptr()) {
 					if (*methodname != GDScriptLanguage::get_singleton()->strings._init) {
-						const MethodBind *mb = ClassDB::get_method(gds->native->get_name(), *methodname);
-						if (!mb) {
+						const MethodBind *const *mb = gds->native->get_gdtype_gdsnc().get_method_map().getptr(*methodname);
+						if (!mb || !*mb) {
 							err.error = Callable::CallError::CALL_ERROR_INVALID_METHOD;
 						} else {
-							*dst = mb->call(p_instance->owner, (const Variant **)argptrs, argc, err);
+							*dst = (*mb)->call(p_instance->owner, (const Variant **)argptrs, argc, err);
 						}
 					} else {
 						err.error = Callable::CallError::CALL_OK;
@@ -2948,7 +2947,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 #else
 				Object *ret_obj = r->operator Object *();
 #endif // DEBUG_ENABLED
-				if (ret_obj && !ClassDB::is_parent_class(ret_obj->get_class_name(), nc->get_name())) {
+				if (ret_obj && !ret_obj->get_gdtype().get_name_hierarchy().has(nc->get_name())) {
 #ifdef DEBUG_ENABLED
 					err_text = vformat(R"(Trying to return a value of type "%s" from a function whose return type is "%s".)",
 							_get_var_type(r), nc->get_name());

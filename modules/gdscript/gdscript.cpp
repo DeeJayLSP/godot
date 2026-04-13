@@ -65,20 +65,19 @@
 ///////////////////////////
 
 GDScriptNativeClass::GDScriptNativeClass(const StringName &p_name) {
-	name = p_name;
+	gdtype = ClassDB::get_gdtype(p_name);
 }
 
 bool GDScriptNativeClass::_get(const StringName &p_name, Variant &r_ret) const {
-	bool ok;
-	int64_t v = ClassDB::get_integer_constant(name, p_name, &ok);
+	const int64_t *v = gdtype->get_integer_constant_map().getptr(p_name);
 
-	if (ok) {
-		r_ret = v;
+	if (v) {
+		r_ret = *v;
 		return true;
 	}
 
-	const MethodBind *method = ClassDB::get_method(name, p_name);
-	if (method && method->is_static()) {
+	const MethodBind *const *method = gdtype->get_method_map(false).getptr(p_name);
+	if (method && *method && (*method)->is_static()) {
 		// Native static method.
 		r_ret = Callable(this, p_name);
 		return true;
@@ -93,7 +92,7 @@ void GDScriptNativeClass::_bind_methods() {
 
 Variant GDScriptNativeClass::_new() {
 	Object *o = instantiate();
-	ERR_FAIL_NULL_V_MSG(o, Variant(), "Class type: '" + String(name) + "' is not instantiable.");
+	ERR_FAIL_NULL_V_MSG(o, Variant(), "Class type: '" + String(get_name()) + "' is not instantiable.");
 
 	RefCounted *rc = Object::cast_to<RefCounted>(o);
 	if (rc) {
@@ -104,7 +103,7 @@ Variant GDScriptNativeClass::_new() {
 }
 
 Object *GDScriptNativeClass::instantiate() {
-	return ClassDB::instantiate_no_placeholders(name);
+	return ClassDB::instantiate_no_placeholders(get_name());
 }
 
 Variant GDScriptNativeClass::callp(const StringName &p_method, const Variant **p_args, int p_argcount, Callable::CallError &r_error) {
@@ -112,10 +111,10 @@ Variant GDScriptNativeClass::callp(const StringName &p_method, const Variant **p
 		// Constructor.
 		return Object::callp(p_method, p_args, p_argcount, r_error);
 	}
-	const MethodBind *method = ClassDB::get_method(name, p_method);
-	if (method && method->is_static()) {
+	const MethodBind *const *method = gdtype->get_method_map(false).getptr(p_method);
+	if (method && *method && (*method)->is_static()) {
 		// Native static method.
-		return method->call(nullptr, p_args, p_argcount, r_error);
+		return (*method)->call(nullptr, p_args, p_argcount, r_error);
 	}
 
 	r_error.error = Callable::CallError::CALL_ERROR_INVALID_METHOD;
@@ -412,7 +411,7 @@ ScriptInstance *GDScript::instance_create(Object *p_this) {
 	}
 
 	if (top->native.is_valid()) {
-		if (!ClassDB::is_parent_class(p_this->get_class_name(), top->native->get_name())) {
+		if (!p_this->get_gdtype().get_name_hierarchy().has(top->native->get_name())) {
 			if (EngineDebugger::is_active()) {
 				GDScriptLanguage::get_singleton()->debug_break_parse(_get_debug_path(), 1, "Script inherits from native type '" + String(top->native->get_name()) + "', so it can't be assigned to an object of type: '" + p_this->get_class() + "'");
 			}

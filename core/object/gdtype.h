@@ -33,6 +33,7 @@
 #include "core/object/method_info.h"
 #include "core/string/string_name.h"
 #include "core/templates/a_hash_map.h"
+#include "core/templates/hash_set.h"
 #include "core/templates/vector.h"
 
 class MethodBind;
@@ -49,6 +50,15 @@ public:
 		StringName name;
 		AHashMap<StringName, int64_t> values;
 		bool is_bitfield = false;
+	};
+
+	struct PropertySetGet {
+		int index;
+		StringName setter;
+		StringName getter;
+		const MethodBind *_setptr = nullptr;
+		const MethodBind *_getptr = nullptr;
+		Variant::Type type;
 	};
 
 protected:
@@ -71,6 +81,25 @@ protected:
 
 	AHashMap<StringName, const MethodBind *> method_map;
 	AHashMap<StringName, const MethodBind *> self_method_map;
+
+	List<const PropertyInfo *> property_list;
+	List<const PropertyInfo *> self_property_list;
+
+	AHashMap<StringName, const PropertyInfo *> property_map;
+	AHashMap<StringName, const PropertyInfo *> self_property_map;
+
+	AHashMap<StringName, const PropertySetGet *> property_setget;
+	AHashMap<StringName, const PropertySetGet *> self_property_setget;
+
+#ifdef DEBUG_ENABLED
+	HashSet<StringName> methods_in_properties;
+	HashSet<StringName> self_methods_in_properties;
+#endif
+
+#ifdef TOOLS_ENABLED
+	HashMap<StringName, List<StringName> *> linked_properties;
+	HashMap<StringName, List<StringName> *> self_linked_properties;
+#endif
 
 	// Lifecycle
 	friend class ClassDB;
@@ -102,4 +131,20 @@ public:
 	bool bind_method(MethodBind *p_method);
 	void set_method_flags(const StringName &p_method, int p_flags);
 	const AHashMap<StringName, const MethodBind *> &get_method_map(bool p_no_inheritance = false) const { return p_no_inheritance ? self_method_map : method_map; }
+
+	void add_property_group(const String &p_name, const String &p_prefix = "", int p_indent_depth = 0);
+	void add_property_subgroup(const String &p_name, const String &p_prefix = "", int p_indent_depth = 0);
+	void add_property_array_count(const String &p_label, const StringName &p_count_property, const StringName &p_count_setter, const StringName &p_count_getter, const String &p_array_element_prefix, uint32_t p_count_usage = PROPERTY_USAGE_DEFAULT);
+	void add_property_array(const StringName &p_path, const String &p_array_element_prefix);
+	void add_property(const PropertyInfo &p_info, const StringName &p_setter, const StringName &p_getter, int p_index = -1);
+	void add_linked_property(const String &p_property, const String &p_linked_property);
+	const List<const PropertyInfo *> &get_property_list(bool p_no_inheritance = false) const { return p_no_inheritance ? self_property_list : property_list; }
+	const AHashMap<StringName, const PropertyInfo *> &get_property_map(bool p_no_inheritance = false) const { return p_no_inheritance ? self_property_map : property_map; }
+	const AHashMap<StringName, const PropertySetGet *> &get_property_setget(bool p_no_inheritance = false) const { return p_no_inheritance ? self_property_setget : property_setget; }
+#ifdef DEBUG_ENABLED
+	const HashSet<StringName> &get_methods_in_properties(bool p_no_inheritance = false) const { return p_no_inheritance ? self_methods_in_properties : methods_in_properties; }
+#endif
+#ifdef TOOLS_ENABLED
+	const HashMap<StringName, List<StringName> *> &get_linked_properties(bool p_no_inheritance = false) const { return p_no_inheritance ? self_linked_properties : linked_properties; }
+#endif
 };

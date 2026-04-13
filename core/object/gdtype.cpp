@@ -55,6 +55,17 @@ GDType::~GDType() {
 	for (const KeyValue<StringName, const MethodBind *> &kv : self_method_map) {
 		memdelete(const_cast<MethodBind *>(kv.value));
 	}
+	for (const PropertyInfo *pinfo : self_property_list) {
+		memdelete(const_cast<PropertyInfo *>(pinfo));
+	}
+	for (const KeyValue<StringName, const PropertySetGet *> &kv : self_property_setget) {
+		memdelete(const_cast<PropertySetGet *>(kv.value));
+	}
+#ifdef TOOLS_ENABLED
+	for (const KeyValue<StringName, List<StringName> *> &kv : self_linked_properties) {
+		memdelete(const_cast<List<StringName> *>(kv.value));
+	}
+#endif
 }
 
 void GDType::initialize() {
@@ -71,6 +82,15 @@ void GDType::initialize() {
 		enum_map = super_type->enum_map;
 		signal_map = super_type->signal_map;
 		method_map = super_type->method_map;
+		property_list = super_type->property_list;
+		property_map = super_type->property_map;
+		property_setget = super_type->property_setget;
+#ifdef DEBUG_ENABLED
+		methods_in_properties = super_type->methods_in_properties;
+#endif
+#ifdef TOOLS_ENABLED
+		linked_properties = super_type->linked_properties;
+#endif
 	}
 
 	init_state = InitState::MUTABLE;
@@ -155,4 +175,126 @@ void GDType::set_method_flags(const StringName &p_method, int p_flags) {
 	ERR_FAIL_COND(init_state != InitState::MUTABLE);
 
 	(const_cast<MethodBind *>(self_method_map[p_method]))->set_hint_flags(p_flags);
+}
+
+void GDType::add_property_group(const String &p_name, const String &p_prefix, int p_indent_depth) {
+	ERR_FAIL_COND(!Thread::is_main_thread());
+	ERR_FAIL_COND(init_state != InitState::MUTABLE);
+	String prefix = p_prefix;
+	if (p_indent_depth > 0) {
+		prefix = vformat("%s,%d", p_prefix, p_indent_depth);
+	}
+
+	PropertyInfo *pinfo = memnew(PropertyInfo(Variant::NIL, p_name, PROPERTY_HINT_NONE, prefix, PROPERTY_USAGE_GROUP));
+	property_list.push_back(pinfo);
+	self_property_list.push_back(pinfo);
+}
+
+void GDType::add_property_subgroup(const String &p_name, const String &p_prefix, int p_indent_depth) {
+	ERR_FAIL_COND(!Thread::is_main_thread());
+	ERR_FAIL_COND(init_state != InitState::MUTABLE);
+	String prefix = p_prefix;
+	if (p_indent_depth > 0) {
+		prefix = vformat("%s,%d", p_prefix, p_indent_depth);
+	}
+
+	PropertyInfo *pinfo = memnew(PropertyInfo(Variant::NIL, p_name, PROPERTY_HINT_NONE, prefix, PROPERTY_USAGE_SUBGROUP));
+	property_list.push_back(pinfo);
+	self_property_list.push_back(pinfo);
+}
+
+void GDType::add_property_array_count(const String &p_label, const StringName &p_count_property, const StringName &p_count_setter, const StringName &p_count_getter, const String &p_array_element_prefix, uint32_t p_count_usage) {
+	add_property(PropertyInfo(Variant::INT, p_count_property, PROPERTY_HINT_NONE, "", p_count_usage | PROPERTY_USAGE_ARRAY, vformat("%s,%s", p_label, p_array_element_prefix)), p_count_setter, p_count_getter);
+}
+
+void GDType::add_property_array(const StringName &p_path, const String &p_array_element_prefix) {
+	ERR_FAIL_COND(!Thread::is_main_thread());
+	ERR_FAIL_COND(init_state != InitState::MUTABLE);
+
+	PropertyInfo *pinfo = memnew(PropertyInfo(Variant::NIL, p_path, PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_ARRAY, p_array_element_prefix));
+
+	property_list.push_back(pinfo);
+	self_property_list.push_back(pinfo);
+}
+
+void GDType::add_property(const PropertyInfo &p_pinfo, const StringName &p_setter, const StringName &p_getter, int p_index) {
+	ERR_FAIL_COND(!Thread::is_main_thread());
+	ERR_FAIL_COND(init_state != InitState::MUTABLE);
+
+	const StringName property_name(p_pinfo.name);
+	ERR_FAIL_COND_MSG(property_map.has(property_name), vformat("Class '%s' already has property '%s'.", String(name), String(property_name)));
+
+	const MethodBind *mb_set = nullptr;
+	if (p_setter) {
+		mb_set = *method_map.getptr(p_setter);
+#ifdef DEBUG_ENABLED
+
+		ERR_FAIL_NULL_MSG(mb_set, vformat("Invalid setter '%s::%s' for property '%s'.", name, p_setter, p_pinfo.name));
+
+		int exp_args = 1 + (p_index >= 0 ? 1 : 0);
+		ERR_FAIL_COND_MSG(mb_set->get_argument_count() != exp_args, vformat("Invalid function for setter '%s::%s' for property '%s'.", name, p_setter, p_pinfo.name));
+#endif // DEBUG_ENABLED
+	}
+
+	const MethodBind *mb_get = nullptr;
+	if (p_getter) {
+		mb_get = *method_map.getptr(p_getter);
+#ifdef DEBUG_ENABLED
+
+		ERR_FAIL_NULL_MSG(mb_get, vformat("Invalid getter '%s::%s' for property '%s'.", name, p_getter, p_pinfo.name));
+
+		int exp_args = 0 + (p_index >= 0 ? 1 : 0);
+		ERR_FAIL_COND_MSG(mb_get->get_argument_count() != exp_args, vformat("Invalid function for getter '%s::%s' for property '%s'.", name, p_getter, p_pinfo.name));
+#endif // DEBUG_ENABLED
+	}
+
+#ifdef DEBUG_ENABLED
+	ERR_FAIL_COND_MSG(self_property_setget.has(p_pinfo.name), vformat("Object '%s' already has property '%s'.", name, p_pinfo.name));
+#endif // DEBUG_ENABLED
+
+	const PropertyInfo *pinfo = memnew(PropertyInfo(p_pinfo));
+
+	property_list.push_back(pinfo);
+	self_property_list.push_back(pinfo);
+	property_map[property_name] = pinfo;
+	self_property_map[property_name] = pinfo;
+#ifdef DEBUG_ENABLED
+	// Used to filter out setters and getters in the editor (e.g. autocomplete) to not clutter menus. We only want to filter methods from properties that are easily available to users.
+	if (p_index == -1 && !(p_pinfo.usage & PropertyUsageFlags::PROPERTY_USAGE_INTERNAL)) {
+		if (mb_get) {
+			methods_in_properties.insert(p_getter);
+			self_methods_in_properties.insert(p_getter);
+		}
+		if (mb_set) {
+			methods_in_properties.insert(p_setter);
+			self_methods_in_properties.insert(p_setter);
+		}
+	}
+#endif // DEBUG_ENABLED
+	PropertySetGet *psg = memnew(PropertySetGet);
+	psg->setter = p_setter;
+	psg->getter = p_getter;
+	psg->_setptr = mb_set;
+	psg->_getptr = mb_get;
+	psg->index = p_index;
+	psg->type = p_pinfo.type;
+
+	property_setget[p_pinfo.name] = psg;
+	self_property_setget[p_pinfo.name] = psg;
+}
+
+void GDType::add_linked_property(const String &p_property, const String &p_linked_property) {
+#ifdef TOOLS_ENABLED
+	ERR_FAIL_COND(!Thread::is_main_thread());
+	ERR_FAIL_COND(init_state != InitState::MUTABLE);
+	ERR_FAIL_COND(!property_map.has(p_property));
+	ERR_FAIL_COND(!property_map.has(p_linked_property));
+
+	if (!linked_properties.has(p_property)) {
+		linked_properties.insert(p_property, memnew(List<StringName>()));
+		self_linked_properties.insert(p_property, memnew(List<StringName>()));
+	}
+	linked_properties[p_property]->push_back(p_linked_property);
+	self_linked_properties[p_property]->push_back(p_linked_property);
+#endif
 }

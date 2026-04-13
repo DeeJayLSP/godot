@@ -773,7 +773,7 @@ bool AnimationMixer::_update_caches() {
 						if (is_value && callback_mode_discrete == ANIMATION_CALLBACK_MODE_DISCRETE_FORCE_CONTINUOUS) {
 							if (child) {
 								PropertyInfo prop_info;
-								ClassDB::get_property_info(child->get_class_name(), path.get_concatenated_subnames(), &prop_info);
+								child->get_property_info(path.get_concatenated_subnames(), &prop_info);
 								if (prop_info.hint == PROPERTY_HINT_ONESHOT) {
 									WARN_PRINT_ED(vformat("%s: '%s', Value Track: '%s' is oneshot property, but will be continuously updated. Consider setting a value other than ANIMATION_CALLBACK_MODE_DISCRETE_FORCE_CONTINUOUS to AnimationMixer.callback_mode_dominant.", mixer_name, String(E), String(path)));
 								}

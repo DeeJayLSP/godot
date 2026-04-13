@@ -179,7 +179,7 @@ void class_db_api_to_json(const String &p_output_file, ClassDB::APIType p_api) {
 
 			List<StringName> snames;
 
-			for (const KeyValue<StringName, ClassDB::PropertySetGet> &F : t->property_setget) {
+			for (const KeyValue<StringName, const GDType::PropertySetGet *> &F : t->gdtype->get_property_setget(true)) {
 				snames.push_back(F.key);
 			}
 
@@ -191,11 +191,11 @@ void class_db_api_to_json(const String &p_output_file, ClassDB::APIType p_api) {
 				Dictionary property_dict;
 				properties.push_back(property_dict);
 
-				ClassDB::PropertySetGet *psg = t->property_setget.getptr(F);
+				const GDType::PropertySetGet *const *psg = t->gdtype->get_property_setget(true).getptr(F);
 
 				property_dict["name"] = F;
-				property_dict["setter"] = psg->setter;
-				property_dict["getter"] = psg->getter;
+				property_dict["setter"] = (*psg)->setter;
+				property_dict["getter"] = (*psg)->getter;
 			}
 
 			if (!properties.is_empty()) {
@@ -206,15 +206,15 @@ void class_db_api_to_json(const String &p_output_file, ClassDB::APIType p_api) {
 		Array property_list;
 
 		//property list
-		for (const PropertyInfo &F : t->property_list) {
+		for (const PropertyInfo *const &F : t->gdtype->get_property_list(true)) {
 			Dictionary property_dict;
 			property_list.push_back(property_dict);
 
-			property_dict["name"] = F.name;
-			property_dict["type"] = F.type;
-			property_dict["hint"] = F.hint;
-			property_dict["hint_string"] = F.hint_string;
-			property_dict["usage"] = F.usage;
+			property_dict["name"] = F->name;
+			property_dict["type"] = F->type;
+			property_dict["hint"] = F->hint;
+			property_dict["hint_string"] = F->hint_string;
+			property_dict["usage"] = F->usage;
 		}
 
 		if (!property_list.is_empty()) {
