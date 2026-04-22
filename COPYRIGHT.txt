@@ -386,7 +386,7 @@ Copyright: 2013-2020, Mark Callow
 License: Apache-2.0
 
 Files: thirdparty/libogg/*
-Comment: OggVorbis
+Comment: libogg
 Copyright: 2002, Xiph.org Foundation
 License: BSD-3-clause
 
@@ -400,12 +400,12 @@ Copyright: 1995-2026, The PNG Reference Library Authors.
 License: Zlib
 
 Files: thirdparty/libtheora/*
-Comment: OggTheora
+Comment: Theora
 Copyright: 2002-2009, Xiph.org Foundation
 License: BSD-3-clause
 
 Files: thirdparty/libvorbis/*
-Comment: OggVorbis
+Comment: Ogg Vorbis
 Copyright: 2002-2015, Xiph.org Foundation
 License: BSD-3-clause
 
