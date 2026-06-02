@@ -812,6 +812,12 @@ elif env["arch"] == "x86_32":
         # Use `-mfpmath=sse` to use SSE for floating-point math, which is more stable than x87.
         # `-mstackrealign` is needed for it to work.
         env.Append(CCFLAGS=["-msse2", "-mfpmath=sse", "-mstackrealign"])
+elif env["arch"] == "arm32":
+    # Enable latest ARMv7 instruction set with VFPv4 and Neon.
+    if env.msvc and not methods.using_clang(env):
+        env.Append(CCFLAGS=["/arch:VFPv4"])
+    else:
+        env.Append(CCFLAGS=["-mfpu=neon-vfpv4"])
 
 # Explicitly specify colored output.
 if methods.using_gcc(env):
