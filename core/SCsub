@@ -130,13 +130,14 @@ if env["builtin_zlib"]:
 
         if env["arch"] == "x86_64":
             thirdparty_zlib_arch_sources += [
+                "crc32_pclmulqdq.c",
                 "adler32_sse42.c",
                 "adler32_ssse3.c",
                 "chorba_sse41.c",
                 "chunkset_ssse3.c",
             ]
 
-            env_thirdparty.Append(CPPDEFINES=["X86_SSSE3", "X86_SSE41", "X86_SSE42"])
+            env_thirdparty.Append(CPPDEFINES=["X86_SSSE3", "X86_SSE41", "X86_SSE42", "X86_PCLMULQDQ_CRC"])
         env_thirdparty.Append(CPPDEFINES=["X86_FEATURES", "X86_SSE2"])
 
     if env["arch"].startswith("arm"):
