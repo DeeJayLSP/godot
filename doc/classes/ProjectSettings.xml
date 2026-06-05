@@ -3502,6 +3502,10 @@
 			[b]Note:[/b] This setting is an override. The texture importer will always import the format the host platform needs, even if this is set to [code]false[/code].
 			[b]Note:[/b] Changing this setting does [i]not[/i] impact textures that were already imported before. To make this setting apply to textures that were already imported, exit the editor, remove the [code].godot/imported/[/code] folder located inside the project folder then restart the editor (see [member application/config/use_hidden_project_data_directory]).
 		</member>
+		<member name="rendering/textures/vram_compression/store_compressed" type="bool" setter="" getter="" default="true">
+			If [code]true[/code], makes use of lossless [i]storage[/i] compression to further compress textures on import. This can save disk space and reduce the exported PCK file size at the cost of slightly longer import times.
+			[b]Note:[/b] Only textures with the [b]VRAM Compressed[/b] and [b]VRAM Uncompressed[/b] are affected by this setting. [b]Lossless[/b], [b]Lossy[/b] and [b]Basis Universal[/b] don't make use of storage compression, as the formats employed are already effectively compressed for small storage sizes.
+		</member>
 		<member name="rendering/textures/webp_compression/compression_method" type="int" setter="" getter="" default="2">
 			The default compression method for WebP. Affects both lossy and lossless WebP. A higher value results in smaller files at the cost of compression speed. Decompression speed is mostly unaffected by the compression method. Supported values are 0 to 6. Note that compression methods above 4 are very slow and offer very little savings.
 		</member>
