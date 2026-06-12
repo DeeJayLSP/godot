@@ -179,7 +179,5 @@ zlib_filefunc_def zipio_create_io(Ref<FileAccess> *p_data) {
 	io.zseek_file = zipio_seek;
 	io.zclose_file = zipio_close;
 	io.zerror_file = zipio_testerror;
-	io.alloc_mem = zipio_alloc;
-	io.free_mem = zipio_free;
 	return io;
 }

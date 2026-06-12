@@ -768,21 +768,18 @@ Files extracted from upstream source:
   by CMake). Bump the version number for miniupnpc in that file when upgrading.
 
 
-## minizip
+## minizip-ng
 
-- Upstream: https://github.com/madler/zlib
-- Version: 1.3.2 (da607da739fa6047df13e66a2af6b8bec7c2a498, 2026)
-- License: zlib
+- Upstream: https://github.com/zlib-ng/minizip-ng
+- Version: 4.2.1 (26b4619120f714cb76c0c52cdd48223bee944d73, 2026)
+- License: Zlib
 
 Files extracted from the upstream source:
 
-- From `contrib/minizip`:
-  `{crypt.h,ints.h,ioapi.{c,h},skipset.h,unzip.{c,h},zip.{c,h}}`
-  `MiniZip64_info.txt`
-
-Patches:
-
-- `0001-godot-seek.patch` ([GH-10428](https://github.com/godotengine/godot/pull/10428))
+- All files in `compat/`
+- All `*.c` and `*.h` files except `minizip.c`, `minigzip.c`, `mz_crypt_apple.c`, `mz_crypt_openssl.c`, `mz_crypt_win*.c`, `mz_strm_buf.c`, `*bzip.*`, `*libcomp.*`, `*lzma.*`, `*pkcrypt.*`, `*ppmd.*`, `mz_strm_split.c`, `mz_strm_wzaes.c`
+- `mz_config.h` generated through `cmake -S . -B .`
+- `LICENSE`
 
 
 ## misc
@@ -816,7 +813,7 @@ Collection of single-file libraries used in Godot components.
 - `mikktspace.{c,h}`
   * Upstream: https://archive.blender.org/wiki/index.php/Dev:Shading/Tangent_Space_Normal_Maps/
   * Version: 1.0 (2011)
-  * License: zlib
+  * License: Zlib
 - `nvapi_minimal.h`
   * Upstream: http://download.nvidia.com/XFree86/nvapi-open-source-sdk
   * Version: R525
@@ -941,7 +938,7 @@ Files extracted from upstream source:
 
 - Upstream: https://github.com/recastnavigation/recastnavigation
 - Version: 1.6.0 (6dc1667f580357e8a2154c28b7867bea7e8ad3a7, 2023)
-- License: zlib
+- License: Zlib
 
 Files extracted from upstream source:
 
@@ -1293,7 +1290,7 @@ Files extracted from upstream source:
 
 - Upstream: https://github.com/madler/zlib
 - Version: 1.3.2 (da607da739fa6047df13e66a2af6b8bec7c2a498, 2026)
-- License: zlib
+- License: Zlib
 
 Files extracted from upstream source:
 

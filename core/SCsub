@@ -106,13 +106,6 @@ if env["builtin_zlib"]:
 
     env_thirdparty.add_source_files(thirdparty_obj, thirdparty_zlib_sources)
 
-# Minizip library, could be unbundled in theory
-# However, our version has some custom modifications, so it won't compile with the system one
-thirdparty_minizip_dir = "#thirdparty/minizip/"
-thirdparty_minizip_sources = ["ioapi.c", "unzip.c", "zip.c"]
-thirdparty_minizip_sources = [thirdparty_minizip_dir + file for file in thirdparty_minizip_sources]
-env_thirdparty.add_source_files(thirdparty_obj, thirdparty_minizip_sources)
-
 # Zstd library, can be unbundled
 if env["builtin_zstd"]:
     thirdparty_zstd_dir = "#thirdparty/zstd/"
@@ -161,6 +154,40 @@ if env["builtin_zstd"]:
 
     env_thirdparty.add_source_files(thirdparty_obj, thirdparty_zstd_sources)
 
+
+# Minizip-ng library, could be unbundled in theory
+# However, it's very intertwined with the ZIP support in Godot, so we require it to be built as part of the engine to ensure compatibility.
+thirdparty_minizip_ng_dir = "#thirdparty/minizip-ng/"
+thirdparty_minizip_ng_sources = [
+    "ioapi.c",
+    "mz_crypt.c",
+    "mz_os.c",
+    "mz_strm.c",
+    "mz_strm_mem.c",
+    "mz_strm_zlib.c",
+    "mz_strm_zstd.c",
+    "mz_zip.c",
+    "mz_zip_rw.c",
+    "unzip.c",
+    "zip.c",
+]
+
+if env.msvc and not methods.using_clang(env):
+    thirdparty_minizip_ng_sources += [
+        "mz_os_win32.c",
+        "mz_strm_os_win32.c",
+    ]
+else:
+    thirdparty_minizip_ng_sources += [
+        "mz_os_posix.c",
+        "mz_strm_os_posix.c",
+    ]
+
+thirdparty_minizip_ng_sources = [thirdparty_minizip_ng_dir + file for file in thirdparty_minizip_ng_sources]
+
+env_thirdparty.Append(CPPDEFINES=["HAVE_ZLIB", "HAVE_ZSTD", "STRICTUNZIP", "ZLIB_COMPAT"])
+env_thirdparty.Prepend(CPPPATH=[thirdparty_minizip_ng_dir])
+env_thirdparty.add_source_files(thirdparty_obj, thirdparty_minizip_ng_sources)
 
 env.core_sources += thirdparty_obj
 

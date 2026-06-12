@@ -97,14 +97,6 @@ static int godot_testerror(voidpf opaque, voidpf stream) {
 	ZipData *zd = (ZipData *)stream;
 	return zd->f->get_error() != OK ? 1 : 0;
 }
-
-static voidpf godot_alloc(voidpf opaque, uInt items, uInt size) {
-	return memalloc((size_t)items * size);
-}
-
-static void godot_free(voidpf opaque, voidpf address) {
-	memfree(address);
-}
 } // extern "C"
 
 void ZipArchive::close_handle(unzFile p_file) const {
@@ -129,9 +121,6 @@ unzFile ZipArchive::get_file_handle(const String &p_file) const {
 	io.zseek_file = godot_seek;
 	io.zclose_file = godot_close;
 	io.zerror_file = godot_testerror;
-
-	io.alloc_mem = godot_alloc;
-	io.free_mem = godot_free;
 
 	unzFile pkg = unzOpen2(packages[file.package].filename.utf8().get_data(), &io);
 	ERR_FAIL_NULL_V_MSG(pkg, nullptr, vformat("Cannot open file '%s'.", packages[file.package].filename));
@@ -262,17 +251,17 @@ bool FileAccessZip::is_open() const {
 void FileAccessZip::seek(uint64_t p_position) {
 	ERR_FAIL_NULL(zfile);
 
-	unzSeekCurrentFile(zfile, p_position);
+	unzSeek(zfile, p_position, SEEK_SET);
 }
 
 void FileAccessZip::seek_end(int64_t p_position) {
 	ERR_FAIL_NULL(zfile);
-	unzSeekCurrentFile(zfile, get_length() + p_position);
+	unzSeek(zfile, p_position, SEEK_END);
 }
 
 uint64_t FileAccessZip::get_position() const {
 	ERR_FAIL_NULL_V(zfile, 0);
-	return unztell64(zfile);
+	return unzTell(zfile);
 }
 
 uint64_t FileAccessZip::get_length() const {
@@ -289,8 +278,11 @@ bool FileAccessZip::eof_reached() const {
 uint64_t FileAccessZip::get_buffer(uint8_t *p_dst, uint64_t p_length) const {
 	ERR_FAIL_COND_V(!p_dst && p_length > 0, -1);
 	ERR_FAIL_NULL_V(zfile, -1);
+	if (p_length == 0) {
+		return 0;
+	}
 
-	at_eof = unzeof(zfile);
+	at_eof = unzEndOfFile(zfile);
 	if (at_eof) {
 		return 0;
 	}

@@ -444,8 +444,8 @@ Comment: MiniUPnP Project
 Copyright: 2005-2025, Thomas Bernard
 License: BSD-3-clause
 
-Files: thirdparty/minizip/*
-Comment: MiniZip
+Files: thirdparty/minizip-ng/*
+Comment: minizip-ng
 Copyright: 1998-2026, Gilles Vollant
  2007-2008, Even Rouault
  2009-2010, Mathias Svensson
