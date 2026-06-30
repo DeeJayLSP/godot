@@ -3297,8 +3297,8 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 				}
 
 				// Construct here.
-				Vector<const Variant *> args;
-				for (int i = 0; i < p_call->arguments.size(); i++) {
+				LocalVector<const Variant *> args;
+				for (uint32_t i = 0; i < p_call->arguments.size(); i++) {
 					args.push_back(&(p_call->arguments[i]->reduced_value));
 				}
 
@@ -3467,8 +3467,8 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 
 			if (all_is_constant && GDScriptUtilityFunctions::is_function_constant(function_name)) {
 				// Can call on compilation.
-				Vector<const Variant *> args;
-				for (int i = 0; i < p_call->arguments.size(); i++) {
+				LocalVector<const Variant *> args;
+				for (uint32_t i = 0; i < p_call->arguments.size(); i++) {
 					args.push_back(&(p_call->arguments[i]->reduced_value));
 				}
 
@@ -3518,8 +3518,8 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 
 			if (all_is_constant && Variant::get_utility_function_type(function_name) == Variant::UTILITY_FUNC_TYPE_MATH) {
 				// Can call on compilation.
-				Vector<const Variant *> args;
-				for (int i = 0; i < p_call->arguments.size(); i++) {
+				LocalVector<const Variant *> args;
+				for (uint32_t i = 0; i < p_call->arguments.size(); i++) {
 					args.push_back(&(p_call->arguments[i]->reduced_value));
 				}
 
@@ -5421,16 +5421,16 @@ Variant GDScriptAnalyzer::make_call_reduced_value(GDScriptParser::CallNode *p_ca
 			return Variant();
 		}
 
-		Vector<Variant> args;
+		TightLocalVector<Variant> args;
 		args.resize(p_call->arguments.size());
 		const Variant **argptrs = (const Variant **)alloca(sizeof(const Variant *) * args.size());
-		for (int i = 0; i < p_call->arguments.size(); i++) {
+		for (uint32_t i = 0; i < p_call->arguments.size(); i++) {
 			bool is_arg_value_reduced = false;
 			Variant arg_value = make_expression_reduced_value(p_call->arguments[i], is_arg_value_reduced);
 			if (!is_arg_value_reduced) {
 				return Variant();
 			}
-			args.write[i] = arg_value;
+			args[i] = arg_value;
 			argptrs[i] = &args[i];
 		}
 

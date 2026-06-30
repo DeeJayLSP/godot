@@ -108,7 +108,7 @@ GDScriptTokenizer::Token GDScriptTokenizerBuffer::_binary_to_token(const uint8_t
 		case GDScriptTokenizer::Token::ANNOTATION:
 		case GDScriptTokenizer::Token::IDENTIFIER: {
 			// Get name from map.
-			int identifier_pos = token_type >> TOKEN_BITS;
+			uint32_t identifier_pos = token_type >> TOKEN_BITS;
 			if (unlikely(identifier_pos >= identifiers.size())) {
 				Token error;
 				error.type = Token::ERROR;
@@ -120,7 +120,7 @@ GDScriptTokenizer::Token GDScriptTokenizerBuffer::_binary_to_token(const uint8_t
 		case GDScriptTokenizer::Token::ERROR:
 		case GDScriptTokenizer::Token::LITERAL: {
 			// Get literal from map.
-			int constant_pos = token_type >> TOKEN_BITS;
+			uint32_t constant_pos = token_type >> TOKEN_BITS;
 			if (unlikely(constant_pos >= constants.size())) {
 				Token error;
 				error.type = Token::ERROR;
@@ -183,7 +183,7 @@ Error GDScriptTokenizerBuffer::set_code_buffer(const Vector<uint8_t> &p_buffer) 
 		String s = String::utf32(Span(reinterpret_cast<const char32_t *>(cs.ptr()), len));
 		b += len * 4;
 		total_len -= len * 4;
-		identifiers.write[i] = s;
+		identifiers[i] = s;
 	}
 
 	constants.resize(constant_count);
@@ -196,7 +196,7 @@ Error GDScriptTokenizerBuffer::set_code_buffer(const Vector<uint8_t> &p_buffer) 
 		}
 		b += len;
 		total_len -= len;
-		constants.write[i] = v;
+		constants[i] = v;
 	}
 
 	for (uint32_t i = 0; i < token_line_count; i++) {
@@ -228,7 +228,7 @@ Error GDScriptTokenizerBuffer::set_code_buffer(const Vector<uint8_t> &p_buffer) 
 		Token token = _binary_to_token(b);
 		b += token_len;
 		ERR_FAIL_INDEX_V(token.type, Token::TK_MAX, ERR_INVALID_DATA);
-		tokens.write[i] = token;
+		tokens[i] = token;
 		total_len -= token_len;
 	}
 
