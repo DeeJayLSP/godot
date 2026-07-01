@@ -638,7 +638,7 @@ Error GDScriptAnalyzer::resolve_class_inheritance(GDScriptParser::ClassNode *p_c
 	}
 
 	if (p_recursive) {
-		for (int i = 0; i < p_class->members.size(); i++) {
+		for (uint32_t i = 0; i < p_class->members.size(); i++) {
 			if (p_class->members[i].type == GDScriptParser::ClassNode::Member::CLASS) {
 				const Error inner_err = resolve_class_inheritance(p_class->members[i].m_class, true);
 				if (inner_err != OK && err == OK) {
@@ -907,7 +907,7 @@ GDScriptParser::DataType GDScriptAnalyzer::resolve_datatype(GDScriptParser::Type
 
 	if (p_type->type_chain.size() > 1) {
 		if (result.kind == GDScriptParser::DataType::CLASS) {
-			for (int i = 1; i < p_type->type_chain.size(); i++) {
+			for (uint32_t i = 1; i < p_type->type_chain.size(); i++) {
 				GDScriptParser::DataType base = result;
 				reduce_identifier_from_base(p_type->type_chain[i], &base);
 				result = p_type->type_chain[i]->get_datatype();
@@ -965,9 +965,9 @@ void GDScriptAnalyzer::resolve_class_member(GDScriptParser::ClassNode *p_class, 
 }
 
 void GDScriptAnalyzer::resolve_class_member(GDScriptParser::ClassNode *p_class, int p_index, const GDScriptParser::Node *p_source) {
-	ERR_FAIL_INDEX(p_index, p_class->members.size());
+	ERR_FAIL_INDEX(p_index, (int)p_class->members.size());
 
-	GDScriptParser::ClassNode::Member &member = p_class->members.write[p_index];
+	GDScriptParser::ClassNode::Member &member = p_class->members[p_index];
 	if (p_source == nullptr && parser->has_class(p_class)) {
 		p_source = member.get_source_node();
 	}
@@ -1126,7 +1126,7 @@ void GDScriptAnalyzer::resolve_class_member(GDScriptParser::ClassNode *p_class, 
 				// MethodInfo inline so it's a tiny bit more efficient.
 				MethodInfo mi = MethodInfo(member.signal->identifier->name);
 
-				for (int j = 0; j < member.signal->parameters.size(); j++) {
+				for (uint32_t j = 0; j < member.signal->parameters.size(); j++) {
 					GDScriptParser::ParameterNode *param = member.signal->parameters[j];
 					GDScriptParser::DataType param_type = type_from_metatype(resolve_datatype(param->datatype_specifier));
 					param->set_datatype(param_type);
@@ -1157,8 +1157,8 @@ void GDScriptAnalyzer::resolve_class_member(GDScriptParser::ClassNode *p_class, 
 				current_enum = member.m_enum;
 
 				Dictionary dictionary;
-				for (int j = 0; j < member.m_enum->values.size(); j++) {
-					GDScriptParser::EnumNode::Value &element = member.m_enum->values.write[j];
+				for (uint32_t j = 0; j < member.m_enum->values.size(); j++) {
+					GDScriptParser::EnumNode::Value &element = member.m_enum->values[j];
 
 					if (element.custom_value) {
 						reduce_expression(element.custom_value);
@@ -1242,7 +1242,7 @@ void GDScriptAnalyzer::resolve_class_member(GDScriptParser::ClassNode *p_class, 
 				}
 
 				// Also update the original references.
-				member.enum_value.parent_enum->values.set(member.enum_value.index, member.enum_value);
+				member.enum_value.parent_enum->values[member.enum_value.index] = member.enum_value;
 
 				member.enum_value.identifier->set_datatype(make_class_enum_type(UNNAMED_ENUM, p_class, parser->script_path, false));
 			} break;
@@ -1314,7 +1314,7 @@ void GDScriptAnalyzer::resolve_class_interface(GDScriptParser::ClassNode *p_clas
 			resolve_class_interface(base_class, p_class);
 		}
 
-		for (int i = 0; i < p_class->members.size(); i++) {
+		for (uint32_t i = 0; i < p_class->members.size(); i++) {
 			resolve_class_member(p_class, i);
 
 #ifdef DEBUG_ENABLED
@@ -1346,7 +1346,7 @@ void GDScriptAnalyzer::resolve_class_interface(GDScriptParser::ClassNode *p_clas
 	resolve_class_interface(p_class);
 
 	if (p_recursive) {
-		for (int i = 0; i < p_class->members.size(); i++) {
+		for (uint32_t i = 0; i < p_class->members.size(); i++) {
 			GDScriptParser::ClassNode::Member member = p_class->members[i];
 			if (member.type == GDScriptParser::ClassNode::Member::CLASS) {
 				resolve_class_interface(member.m_class, true);
@@ -1405,7 +1405,7 @@ void GDScriptAnalyzer::resolve_class_body(GDScriptParser::ClassNode *p_class, co
 	}
 
 	// Do functions, properties, and groups now.
-	for (int i = 0; i < p_class->members.size(); i++) {
+	for (uint32_t i = 0; i < p_class->members.size(); i++) {
 		GDScriptParser::ClassNode::Member member = p_class->members[i];
 		if (member.type == GDScriptParser::ClassNode::Member::FUNCTION) {
 			// Apply annotations.
@@ -1438,7 +1438,7 @@ void GDScriptAnalyzer::resolve_class_body(GDScriptParser::ClassNode *p_class, co
 	}
 
 	// Check unused variables and datatypes of property getters and setters.
-	for (int i = 0; i < p_class->members.size(); i++) {
+	for (uint32_t i = 0; i < p_class->members.size(); i++) {
 		GDScriptParser::ClassNode::Member member = p_class->members[i];
 		if (member.type == GDScriptParser::ClassNode::Member::VARIABLE) {
 #ifdef DEBUG_ENABLED
@@ -1574,7 +1574,7 @@ void GDScriptAnalyzer::resolve_class_body(GDScriptParser::ClassNode *p_class, bo
 	resolve_class_body(p_class);
 
 	if (p_recursive) {
-		for (int i = 0; i < p_class->members.size(); i++) {
+		for (uint32_t i = 0; i < p_class->members.size(); i++) {
 			GDScriptParser::ClassNode::Member member = p_class->members[i];
 			if (member.type == GDScriptParser::ClassNode::Member::CLASS) {
 				resolve_class_body(member.m_class, true);
@@ -2070,7 +2070,7 @@ void GDScriptAnalyzer::decide_suite_type(GDScriptParser::Node *p_suite, GDScript
 }
 
 void GDScriptAnalyzer::resolve_suite(GDScriptParser::SuiteNode *p_suite, bool p_is_root) {
-	for (int i = 0; i < p_suite->statements.size(); i++) {
+	for (uint32_t i = 0; i < p_suite->statements.size(); i++) {
 		GDScriptParser::Node *stmt = p_suite->statements[i];
 		// Apply annotations.
 		for (GDScriptParser::AnnotationNode *&E : stmt->annotations) {
@@ -2421,7 +2421,7 @@ void GDScriptAnalyzer::resolve_assert(GDScriptParser::AssertNode *p_assert) {
 void GDScriptAnalyzer::resolve_match(GDScriptParser::MatchNode *p_match) {
 	reduce_expression(p_match->test);
 
-	for (int i = 0; i < p_match->branches.size(); i++) {
+	for (uint32_t i = 0; i < p_match->branches.size(); i++) {
 		resolve_match_branch(p_match->branches[i], p_match->test);
 
 		decide_suite_type(p_match, p_match->branches[i]);
@@ -2435,7 +2435,7 @@ void GDScriptAnalyzer::resolve_match_branch(GDScriptParser::MatchBranchNode *p_m
 		E->apply(parser, p_match_branch, nullptr); // TODO: Provide `p_class`.
 	}
 
-	for (int i = 0; i < p_match_branch->patterns.size(); i++) {
+	for (uint32_t i = 0; i < p_match_branch->patterns.size(); i++) {
 		resolve_match_pattern(p_match_branch->patterns[i], p_match_test);
 	}
 
@@ -2497,14 +2497,14 @@ void GDScriptAnalyzer::resolve_match_pattern(GDScriptParser::PatternNode *p_matc
 #endif // DEBUG_ENABLED
 			break;
 		case GDScriptParser::PatternNode::PT_ARRAY:
-			for (int i = 0; i < p_match_pattern->array.size(); i++) {
+			for (uint32_t i = 0; i < p_match_pattern->array.size(); i++) {
 				resolve_match_pattern(p_match_pattern->array[i], nullptr);
 				decide_suite_type(p_match_pattern, p_match_pattern->array[i]);
 			}
 			result = p_match_pattern->get_datatype();
 			break;
 		case GDScriptParser::PatternNode::PT_DICTIONARY:
-			for (int i = 0; i < p_match_pattern->dictionary.size(); i++) {
+			for (uint32_t i = 0; i < p_match_pattern->dictionary.size(); i++) {
 				if (p_match_pattern->dictionary[i].key) {
 					reduce_expression(p_match_pattern->dictionary[i].key);
 					if (!p_match_pattern->dictionary[i].key->is_constant) {
@@ -2712,7 +2712,7 @@ void GDScriptAnalyzer::reduce_expression(GDScriptParser::ExpressionNode *p_expre
 }
 
 void GDScriptAnalyzer::reduce_array(GDScriptParser::ArrayNode *p_array) {
-	for (int i = 0; i < p_array->elements.size(); i++) {
+	for (uint32_t i = 0; i < p_array->elements.size(); i++) {
 		GDScriptParser::ExpressionNode *element = p_array->elements[i];
 		reduce_expression(element);
 	}
@@ -2795,7 +2795,7 @@ void GDScriptAnalyzer::update_array_literal_element_type(GDScriptParser::ArrayNo
 	GDScriptParser::DataType expected_type = p_element_type;
 	expected_type.container_element_types.clear(); // Nested types (like `Array[Array[int]]`) are not currently supported.
 
-	for (int i = 0; i < p_array->elements.size(); i++) {
+	for (uint32_t i = 0; i < p_array->elements.size(); i++) {
 		GDScriptParser::ExpressionNode *element_node = p_array->elements[i];
 		if (element_node->is_constant) {
 			update_const_expression_builtin_type(element_node, expected_type, "include");
@@ -2828,7 +2828,7 @@ void GDScriptAnalyzer::update_dictionary_literal_element_type(GDScriptParser::Di
 	expected_key_type.container_element_types.clear(); // Nested types (like `Dictionary[String, Array[int]]`) are not currently supported.
 	expected_value_type.container_element_types.clear();
 
-	for (int i = 0; i < p_dictionary->elements.size(); i++) {
+	for (uint32_t i = 0; i < p_dictionary->elements.size(); i++) {
 		GDScriptParser::ExpressionNode *key_element_node = p_dictionary->elements[i].key;
 		if (key_element_node->is_constant) {
 			update_const_expression_builtin_type(key_element_node, expected_key_type, "include");
@@ -3351,7 +3351,7 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 #ifdef DEBUG_ENABLED
 						mark_node_unsafe(p_call);
 						// Constructors support overloads.
-						Vector<String> types;
+						LocalVector<String> types;
 						for (int i = 0; i < Variant::VARIANT_MAX; i++) {
 							if (i != builtin_type && Variant::can_convert_strict((Variant::Type)i, builtin_type)) {
 								types.push_back(Variant::get_type_name((Variant::Type)i));
@@ -3361,7 +3361,7 @@ void GDScriptAnalyzer::reduce_call(GDScriptParser::CallNode *p_call, bool p_is_a
 						if (types.size() == 1) {
 							expected_types += "\" or \"" + types[0];
 						} else if (types.size() >= 2) {
-							for (int i = 0; i < types.size() - 1; i++) {
+							for (uint32_t i = 0; i < types.size() - 1; i++) {
 								expected_types += "\", \"" + types[i];
 							}
 							expected_types += "\", or \"" + types[types.size() - 1];
@@ -3854,7 +3854,7 @@ void GDScriptAnalyzer::reduce_cast(GDScriptParser::CastNode *p_cast) {
 void GDScriptAnalyzer::reduce_dictionary(GDScriptParser::DictionaryNode *p_dictionary) {
 	HashMap<Variant, GDScriptParser::ExpressionNode *, HashMapHasherDefault, StringLikeVariantComparator> elements;
 
-	for (int i = 0; i < p_dictionary->elements.size(); i++) {
+	for (uint32_t i = 0; i < p_dictionary->elements.size(); i++) {
 		const GDScriptParser::DictionaryNode::Pair &element = p_dictionary->elements[i];
 		if (p_dictionary->style == GDScriptParser::DictionaryNode::PYTHON_DICT) {
 			reduce_expression(element.key);
@@ -4400,7 +4400,7 @@ void GDScriptAnalyzer::reduce_identifier(GDScriptParser::IdentifierNode *p_ident
 
 	// Check if we are inside an enum. This allows enum values to access other elements of the same enum.
 	if (current_enum) {
-		for (int i = 0; i < current_enum->values.size(); i++) {
+		for (uint32_t i = 0; i < current_enum->values.size(); i++) {
 			const GDScriptParser::EnumNode::Value &element = current_enum->values[i];
 			if (element.identifier->name == p_identifier->name) {
 				StringName enum_name = current_enum->identifier ? current_enum->identifier->name : UNNAMED_ENUM;
@@ -5325,7 +5325,7 @@ Variant GDScriptAnalyzer::make_array_reduced_value(GDScriptParser::ArrayNode *p_
 	Array array = p_array->get_datatype().has_container_element_type(0) ? make_array_from_element_datatype(p_array->get_datatype().get_container_element_type(0)) : Array();
 
 	array.resize(p_array->elements.size());
-	for (int i = 0; i < p_array->elements.size(); i++) {
+	for (uint32_t i = 0; i < p_array->elements.size(); i++) {
 		GDScriptParser::ExpressionNode *element = p_array->elements[i];
 
 		bool is_element_value_reduced = false;
@@ -5348,7 +5348,7 @@ Variant GDScriptAnalyzer::make_dictionary_reduced_value(GDScriptParser::Dictiona
 			? make_dictionary_from_element_datatype(p_dictionary->get_datatype().get_container_element_type_or_variant(0), p_dictionary->get_datatype().get_container_element_type_or_variant(1))
 			: Dictionary();
 
-	for (int i = 0; i < p_dictionary->elements.size(); i++) {
+	for (uint32_t i = 0; i < p_dictionary->elements.size(); i++) {
 		const GDScriptParser::DictionaryNode::Pair &element = p_dictionary->elements[i];
 
 		bool is_element_key_reduced = false;
@@ -6605,7 +6605,7 @@ void GDScriptAnalyzer::resolve_pending_lambda_bodies() {
 			}
 
 			// Add captures as extra parameters at the beginning.
-			for (int i = 0; i < lambda->captures.size(); i++) {
+			for (uint32_t i = 0; i < lambda->captures.size(); i++) {
 				GDScriptParser::IdentifierNode *capture = lambda->captures[i];
 				GDScriptParser::ParameterNode *capture_param = parser->alloc_node<GDScriptParser::ParameterNode>();
 				capture_param->identifier = capture;

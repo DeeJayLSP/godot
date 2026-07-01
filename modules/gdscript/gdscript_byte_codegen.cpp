@@ -402,13 +402,13 @@ GDScriptFunction *GDScriptByteCodeGenerator::write_end() {
 	function->_instruction_args_size = instr_args_max;
 
 #ifdef DEBUG_ENABLED
-	function->operator_names = operator_names;
-	function->setter_names = setter_names;
-	function->getter_names = getter_names;
-	function->builtin_methods_names = builtin_methods_names;
-	function->constructors_names = constructors_names;
-	function->utilities_names = utilities_names;
-	function->gds_utilities_names = gds_utilities_names;
+	function->operator_names = std::move(operator_names);
+	function->setter_names = std::move(setter_names);
+	function->getter_names = std::move(getter_names);
+	function->builtin_methods_names = std::move(builtin_methods_names);
+	function->constructors_names = std::move(constructors_names);
+	function->utilities_names = std::move(utilities_names);
+	function->gds_utilities_names = std::move(gds_utilities_names);
 #endif
 
 	ended = true;

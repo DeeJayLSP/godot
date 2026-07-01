@@ -281,7 +281,7 @@ public:
 	struct ClassDocData {
 		String brief;
 		String description;
-		Vector<Pair<String, String>> tutorials;
+		LocalVector<Pair<String, String>> tutorials;
 		bool is_deprecated = false;
 		String deprecated_message;
 		bool is_experimental = false;
@@ -376,7 +376,7 @@ public:
 	struct AnnotationNode : public Node {
 		StringName name;
 		Vector<ExpressionNode *> arguments;
-		Vector<Variant> resolved_arguments;
+		LocalVector<Variant> resolved_arguments;
 
 		/** Information of the annotation. Might be null for unknown annotations. */
 		AnnotationInfo *info = nullptr;
@@ -393,7 +393,7 @@ public:
 	};
 
 	struct ArrayNode : public ExpressionNode {
-		Vector<ExpressionNode *> elements;
+		LocalVector<ExpressionNode *> elements;
 
 		ArrayNode() {
 			type = ARRAY;
@@ -551,7 +551,7 @@ public:
 		};
 
 		IdentifierNode *identifier = nullptr;
-		Vector<Value> values;
+		LocalVector<Value> values;
 		Variant dictionary;
 #ifdef TOOLS_ENABLED
 		MemberDocData doc_data;
@@ -750,7 +750,7 @@ public:
 		IdentifierNode *identifier = nullptr;
 		String icon_path;
 		String simplified_icon_path;
-		Vector<Member> members;
+		LocalVector<Member> members;
 		HashMap<StringName, int> members_indices;
 		ClassNode *outer = nullptr;
 		bool extends_used = false;
@@ -774,8 +774,8 @@ public:
 
 		// EnumValue docs are parsed after itself, so we need a method to add/modify the doc property later.
 		void set_enum_value_doc_data(const StringName &p_name, const MemberDocData &p_doc_data) {
-			ERR_FAIL_INDEX(members_indices[p_name], members.size());
-			members.write[members_indices[p_name]].enum_value.doc_data = p_doc_data;
+			ERR_FAIL_INDEX(members_indices[p_name], (int)members.size());
+			members[members_indices[p_name]].enum_value.doc_data = p_doc_data;
 		}
 #endif // TOOLS_ENABLED
 
@@ -837,7 +837,7 @@ public:
 			ExpressionNode *key = nullptr;
 			ExpressionNode *value = nullptr;
 		};
-		Vector<Pair> elements;
+		LocalVector<Pair> elements;
 
 		enum Style {
 			LUA_TABLE,
@@ -959,7 +959,7 @@ public:
 		FunctionNode *function = nullptr;
 		FunctionNode *parent_function = nullptr;
 		LambdaNode *parent_lambda = nullptr;
-		Vector<IdentifierNode *> captures;
+		LocalVector<IdentifierNode *> captures;
 		HashMap<StringName, int> captures_indices;
 		bool use_self = false;
 
@@ -982,7 +982,7 @@ public:
 
 	struct MatchNode : public Node {
 		ExpressionNode *test = nullptr;
-		Vector<MatchBranchNode *> branches;
+		LocalVector<MatchBranchNode *> branches;
 
 		MatchNode() {
 			type = MATCH;
@@ -990,7 +990,7 @@ public:
 	};
 
 	struct MatchBranchNode : public Node {
-		Vector<PatternNode *> patterns;
+		LocalVector<PatternNode *> patterns;
 		SuiteNode *block = nullptr;
 		bool has_wildcard = false;
 		SuiteNode *guard_body = nullptr;
@@ -1029,14 +1029,14 @@ public:
 			IdentifierNode *bind;
 			ExpressionNode *expression;
 		};
-		Vector<PatternNode *> array;
+		LocalVector<PatternNode *> array;
 		bool rest_used = false; // For array/dict patterns.
 
 		struct Pair {
 			ExpressionNode *key = nullptr;
 			PatternNode *value_pattern = nullptr;
 		};
-		Vector<Pair> dictionary;
+		LocalVector<Pair> dictionary;
 
 		HashMap<StringName, IdentifierNode *> binds;
 
@@ -1077,7 +1077,7 @@ public:
 
 	struct SignalNode : public Node {
 		IdentifierNode *identifier = nullptr;
-		Vector<ParameterNode *> parameters;
+		LocalVector<ParameterNode *> parameters;
 		HashMap<StringName, int> parameters_indices;
 		MethodInfo method_info;
 #ifdef TOOLS_ENABLED
@@ -1107,7 +1107,7 @@ public:
 
 	struct SuiteNode : public Node {
 		SuiteNode *parent_block = nullptr;
-		Vector<Node *> statements;
+		LocalVector<Node *> statements;
 		struct Local {
 			enum Type {
 				UNDEFINED,
@@ -1182,7 +1182,7 @@ public:
 			}
 		};
 		Local empty;
-		Vector<Local> locals;
+		LocalVector<Local> locals;
 		HashMap<StringName, int> locals_indices;
 
 		FunctionNode *parent_function = nullptr;
@@ -1222,11 +1222,11 @@ public:
 	};
 
 	struct TypeNode : public Node {
-		Vector<IdentifierNode *> type_chain;
-		Vector<TypeNode *> container_types;
+		LocalVector<IdentifierNode *> type_chain;
+		LocalVector<TypeNode *> container_types;
 
-		TypeNode *get_container_type_or_null(int p_index) const {
-			return p_index >= 0 && p_index < container_types.size() ? container_types[p_index] : nullptr;
+		TypeNode *get_container_type_or_null(uint32_t p_index) const {
+			return p_index < container_types.size() ? container_types[p_index] : nullptr;
 		}
 
 		TypeNode() {

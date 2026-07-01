@@ -422,13 +422,13 @@ private:
 	CharString func_cname;
 	const char *_func_cname = nullptr;
 
-	Vector<String> operator_names;
-	Vector<String> setter_names;
-	Vector<String> getter_names;
-	Vector<String> builtin_methods_names;
-	Vector<String> constructors_names;
-	Vector<String> utilities_names;
-	Vector<String> gds_utilities_names;
+	LocalVector<String> operator_names;
+	LocalVector<String> setter_names;
+	LocalVector<String> getter_names;
+	LocalVector<String> builtin_methods_names;
+	LocalVector<String> constructors_names;
+	LocalVector<String> utilities_names;
+	LocalVector<String> gds_utilities_names;
 
 	struct Profile {
 		StringName signature;

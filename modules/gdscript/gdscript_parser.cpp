@@ -1681,7 +1681,7 @@ GDScriptParser::EnumNode *GDScriptParser::parse_enum(bool p_is_static) {
 
 #ifdef TOOLS_ENABLED
 	// Enum values documentation.
-	for (int i = 0; i < enum_node->values.size(); i++) {
+	for (uint32_t i = 0; i < enum_node->values.size(); i++) {
 		int enum_value_line = enum_node->values[i].line;
 		int doc_comment_line = enum_value_line - 1;
 
@@ -1697,7 +1697,7 @@ GDScriptParser::EnumNode *GDScriptParser::parse_enum(bool p_is_static) {
 		}
 
 		if (named) {
-			enum_node->values.write[i].doc_data = doc_data;
+			enum_node->values[i].doc_data = doc_data;
 		} else {
 			current_class->set_enum_value_doc_data(enum_node->values[i].identifier->name, doc_data);
 		}
@@ -2564,7 +2564,7 @@ GDScriptParser::MatchBranchNode *GDScriptParser::parse_match_branch() {
 		if (guard == nullptr) {
 			push_error(R"(Expected expression for pattern guard after "when".)");
 		} else {
-			branch->guard_body->statements.append(guard);
+			branch->guard_body->statements.push_back(guard);
 		}
 		current_suite = parent_block;
 		complete_extents(branch->guard_body);
@@ -3933,7 +3933,7 @@ GDScriptParser::TypeNode *GDScriptParser::parse_type(bool p_allow_void) {
 			} else if (container_type->container_types.size() > 0) {
 				push_error("Nested typed collections are not supported.");
 			} else {
-				type->container_types.append(container_type);
+				type->container_types.push_back(container_type);
 			}
 			first_pass = false;
 		} while (match(GDScriptTokenizer::Token::COMMA));
@@ -4245,7 +4245,7 @@ GDScriptParser::ClassDocData GDScriptParser::parse_class_doc_comment(int p_line,
 					link = stripped_line.substr(colon_pos).strip_edges();
 				}
 
-				result.tutorials.append(Pair<String, String>(title, link));
+				result.tutorials.push_back(Pair<String, String>(title, link));
 				continue;
 			} else if (stripped_line == "@deprecated" || stripped_line.begins_with("@deprecated:")) {
 				result.is_deprecated = true;
@@ -4707,7 +4707,7 @@ bool GDScriptParser::export_annotations(AnnotationNode *p_annotation, Node *p_ta
 	variable->export_info.hint = t_hint;
 
 	String hint_string;
-	for (int i = 0; i < p_annotation->resolved_arguments.size(); i++) {
+	for (uint32_t i = 0; i < p_annotation->resolved_arguments.size(); i++) {
 		String arg_string = String(p_annotation->resolved_arguments[i]);
 
 		if (p_annotation->name != SNAME("@export_placeholder")) {
@@ -5204,7 +5204,7 @@ bool GDScriptParser::warning_ignore_annotation(AnnotationNode *p_annotation, Nod
 				case Node::MATCH_BRANCH: {
 					MatchBranchNode *branch = static_cast<MatchBranchNode *>(p_target);
 					end_line = branch->start_line;
-					for (int i = 0; i < branch->patterns.size(); i++) {
+					for (uint32_t i = 0; i < branch->patterns.size(); i++) {
 						end_line = MAX(end_line, branch->patterns[i]->end_line);
 					}
 				} break;
@@ -5282,7 +5282,7 @@ bool GDScriptParser::rpc_annotation(AnnotationNode *p_annotation, Node *p_target
 		unsigned char permission_args = 0;
 		unsigned char transfer_mode_args = 0;
 
-		for (int i = 0; i < p_annotation->resolved_arguments.size(); i++) {
+		for (uint32_t i = 0; i < p_annotation->resolved_arguments.size(); i++) {
 			if (i == 3) {
 				rpc_config["channel"] = p_annotation->resolved_arguments[i].operator int();
 				continue;
@@ -5694,7 +5694,7 @@ void GDScriptParser::TreePrinter::print_annotation(const AnnotationNode *p_annot
 
 void GDScriptParser::TreePrinter::print_array(ArrayNode *p_array) {
 	push_text("[ ");
-	for (int i = 0; i < p_array->elements.size(); i++) {
+	for (uint32_t i = 0; i < p_array->elements.size(); i++) {
 		if (i > 0) {
 			push_text(" , ");
 		}
@@ -5898,7 +5898,7 @@ void GDScriptParser::TreePrinter::print_class(ClassNode *p_class) {
 
 	increase_indent();
 
-	for (int i = 0; i < p_class->members.size(); i++) {
+	for (uint32_t i = 0; i < p_class->members.size(); i++) {
 		const ClassNode::Member &m = p_class->members[i];
 
 		switch (m.type) {
@@ -5953,7 +5953,7 @@ void GDScriptParser::TreePrinter::print_constant(ConstantNode *p_constant) {
 void GDScriptParser::TreePrinter::print_dictionary(DictionaryNode *p_dictionary) {
 	push_line("{");
 	increase_indent();
-	for (int i = 0; i < p_dictionary->elements.size(); i++) {
+	for (uint32_t i = 0; i < p_dictionary->elements.size(); i++) {
 		print_expression(p_dictionary->elements[i].key);
 		if (p_dictionary->style == DictionaryNode::PYTHON_DICT) {
 			push_text(" : ");
@@ -6040,7 +6040,7 @@ void GDScriptParser::TreePrinter::print_enum(EnumNode *p_enum) {
 
 	push_line(" {");
 	increase_indent();
-	for (int i = 0; i < p_enum->values.size(); i++) {
+	for (uint32_t i = 0; i < p_enum->values.size(); i++) {
 		const EnumNode::Value &item = p_enum->values[i];
 		print_identifier(item.identifier);
 		push_text(" = ");
@@ -6132,7 +6132,7 @@ void GDScriptParser::TreePrinter::print_if(IfNode *p_if, bool p_is_elif) {
 void GDScriptParser::TreePrinter::print_lambda(LambdaNode *p_lambda) {
 	print_function(p_lambda->function, "Lambda");
 	push_text("| captures [ ");
-	for (int i = 0; i < p_lambda->captures.size(); i++) {
+	for (uint32_t i = 0; i < p_lambda->captures.size(); i++) {
 		if (i > 0) {
 			push_text(" , ");
 		}
@@ -6175,14 +6175,14 @@ void GDScriptParser::TreePrinter::print_match(MatchNode *p_match) {
 	push_line(" :");
 
 	increase_indent();
-	for (int i = 0; i < p_match->branches.size(); i++) {
+	for (uint32_t i = 0; i < p_match->branches.size(); i++) {
 		print_match_branch(p_match->branches[i]);
 	}
 	decrease_indent();
 }
 
 void GDScriptParser::TreePrinter::print_match_branch(MatchBranchNode *p_match_branch) {
-	for (int i = 0; i < p_match_branch->patterns.size(); i++) {
+	for (uint32_t i = 0; i < p_match_branch->patterns.size(); i++) {
 		if (i > 0) {
 			push_text(" , ");
 		}
@@ -6216,7 +6216,7 @@ void GDScriptParser::TreePrinter::print_match_pattern(PatternNode *p_match_patte
 			break;
 		case PatternNode::PT_ARRAY:
 			push_text("[ ");
-			for (int i = 0; i < p_match_pattern->array.size(); i++) {
+			for (uint32_t i = 0; i < p_match_pattern->array.size(); i++) {
 				if (i > 0) {
 					push_text(" , ");
 				}
@@ -6226,7 +6226,7 @@ void GDScriptParser::TreePrinter::print_match_pattern(PatternNode *p_match_patte
 			break;
 		case PatternNode::PT_DICTIONARY:
 			push_text("{ ");
-			for (int i = 0; i < p_match_pattern->dictionary.size(); i++) {
+			for (uint32_t i = 0; i < p_match_pattern->dictionary.size(); i++) {
 				if (i > 0) {
 					push_text(" , ");
 				}
@@ -6286,7 +6286,7 @@ void GDScriptParser::TreePrinter::print_signal(SignalNode *p_signal) {
 	push_text("Signal ");
 	print_identifier(p_signal->identifier);
 	push_text("( ");
-	for (int i = 0; i < p_signal->parameters.size(); i++) {
+	for (uint32_t i = 0; i < p_signal->parameters.size(); i++) {
 		print_parameter(p_signal->parameters[i]);
 	}
 	push_line(" )");
@@ -6357,7 +6357,7 @@ void GDScriptParser::TreePrinter::print_statement(Node *p_statement) {
 }
 
 void GDScriptParser::TreePrinter::print_suite(SuiteNode *p_suite) {
-	for (int i = 0; i < p_suite->statements.size(); i++) {
+	for (uint32_t i = 0; i < p_suite->statements.size(); i++) {
 		print_statement(p_suite->statements[i]);
 	}
 }
@@ -6377,7 +6377,7 @@ void GDScriptParser::TreePrinter::print_type(TypeNode *p_type) {
 	if (p_type->type_chain.is_empty()) {
 		push_text("Void");
 	} else {
-		for (int i = 0; i < p_type->type_chain.size(); i++) {
+		for (uint32_t i = 0; i < p_type->type_chain.size(); i++) {
 			if (i > 0) {
 				push_text(".");
 			}

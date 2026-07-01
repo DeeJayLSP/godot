@@ -106,9 +106,6 @@ class GDScriptByteCodeGenerator : public GDScriptCodeGenerator {
 
 	HashMap<Variant, int> constant_map;
 	RBMap<StringName, int> name_map;
-#ifdef TOOLS_ENABLED
-	Vector<StringName> named_globals;
-#endif
 	RBMap<Variant::ValidatedOperatorEvaluator, int> operator_func_map;
 	RBMap<Variant::ValidatedSetter, int> setters_map;
 	RBMap<Variant::ValidatedGetter, int> getters_map;
@@ -126,18 +123,18 @@ class GDScriptByteCodeGenerator : public GDScriptCodeGenerator {
 #ifdef DEBUG_ENABLED
 	// Keep method and property names for pointer and validated operations.
 	// Used when disassembling the bytecode.
-	Vector<String> operator_names;
-	Vector<String> setter_names;
-	Vector<String> getter_names;
-	Vector<String> builtin_methods_names;
-	Vector<String> constructors_names;
-	Vector<String> utilities_names;
-	Vector<String> gds_utilities_names;
-	void add_debug_name(Vector<String> &vector, int index, const String &name) {
+	LocalVector<String> operator_names;
+	LocalVector<String> setter_names;
+	LocalVector<String> getter_names;
+	LocalVector<String> builtin_methods_names;
+	LocalVector<String> constructors_names;
+	LocalVector<String> utilities_names;
+	LocalVector<String> gds_utilities_names;
+	void add_debug_name(LocalVector<String> &vector, uint32_t index, const String &name) {
 		if (index >= vector.size()) {
 			vector.resize(index + 1);
 		}
-		vector.write[index] = name;
+		vector[index] = name;
 	}
 #endif
 

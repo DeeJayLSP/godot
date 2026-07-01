@@ -550,7 +550,7 @@ bool GDScript::_update_exports(bool *r_err, bool p_recursive_call, PlaceHolderSc
 
 			members_cache.push_back(get_class_category());
 
-			for (int i = 0; i < c->members.size(); i++) {
+			for (uint32_t i = 0; i < c->members.size(); i++) {
 				const GDScriptParser::ClassNode::Member &member = c->members[i];
 
 				switch (member.type) {
@@ -2790,7 +2790,7 @@ String GDScriptLanguage::_get_global_class_name(const String &p_path, String *r_
 
 						while (extend_classes.size() > 0) {
 							bool found = false;
-							for (int i = 0; i < subclass->members.size(); i++) {
+							for (uint32_t i = 0; i < subclass->members.size(); i++) {
 								if (subclass->members[i].type != GDScriptParser::ClassNode::Member::CLASS) {
 									continue;
 								}
