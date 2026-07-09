@@ -1769,7 +1769,7 @@ GridMapEditor::GridMapEditor() {
 	toolbar->add_child(mode_buttons);
 	mode_buttons_group.instantiate();
 
-	viewport_shortcut_buttons.reserve(12);
+	viewport_shortcut_buttons.reserve_exact(13);
 
 	transform_mode_button = memnew(Button);
 	transform_mode_button->set_theme_type_variation(SceneStringName(FlatButton));

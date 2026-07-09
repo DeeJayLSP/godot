@@ -95,7 +95,7 @@ public:
 
 	bool is_empty() { return _values.is_empty(); }
 	size_t size() { return _values.size(); }
-	void reserve(size_t p_new_cap) { _values.reserve(p_new_cap); }
+	void reserve(size_t p_new_cap) { _values.reserve_exact(p_new_cap); }
 
 protected:
 	static constexpr IndexType INVALID = std::numeric_limits<IndexType>::max();
@@ -118,7 +118,7 @@ protected:
 		return _values[val_idx->value];
 	}
 
-	TightLocalVector<ValueType> _values;
+	LocalVector<ValueType> _values;
 	HashMap<KeyType, IndexValue> _inflection_indexes;
 	IndexValue _linear_indexes[LinearCount];
 };

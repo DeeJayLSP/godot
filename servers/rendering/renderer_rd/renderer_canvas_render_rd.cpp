@@ -2993,7 +2993,7 @@ void RendererCanvasRenderRD::_uniform_set_invalidation_callback(void *p_userdata
 }
 
 void RendererCanvasRenderRD::_canvas_texture_invalidation_callback(bool p_deleted, void *p_userdata) {
-	KeyValue<RID, TightLocalVector<RID>> *kv = static_cast<KeyValue<RID, TightLocalVector<RID>> *>(p_userdata);
+	KeyValue<RID, LocalVector<RID>> *kv = static_cast<KeyValue<RID, LocalVector<RID>> *>(p_userdata);
 	RD *rd = RD::get_singleton();
 	for (RID rid : kv->value) {
 		// The invalidation callback will also take care of clearing rid_set_to_uniform_set cache.
@@ -3029,8 +3029,8 @@ void RendererCanvasRenderRD::_render_batch(RD::DrawListID p_draw_list, CanvasSha
 			// If this is a CanvasTexture, it must be tracked so that any changes to the diffuse, normal,
 			// or specular channels invalidate all associated uniform sets.
 			if (ts->owns_canvas_texture(p_batch->tex_info->state.texture)) {
-				KeyValue<RID, TightLocalVector<RID>> *kv = nullptr;
-				if (HashMap<RID, TightLocalVector<RID>>::Iterator i = canvas_texture_to_uniform_set.find(p_batch->tex_info->state.texture); i == canvas_texture_to_uniform_set.end()) {
+				KeyValue<RID, LocalVector<RID>> *kv = nullptr;
+				if (HashMap<RID, LocalVector<RID>>::Iterator i = canvas_texture_to_uniform_set.find(p_batch->tex_info->state.texture); i == canvas_texture_to_uniform_set.end()) {
 					kv = &*canvas_texture_to_uniform_set.insert(p_batch->tex_info->state.texture, { *uniform_set });
 				} else {
 					i->value.push_back(rid);

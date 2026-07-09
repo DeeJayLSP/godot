@@ -1706,10 +1706,10 @@ private:
 		BinaryMutex operations_mutex;
 	};
 
-	TightLocalVector<TransferWorker *> transfer_worker_pool;
+	LocalVector<TransferWorker *> transfer_worker_pool;
 	uint32_t transfer_worker_pool_size = 0;
 	uint32_t transfer_worker_pool_max_size = 1;
-	TightLocalVector<uint64_t> transfer_worker_operation_used_by_draw;
+	LocalVector<uint64_t> transfer_worker_operation_used_by_draw;
 	LocalVector<uint32_t> transfer_worker_pool_available_list;
 	LocalVector<RDD::TextureBarrier> transfer_worker_pool_texture_barriers;
 	BinaryMutex transfer_worker_pool_mutex;
@@ -1822,7 +1822,7 @@ private:
 
 		// Semaphores the transfer workers can use to wait before rendering the frame.
 		// This must have the same size of the transfer worker pool.
-		TightLocalVector<RDD::SemaphoreID> transfer_worker_semaphores;
+		LocalVector<RDD::SemaphoreID> transfer_worker_semaphores;
 
 		// Extra command buffer pool used for driver workarounds or to reduce GPU bubbles by
 		// splitting the final render pass to the swapchain into its own cmd buffer.
@@ -1835,12 +1835,12 @@ private:
 
 		RDD::QueryPoolID timestamp_pool;
 
-		TightLocalVector<String> timestamp_names;
-		TightLocalVector<uint64_t> timestamp_cpu_values;
+		LocalVector<String> timestamp_names;
+		LocalVector<uint64_t> timestamp_cpu_values;
 		uint32_t timestamp_count = 0;
-		TightLocalVector<String> timestamp_result_names;
-		TightLocalVector<uint64_t> timestamp_cpu_result_values;
-		TightLocalVector<uint64_t> timestamp_result_values;
+		LocalVector<String> timestamp_result_names;
+		LocalVector<uint64_t> timestamp_cpu_result_values;
+		LocalVector<uint64_t> timestamp_result_values;
 		uint32_t timestamp_result_count = 0;
 		uint64_t index = 0;
 	};
@@ -1848,7 +1848,7 @@ private:
 	uint32_t max_timestamp_query_elements = 0;
 
 	int frame = 0;
-	TightLocalVector<Frame> frames;
+	LocalVector<Frame> frames;
 	uint64_t frames_drawn = 0;
 
 	// Whenever logic/physics request a graphics operation (not just deleting a resource) that requires

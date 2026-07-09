@@ -207,7 +207,7 @@ private:
 	struct ResourceInfo {
 		struct States {
 			// As many subresources as mipmaps * layers; planes (for depth-stencil) are tracked together.
-			TightLocalVector<D3D12_RESOURCE_STATES> subresource_states; // Used only if not a view.
+			LocalVector<D3D12_RESOURCE_STATES> subresource_states; // Used only if not a view.
 			uint32_t last_batch_with_uav_barrier = 0;
 		};
 
@@ -355,8 +355,8 @@ public:
 	/**********************/
 private:
 	struct VertexFormatInfo {
-		TightLocalVector<D3D12_INPUT_ELEMENT_DESC> input_elem_descs;
-		TightLocalVector<UINT> vertex_buffer_strides;
+		LocalVector<D3D12_INPUT_ELEMENT_DESC> input_elem_descs;
+		LocalVector<UINT> vertex_buffer_strides;
 	};
 
 public:
@@ -532,9 +532,9 @@ private:
 		UINT sync_interval = 1;
 		UINT creation_flags = 0;
 		RenderPassID render_pass;
-		TightLocalVector<ID3D12Resource *> render_targets;
-		TightLocalVector<TextureInfo> render_targets_info;
-		TightLocalVector<FramebufferID> framebuffers;
+		LocalVector<ID3D12Resource *> render_targets;
+		LocalVector<TextureInfo> render_targets_info;
+		LocalVector<FramebufferID> framebuffers;
 		RDD::DataFormat data_format = DATA_FORMAT_MAX;
 		RDD::ColorSpace color_space = COLOR_SPACE_MAX;
 	};
@@ -562,11 +562,11 @@ private:
 		bool is_screen = false;
 		Size2i size;
 
-		TightLocalVector<uint32_t> attachments_handle_inds; // RTV heap index for color; DSV heap index for DSV.
+		LocalVector<uint32_t> attachments_handle_inds; // RTV heap index for color; DSV heap index for DSV.
 		CPUDescriptorHeapPool::Allocation rtv_alloc;
 		CPUDescriptorHeapPool::Allocation dsv_alloc; // Used only for depth-stencil attachments.
 
-		TightLocalVector<TextureID> attachments; // Color and depth-stencil. Used if not screen.
+		LocalVector<TextureID> attachments; // Color and depth-stencil. Used if not screen.
 		TextureID vrs_attachment;
 	};
 
@@ -618,14 +618,14 @@ private:
 		};
 
 		struct UniformSet {
-			TightLocalVector<UniformBindingInfo> bindings;
+			LocalVector<UniformBindingInfo> bindings;
 			uint32_t resource_root_param_idx = UINT32_MAX;
 			uint32_t resource_descriptor_count = 0;
 			uint32_t sampler_root_param_idx = UINT32_MAX;
 			uint32_t sampler_descriptor_count = 0;
 		};
 
-		TightLocalVector<UniformSet> sets;
+		LocalVector<UniformSet> sets;
 
 		struct SpecializationConstant {
 			uint32_t constant_id = UINT32_MAX;
@@ -633,7 +633,7 @@ private:
 			uint64_t stages_bit_offsets[D3D12_BITCODE_OFFSETS_NUM_STAGES] = {};
 		};
 
-		TightLocalVector<SpecializationConstant> specialization_constants;
+		LocalVector<SpecializationConstant> specialization_constants;
 		uint32_t spirv_specialization_constants_ids_mask = 0;
 
 		HashMap<ShaderStage, Vector<uint8_t>> stages_bytecode;
@@ -669,7 +669,7 @@ private:
 			uint32_t binding = UINT_MAX;
 		};
 
-		TightLocalVector<DynamicBuffer> dynamic_buffers;
+		LocalVector<DynamicBuffer> dynamic_buffers;
 
 		struct StateRequirement {
 			ResourceInfo *resource = nullptr;
@@ -678,7 +678,7 @@ private:
 			uint64_t shader_uniform_idx_mask = 0;
 		};
 
-		TightLocalVector<StateRequirement> resource_states;
+		LocalVector<StateRequirement> resource_states;
 	};
 
 public:
@@ -748,8 +748,8 @@ public:
 
 private:
 	struct RenderPassInfo {
-		TightLocalVector<Attachment> attachments;
-		TightLocalVector<Subpass> subpasses;
+		LocalVector<Attachment> attachments;
+		LocalVector<Subpass> subpasses;
 		uint32_t view_count = 0;
 		uint32_t max_supported_sample_count = 0;
 	};
@@ -904,7 +904,7 @@ private:
 		LocalVector<DescriptorHeap::Allocation> descriptor_allocations;
 		uint32_t descriptor_allocation_count = 0;
 	};
-	TightLocalVector<FrameInfo> frames;
+	LocalVector<FrameInfo> frames;
 	uint32_t frame_idx = 0;
 	uint32_t frames_drawn = 0;
 	bool segment_begun = false;

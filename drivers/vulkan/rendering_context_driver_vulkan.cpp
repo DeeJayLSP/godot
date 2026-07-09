@@ -466,7 +466,7 @@ Error RenderingContextDriverVulkan::_initialize_instance_extensions() {
 	ERR_FAIL_COND_V(err != VK_SUCCESS && err != VK_INCOMPLETE, ERR_CANT_CREATE);
 	ERR_FAIL_COND_V_MSG(instance_extension_count == 0, ERR_CANT_CREATE, "No instance extensions were found.");
 
-	TightLocalVector<VkExtensionProperties> instance_extensions;
+	LocalVector<VkExtensionProperties> instance_extensions;
 	instance_extensions.resize(instance_extension_count);
 	err = vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.ptr());
 	if (err != VK_SUCCESS && err != VK_INCOMPLETE) {
@@ -501,14 +501,14 @@ Error RenderingContextDriverVulkan::_initialize_instance_extensions() {
 	return OK;
 }
 
-Error RenderingContextDriverVulkan::_find_validation_layers(TightLocalVector<const char *> &r_layer_names) const {
+Error RenderingContextDriverVulkan::_find_validation_layers(LocalVector<const char *> &r_layer_names) const {
 	r_layer_names.clear();
 
 	uint32_t instance_layer_count = 0;
 	VkResult err = vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr);
 	ERR_FAIL_COND_V(err != VK_SUCCESS, ERR_CANT_CREATE);
 	if (instance_layer_count > 0) {
-		TightLocalVector<VkLayerProperties> layer_properties;
+		LocalVector<VkLayerProperties> layer_properties;
 		layer_properties.resize(instance_layer_count);
 		err = vkEnumerateInstanceLayerProperties(&instance_layer_count, layer_properties.ptr());
 		ERR_FAIL_COND_V(err != VK_SUCCESS, ERR_CANT_CREATE);
@@ -686,8 +686,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL RenderingContextDriverVulkan::_debug_report_callb
 
 Error RenderingContextDriverVulkan::_initialize_instance() {
 	Error err;
-	TightLocalVector<const char *> enabled_extension_names;
-	enabled_extension_names.reserve(enabled_instance_extension_names.size());
+	LocalVector<const char *> enabled_extension_names;
+	enabled_extension_names.reserve_exact(enabled_instance_extension_names.size());
 	for (const CharString &extension_name : enabled_instance_extension_names) {
 		enabled_extension_names.push_back(extension_name.ptr());
 	}
@@ -705,7 +705,7 @@ Error RenderingContextDriverVulkan::_initialize_instance() {
 	app_info.engineVersion = VK_MAKE_VERSION(GODOT_VERSION_MAJOR, GODOT_VERSION_MINOR, GODOT_VERSION_PATCH);
 	app_info.apiVersion = application_api_version;
 
-	TightLocalVector<const char *> enabled_layer_names;
+	LocalVector<const char *> enabled_layer_names;
 	if (_use_validation_layers()) {
 		err = _find_validation_layers(enabled_layer_names);
 		ERR_FAIL_COND_V(err != OK, err);

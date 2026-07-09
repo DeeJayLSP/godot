@@ -132,7 +132,7 @@ private:
 				has_pump_task(false) {}
 	};
 
-	TightLocalVector<ThreadData> threads;
+	LocalVector<ThreadData> threads;
 	enum Runlevel {
 		RUNLEVEL_NORMAL,
 		RUNLEVEL_PRE_EXIT_LANGUAGES, // Block adding new tasks

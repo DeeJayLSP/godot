@@ -149,8 +149,8 @@ class RenderingDeviceDriverVulkan : public RenderingDeviceDriver {
 	VkPhysicalDeviceFeatures requested_device_features = {};
 	HashMap<CharString, bool> requested_device_extensions;
 	HashSet<CharString> enabled_device_extension_names;
-	TightLocalVector<TightLocalVector<Queue>> queue_families;
-	TightLocalVector<VkQueueFamilyProperties> queue_family_properties;
+	LocalVector<LocalVector<Queue>> queue_families;
+	LocalVector<VkQueueFamilyProperties> queue_family_properties;
 	RDD::Capabilities device_capabilities;
 	SubgroupCapabilities subgroup_capabilities;
 	MultiviewCapabilities multiview_capabilities;
@@ -317,8 +317,8 @@ public:
 	/**********************/
 private:
 	struct VertexFormatInfo {
-		TightLocalVector<VkVertexInputBindingDescription> vk_bindings;
-		TightLocalVector<VkVertexInputAttributeDescription> vk_attributes;
+		LocalVector<VkVertexInputBindingDescription> vk_bindings;
+		LocalVector<VkVertexInputAttributeDescription> vk_attributes;
 		VkPipelineVertexInputStateCreateInfo vk_create_info = {};
 	};
 
@@ -428,10 +428,10 @@ private:
 		VkFormat format = VK_FORMAT_UNDEFINED;
 		VkColorSpaceKHR color_space = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 		RDD::ColorSpace rdd_color_space = RDD::COLOR_SPACE_REC709_NONLINEAR_SRGB;
-		TightLocalVector<VkImage> images;
-		TightLocalVector<VkImageView> image_views;
-		TightLocalVector<VkSemaphore> present_semaphores;
-		TightLocalVector<FramebufferID> framebuffers;
+		LocalVector<VkImage> images;
+		LocalVector<VkImageView> image_views;
+		LocalVector<VkSemaphore> present_semaphores;
+		LocalVector<FramebufferID> framebuffers;
 		LocalVector<CommandQueue *> command_queues_acquired;
 		LocalVector<uint32_t> command_queues_acquired_semaphores;
 		RenderPassID render_pass;
@@ -485,11 +485,13 @@ private:
 	struct ShaderInfo {
 		String name;
 		VkShaderStageFlags vk_push_constant_stages = 0;
-		TightLocalVector<VkPipelineShaderStageCreateInfo> vk_stages_create_info;
-		TightLocalVector<VkDescriptorSetLayout> vk_descriptor_set_layouts;
-		TightLocalVector<respv::Shader> respv_stage_shaders;
-		TightLocalVector<Vector<uint8_t>> spirv_stage_bytes;
-		TightLocalVector<uint64_t> original_stage_size;
+		LocalVector<VkPipelineShaderStageCreateInfo> vk_stages_create_info;
+		LocalVector<VkDescriptorSetLayout> vk_descriptor_set_layouts;
+		LocalVector<respv::Shader> respv_stage_shaders;
+#if RECORD_PIPELINE_STATISTICS
+		LocalVector<Vector<uint8_t>> spirv_stage_bytes;
+#endif
+		LocalVector<uint64_t> original_stage_size;
 		VkPipelineLayout vk_pipeline_layout = VK_NULL_HANDLE;
 	};
 
@@ -546,7 +548,7 @@ private:
 		VkDescriptorPool vk_descriptor_pool = VK_NULL_HANDLE;
 		VkDescriptorPool vk_linear_descriptor_pool = VK_NULL_HANDLE;
 		DescriptorSetPools::Iterator pool_sets_it;
-		TightLocalVector<BufferInfo const *, uint32_t> dynamic_buffers;
+		LocalVector<BufferInfo const *, uint32_t> dynamic_buffers;
 	};
 
 	bool adreno_5xx_empty_descriptor_set_layout_workaround = false;
@@ -714,9 +716,9 @@ public:
 		uint32_t scratch_size;
 
 		// Required for building
-		TightLocalVector<VkAccelerationStructureGeometryKHR> geometries;
+		LocalVector<VkAccelerationStructureGeometryKHR> geometries;
 		VkAccelerationStructureBuildGeometryInfoKHR build_info;
-		TightLocalVector<VkAccelerationStructureBuildRangeInfoKHR> range_infos;
+		LocalVector<VkAccelerationStructureBuildRangeInfoKHR> range_infos;
 	};
 
 	virtual AccelerationStructureID blas_create(VectorView<AccelerationStructureGeometry> p_geometries, BitField<AccelerationStructureFlagBits> p_flags) override final;

@@ -622,7 +622,7 @@ Error RenderingDeviceDriverVulkan::_initialize_device_extensions() {
 	ERR_FAIL_COND_V_MSG(err != VK_SUCCESS, ERR_CANT_CREATE, vformat("Couldn't get Vulkan device extension count (VkResult error %d).", err));
 	ERR_FAIL_COND_V_MSG(device_extension_count == 0, ERR_CANT_CREATE, "Couldn't find any Vulkan device extensions. Do you have a compatible Vulkan installable client driver (ICD) installed?");
 
-	TightLocalVector<VkExtensionProperties> device_extensions;
+	LocalVector<VkExtensionProperties> device_extensions;
 	device_extensions.resize(device_extension_count);
 	err = vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &device_extension_count, device_extensions.ptr());
 	ERR_FAIL_COND_V_MSG(err != VK_SUCCESS, ERR_CANT_CREATE, vformat("Couldn't get Vulkan device extension properties (VkResult error %d).", err));
@@ -1330,8 +1330,8 @@ Error RenderingDeviceDriverVulkan::_add_queue_create_info(LocalVector<VkDeviceQu
 }
 
 Error RenderingDeviceDriverVulkan::_initialize_device(const LocalVector<VkDeviceQueueCreateInfo> &p_queue_create_info) {
-	TightLocalVector<const char *> enabled_extension_names;
-	enabled_extension_names.reserve(enabled_device_extension_names.size());
+	LocalVector<const char *> enabled_extension_names;
+	enabled_extension_names.reserve_exact(enabled_device_extension_names.size());
 	for (const CharString &extension_name : enabled_device_extension_names) {
 		enabled_extension_names.push_back(extension_name.ptr());
 	}
@@ -1585,7 +1585,7 @@ Error RenderingDeviceDriverVulkan::_initialize_pipeline_cache() {
 	return OK;
 }
 
-static void _convert_subpass_attachments(const VkAttachmentReference2 *p_attachment_references_2, uint32_t p_attachment_references_count, TightLocalVector<VkAttachmentReference> &r_attachment_references) {
+static void _convert_subpass_attachments(const VkAttachmentReference2 *p_attachment_references_2, uint32_t p_attachment_references_count, LocalVector<VkAttachmentReference> &r_attachment_references) {
 	r_attachment_references.resize(p_attachment_references_count);
 	for (uint32_t i = 0; i < p_attachment_references_count; i++) {
 		// Ignore sType, pNext and aspectMask (which is currently unused).
@@ -1599,7 +1599,7 @@ VkResult RenderingDeviceDriverVulkan::_create_render_pass(VkDevice p_device, con
 		return device_functions.CreateRenderPass2KHR(p_device, p_create_info, p_allocator, p_render_pass);
 	} else {
 		// Compatibility fallback with regular create render pass but by converting the inputs from the newer version to the older one.
-		TightLocalVector<VkAttachmentDescription> attachments;
+		LocalVector<VkAttachmentDescription> attachments;
 		attachments.resize(p_create_info->attachmentCount);
 		for (uint32_t i = 0; i < p_create_info->attachmentCount; i++) {
 			// Ignores sType and pNext from the attachment.
@@ -1617,8 +1617,8 @@ VkResult RenderingDeviceDriverVulkan::_create_render_pass(VkDevice p_device, con
 		}
 
 		const uint32_t attachment_vectors_per_subpass = 4;
-		TightLocalVector<TightLocalVector<VkAttachmentReference>> subpasses_attachments;
-		TightLocalVector<VkSubpassDescription> subpasses;
+		LocalVector<LocalVector<VkAttachmentReference>> subpasses_attachments;
+		LocalVector<VkSubpassDescription> subpasses;
 		subpasses_attachments.resize(p_create_info->subpassCount * attachment_vectors_per_subpass);
 		subpasses.resize(p_create_info->subpassCount);
 
@@ -1648,7 +1648,7 @@ VkResult RenderingDeviceDriverVulkan::_create_render_pass(VkDevice p_device, con
 			dst_subpass.pPreserveAttachments = src_subpass.pPreserveAttachments;
 		}
 
-		TightLocalVector<VkSubpassDependency> dependencies;
+		LocalVector<VkSubpassDependency> dependencies;
 		dependencies.resize(p_create_info->dependencyCount);
 
 		for (uint32_t i = 0; i < p_create_info->dependencyCount; i++) {
@@ -2812,7 +2812,7 @@ RDD::VertexFormatID RenderingDeviceDriverVulkan::vertex_format_create(Span<Verte
 	// Pre-bookkeep.
 	VertexFormatInfo *vf_info = VersatileResource::allocate<VertexFormatInfo>(resources_allocator);
 
-	vf_info->vk_bindings.reserve(p_vertex_bindings.size());
+	vf_info->vk_bindings.reserve_exact(p_vertex_bindings.size());
 	for (const VertexAttributeBindingsMap::KV &E : p_vertex_bindings) {
 		const VertexAttributeBinding &binding = E.value;
 		VkVertexInputBindingDescription vk_binding = {};
@@ -3149,7 +3149,7 @@ RDD::CommandQueueID RenderingDeviceDriverVulkan::command_queue_create(CommandQue
 
 	// Make a virtual queue on top of a real queue. Use the queue from the family with the least amount of virtual queues created.
 	uint32_t family_index = p_cmd_queue_family.id - 1;
-	TightLocalVector<Queue> &queue_family = queue_families[family_index];
+	LocalVector<Queue> &queue_family = queue_families[family_index];
 	uint32_t picked_queue_index = UINT_MAX;
 	uint32_t picked_virtual_count = UINT_MAX;
 	for (uint32_t i = 0; i < queue_family.size(); i++) {
@@ -3374,7 +3374,7 @@ void RenderingDeviceDriverVulkan::command_queue_free(CommandQueueID p_cmd_queue)
 
 	// Retrieve the queue family corresponding to the virtual queue.
 	DEV_ASSERT(command_queue->queue_family < queue_families.size());
-	TightLocalVector<Queue> &queue_family = queue_families[command_queue->queue_family];
+	LocalVector<Queue> &queue_family = queue_families[command_queue->queue_family];
 
 	// Decrease the virtual queue count.
 	DEV_ASSERT(command_queue->queue_index < queue_family.size());
@@ -3528,7 +3528,7 @@ bool RenderingDeviceDriverVulkan::_determine_swap_chain_format(RenderingContextD
 
 	// Retrieve the formats supported by the surface.
 	uint32_t format_count = 0;
-	TightLocalVector<VkSurfaceFormatKHR> formats;
+	LocalVector<VkSurfaceFormatKHR> formats;
 	// Loop until we get the full format list. This shouldn't have to loop more than twice on most systems.
 	while (true) {
 		VkResult err = functions.GetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface->vk_surface, &format_count, nullptr);
@@ -3730,7 +3730,7 @@ Error RenderingDeviceDriverVulkan::swap_chain_resize(CommandQueueID p_cmd_queue,
 	}
 
 	// Find what present modes are supported.
-	TightLocalVector<VkPresentModeKHR> present_modes;
+	LocalVector<VkPresentModeKHR> present_modes;
 	uint32_t present_modes_count = 0;
 	err = functions.GetPhysicalDeviceSurfacePresentModesKHR(physical_device, surface->vk_surface, &present_modes_count, nullptr);
 	ERR_FAIL_COND_V_MSG(err != VK_SUCCESS, ERR_CANT_CREATE, vformat("Couldn't get Vulkan surface present modes (VkResult error %d).", err));
@@ -3895,7 +3895,7 @@ Error RenderingDeviceDriverVulkan::swap_chain_resize(CommandQueueID p_cmd_queue,
 	view_create_info.subresourceRange.levelCount = 1;
 	view_create_info.subresourceRange.layerCount = 1;
 
-	swap_chain->image_views.reserve(image_count);
+	swap_chain->image_views.reserve_exact(image_count);
 
 	VkImageView image_view;
 	for (uint32_t i = 0; i < image_count; i++) {
@@ -3906,7 +3906,7 @@ Error RenderingDeviceDriverVulkan::swap_chain_resize(CommandQueueID p_cmd_queue,
 		swap_chain->image_views.push_back(image_view);
 	}
 
-	swap_chain->framebuffers.reserve(image_count);
+	swap_chain->framebuffers.reserve_exact(image_count);
 
 	// Create the render pass for the chosen format.
 	VkAttachmentDescription2KHR attachment = {};
@@ -3969,6 +3969,7 @@ Error RenderingDeviceDriverVulkan::swap_chain_resize(CommandQueueID p_cmd_queue,
 	}
 
 	VkSemaphore vk_semaphore = VK_NULL_HANDLE;
+	swap_chain->present_semaphores.reserve_exact(image_count);
 	for (uint32_t i = 0; i < image_count; i++) {
 		VkSemaphoreCreateInfo create_info = {};
 		create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -4097,7 +4098,7 @@ bool RenderingDeviceDriverVulkan::swap_chain_get_hdr_output_supported(SwapChainI
 
 	// Retrieve the formats supported by the surface.
 	uint32_t format_count = 0;
-	TightLocalVector<VkSurfaceFormatKHR> formats;
+	LocalVector<VkSurfaceFormatKHR> formats;
 	while (true) {
 		VkResult err = functions.GetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface->vk_surface, &format_count, nullptr);
 		ERR_FAIL_COND_V_MSG(err != VK_SUCCESS, false, vformat("Couldn't retrieve Vulkan surface formats (VkResult error %d).", err));
@@ -4335,15 +4336,15 @@ RDD::ShaderID RenderingDeviceDriverVulkan::shader_create_from_container(const Re
 	const bool use_respv = (RESPV_ENABLED == 1) && !shader_container_format.get_debug_info_enabled();
 	const bool store_respv = use_respv && !shader_refl.specialization_constants.is_empty();
 	const int64_t stage_count = shader_refl.stages_vector.size();
-	shader_info.vk_stages_create_info.reserve(stage_count);
-	shader_info.original_stage_size.reserve(stage_count);
+	shader_info.vk_stages_create_info.reserve_exact(stage_count);
+	shader_info.original_stage_size.reserve_exact(stage_count);
 
 #if RECORD_PIPELINE_STATISTICS
-	shader_info.spirv_stage_bytes.reserve(stage_count);
+	shader_info.spirv_stage_bytes.reserve_exact(stage_count);
 #endif
 
 	if (store_respv) {
-		shader_info.respv_stage_shaders.reserve(stage_count);
+		shader_info.respv_stage_shaders.reserve_exact(stage_count);
 	}
 
 	for (int i = 0; i < stage_count; i++) {
@@ -4667,7 +4668,7 @@ RDD::UniformSetID RenderingDeviceDriverVulkan::uniform_set_create(VectorView<Bou
 	}
 	DescriptorSetPoolKey pool_key;
 
-	// We first gather dynamic arrays in a local array because TightLocalVector's
+	// We first gather dynamic arrays in a local array because LocalVector's
 	// growth is not efficient when the number of elements is unknown.
 	const BufferInfo *dynamic_buffers[MAX_DYNAMIC_BUFFERS];
 	uint32_t num_dynamic_buffers = 0u;

@@ -2897,9 +2897,9 @@ Error RenderingDeviceDriverD3D12::swap_chain_resize(CommandQueueID p_cmd_queue, 
 	// Retrieve the render targets associated to the swap chain and recreate the framebuffers. The following code
 	// relies on the address of the elements remaining static when new elements are inserted, so the container must
 	// follow this restriction when reserving the right amount of elements beforehand.
-	swap_chain->render_targets.reserve(swap_chain_desc.BufferCount);
-	swap_chain->render_targets_info.reserve(swap_chain_desc.BufferCount);
-	swap_chain->framebuffers.reserve(swap_chain_desc.BufferCount);
+	swap_chain->render_targets.reserve_exact(swap_chain_desc.BufferCount);
+	swap_chain->render_targets_info.reserve_exact(swap_chain_desc.BufferCount);
+	swap_chain->framebuffers.reserve_exact(swap_chain_desc.BufferCount);
 
 	for (uint32_t i = 0; i < swap_chain_desc.BufferCount; i++) {
 		// Retrieve the resource corresponding to the swap chain's buffer.
@@ -3170,7 +3170,7 @@ RDD::FramebufferID RenderingDeviceDriverD3D12::_framebuffer_create(RenderPassID 
 	fb_info->dsv_alloc = dsv_alloc;
 
 	fb_info->attachments_handle_inds.resize(p_attachments.size());
-	fb_info->attachments.reserve(num_color + num_depth_stencil);
+	fb_info->attachments.reserve_exact(num_color + num_depth_stencil);
 
 	uint32_t color_idx = 0;
 	uint32_t depth_stencil_idx = 0;
@@ -3372,7 +3372,7 @@ RDD::UniformSetID RenderingDeviceDriverD3D12::uniform_set_create(VectorView<Boun
 	const ShaderInfo *shader_info_in = (const ShaderInfo *)p_shader.id;
 	const ShaderInfo::UniformSet &uniform_set = shader_info_in->sets[p_set_index];
 
-	// We first gather dynamic arrays in a local array because TightLocalVector's
+	// We first gather dynamic arrays in a local array because LocalVector's
 	// growth is not efficient when the number of elements is unknown.
 	UniformSetInfo::DynamicBuffer dynamic_buffers[MAX_DYNAMIC_BUFFERS];
 	uint32_t num_dynamic_buffers = 0u;
@@ -3598,7 +3598,7 @@ RDD::UniformSetID RenderingDeviceDriverD3D12::uniform_set_create(VectorView<Boun
 	}
 
 	{
-		uniform_set_info->resource_states.reserve(resource_states.size());
+		uniform_set_info->resource_states.reserve_exact(resource_states.size());
 		for (const KeyValue<ResourceInfo *, NeededState> &E : resource_states) {
 			UniformSetInfo::StateRequirement sr;
 			sr.resource = E.key;

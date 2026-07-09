@@ -2044,7 +2044,7 @@ const Variant GDScriptInstance::get_rpc_config() const {
 void GDScriptInstance::reload_members() {
 #ifdef DEBUG_ENABLED
 
-	TightLocalVector<Variant> new_members;
+	LocalVector<Variant> new_members;
 	new_members.resize(script->member_indices.size());
 
 	// Transfer the old members into their new position.

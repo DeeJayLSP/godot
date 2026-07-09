@@ -147,7 +147,7 @@ String OpenXRMetalExtension::get_swapchain_format_name(int64_t p_swapchain_forma
 }
 
 bool OpenXRMetalExtension::get_swapchain_image_data(XrSwapchain p_swapchain, int64_t p_swapchain_format, uint32_t p_width, uint32_t p_height, uint32_t p_sample_count, uint32_t p_array_size, void **r_swapchain_graphics_data) {
-	LocalVector<XrSwapchainImageMetalKHR, uint32_t, false, true> images;
+	LocalVector<XrSwapchainImageMetalKHR> images;
 
 	RenderingServer *rendering_server = RenderingServer::get_singleton();
 	ERR_FAIL_NULL_V(rendering_server, false);

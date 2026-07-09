@@ -508,7 +508,7 @@ class RendererCanvasRenderRD : public RendererCanvasRender {
 	/// Maps a CanvasTexture to its associated uniform sets, which must
 	/// be invalidated when the CanvasTexture is updated, such as changing the
 	/// diffuse texture.
-	HashMap<RID, TightLocalVector<RID>> canvas_texture_to_uniform_set;
+	HashMap<RID, LocalVector<RID>> canvas_texture_to_uniform_set;
 
 	static constexpr uint32_t PUSH_DATA_INSTANCE_COUNT = 0x8000'0000; // Use high bit to indicate instance data comes from push_data.
 	static constexpr uint32_t INSTANCE_COUNT_MASK = 0x7fff'ffff;

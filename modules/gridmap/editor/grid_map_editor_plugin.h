@@ -79,7 +79,7 @@ class GridMapEditor : public EditorDock {
 	double accumulated_floor_delta = 0.0;
 
 	HBoxContainer *toolbar = nullptr;
-	TightLocalVector<BaseButton *> viewport_shortcut_buttons;
+	LocalVector<BaseButton *> viewport_shortcut_buttons;
 	Ref<ButtonGroup> mode_buttons_group;
 	// mode
 	Button *transform_mode_button = nullptr;

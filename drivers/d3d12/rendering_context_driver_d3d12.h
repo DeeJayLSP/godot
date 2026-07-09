@@ -47,7 +47,7 @@
 class RenderingContextDriverD3D12 : public RenderingContextDriver {
 	Microsoft::WRL::ComPtr<ID3D12DeviceFactory> device_factory;
 	Microsoft::WRL::ComPtr<IDXGIFactory2> dxgi_factory;
-	TightLocalVector<Device> driver_devices;
+	LocalVector<Device> driver_devices;
 	bool tearing_supported = false;
 
 	Error _init_device_factory();

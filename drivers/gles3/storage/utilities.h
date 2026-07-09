@@ -185,12 +185,12 @@ public:
 
 	struct Frame {
 		GLuint queries[MAX_QUERIES];
-		TightLocalVector<String> timestamp_names;
-		TightLocalVector<uint64_t> timestamp_cpu_values;
+		LocalVector<String> timestamp_names;
+		LocalVector<uint64_t> timestamp_cpu_values;
 		uint32_t timestamp_count = 0;
-		TightLocalVector<String> timestamp_result_names;
-		TightLocalVector<uint64_t> timestamp_cpu_result_values;
-		TightLocalVector<uint64_t> timestamp_result_values;
+		LocalVector<String> timestamp_result_names;
+		LocalVector<uint64_t> timestamp_cpu_result_values;
+		LocalVector<uint64_t> timestamp_result_values;
 		uint32_t timestamp_result_count = 0;
 		uint64_t index = 0;
 	};

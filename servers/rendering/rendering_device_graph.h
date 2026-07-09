@@ -810,7 +810,7 @@ private:
 	};
 
 	struct Frame {
-		TightLocalVector<SecondaryCommandBuffer> secondary_command_buffers;
+		LocalVector<SecondaryCommandBuffer> secondary_command_buffers;
 		uint32_t secondary_command_buffers_used = 0;
 	};
 
@@ -844,7 +844,7 @@ private:
 	bool driver_clears_with_copy_engine : 1;
 	bool driver_buffers_require_transitions : 1;
 	WorkaroundsState workarounds_state;
-	TightLocalVector<Frame> frames;
+	LocalVector<Frame> frames;
 	uint32_t frame = 0;
 
 #ifdef DEV_ENABLED

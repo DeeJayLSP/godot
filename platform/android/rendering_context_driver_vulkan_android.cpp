@@ -55,7 +55,7 @@ RenderingContextDriver::SurfaceID RenderingContextDriverVulkanAndroid::surface_c
 }
 
 bool RenderingContextDriverVulkanAndroid::_use_validation_layers() const {
-	TightLocalVector<const char *> layer_names;
+	LocalVector<const char *> layer_names;
 	Error err = _find_validation_layers(layer_names);
 
 	// On Android, we use validation layers automatically if they were explicitly linked with the app.

@@ -54,7 +54,7 @@ class AudioStreamPlaybackWAV : public AudioStreamPlaybackResampled {
 		qoa_desc desc = {};
 		uint64_t data_ofs = 0;
 		uint32_t frame_len = 0;
-		TightLocalVector<int16_t> dec;
+		LocalVector<int16_t> dec;
 	} qoa;
 
 	int64_t offset = 0;
@@ -120,7 +120,7 @@ private:
 	int64_t loop_begin = 0;
 	int64_t loop_end = 0;
 	uint32_t mix_rate = 44100;
-	TightLocalVector<uint8_t, uint64_t> data;
+	LocalVector<uint8_t> data;
 
 	Dictionary tags;
 
@@ -271,7 +271,7 @@ public:
 			p_desc->lms[c].weights[3] = (1 << 14);
 		}
 
-		TightLocalVector<int16_t> data16;
+		LocalVector<int16_t> data16;
 		data16.resize(QOA_FRAME_LEN * p_desc->channels);
 
 		uint8_t *dst_ptr = dst_data.ptrw();

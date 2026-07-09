@@ -118,10 +118,10 @@ TEST_CASE("[RID_Owner] Thread safety") {
 	struct RID_OwnerTester {
 		uint32_t thread_count = 0;
 		RID_Owner<DataHolder, true> rid_owner;
-		TightLocalVector<Thread> threads;
+		LocalVector<Thread> threads;
 		SafeNumeric<uint32_t> next_thread_idx;
 		// Using std::atomic directly since SafeNumeric doesn't support relaxed ordering.
-		TightLocalVector<std::atomic<uint64_t>> rids;
+		LocalVector<std::atomic<uint64_t>> rids;
 		std::atomic<uint32_t> sync[2] = {};
 		std::atomic<uint32_t> correct = 0;
 

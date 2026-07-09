@@ -1412,7 +1412,7 @@ void TextureStorage::texture_drawable_blit_rect(const TypedArray<RID> &p_texture
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, tex_blit_fbo);
-	TightLocalVector<GLenum> draw_buffers;
+	LocalVector<GLenum> draw_buffers;
 
 	Texture *tar_textures[4];
 	uint32_t convert_to_srgb_mask = 0;

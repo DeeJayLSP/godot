@@ -39,11 +39,10 @@
 #include <initializer_list>
 #include <type_traits>
 
-// If tight, it grows strictly as much as needed.
-// Otherwise, it grows exponentially (the default and what you want in most cases).
 template <typename T, typename U = uint32_t, bool force_trivial = false, bool tight = false>
 class _WARN_UNUSED_ LocalVector {
 	static_assert(!force_trivial, "force_trivial is no longer supported. Use resize_uninitialized instead.");
+	static_assert(!tight, "tight is no longer supported. Use reserve_exact instead.");
 
 private:
 	U count = 0;
@@ -60,7 +59,7 @@ private:
 			}
 			count = p_size;
 		} else if (p_size > count) {
-			reserve(p_size);
+			reserve_exact(p_size);
 			if constexpr (p_init) {
 				memnew_arr_placement(data + count, p_size - count);
 			} else {
@@ -161,9 +160,10 @@ public:
 	}
 	_FORCE_INLINE_ bool is_empty() const { return count == 0; }
 	_FORCE_INLINE_ U get_capacity() const { return capacity; }
+	template <bool p_exact = false>
 	void reserve(U p_size) {
 		if (p_size > capacity) {
-			if (tight) {
+			if (p_exact) {
 				capacity = p_size;
 			} else {
 				// Try 1.5x the current capacity.
@@ -180,6 +180,9 @@ public:
 		} else if (p_size < count) {
 			WARN_VERBOSE("reserve() called with a capacity smaller than the current size. This is likely a mistake.");
 		}
+	}
+	_FORCE_INLINE_ void reserve_exact(U p_size) {
+		reserve<true>(p_size);
 	}
 
 	/// Resize the vector.
@@ -335,7 +338,7 @@ public:
 
 	_FORCE_INLINE_ LocalVector() {}
 	_FORCE_INLINE_ LocalVector(std::initializer_list<T> p_init) {
-		reserve(p_init.size());
+		reserve_exact(p_init.size());
 		for (const T &element : p_init) {
 			push_back(element);
 		}
