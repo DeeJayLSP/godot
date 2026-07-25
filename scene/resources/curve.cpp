@@ -172,21 +172,21 @@ void Curve::clean_dupes() {
 }
 
 void Curve::set_point_left_tangent(int p_index, real_t p_tangent) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, _points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, _points.size());
 	_points[p_index].left_tangent = p_tangent;
 	_points[p_index].left_mode = TANGENT_FREE;
 	mark_dirty();
 }
 
 void Curve::set_point_right_tangent(int p_index, real_t p_tangent) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, _points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, _points.size());
 	_points[p_index].right_tangent = p_tangent;
 	_points[p_index].right_mode = TANGENT_FREE;
 	mark_dirty();
 }
 
 void Curve::set_point_left_mode(int p_index, TangentMode p_mode) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, _points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, _points.size());
 	_points[p_index].left_mode = p_mode;
 	if (p_index > 0) {
 		if (p_mode == TANGENT_LINEAR) {
@@ -198,7 +198,7 @@ void Curve::set_point_left_mode(int p_index, TangentMode p_mode) {
 }
 
 void Curve::set_point_right_mode(int p_index, TangentMode p_mode) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, _points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, _points.size());
 	_points[p_index].right_mode = p_mode;
 	if ((uint32_t)p_index + 1 < _points.size()) {
 		if (p_mode == TANGENT_LINEAR) {
@@ -210,27 +210,27 @@ void Curve::set_point_right_mode(int p_index, TangentMode p_mode) {
 }
 
 real_t Curve::get_point_left_tangent(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, _points.size(), 0);
+	ERR_FAIL_INDEX_V((uint32_t)p_index, _points.size(), 0);
 	return _points[p_index].left_tangent;
 }
 
 real_t Curve::get_point_right_tangent(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, _points.size(), 0);
+	ERR_FAIL_INDEX_V((uint32_t)p_index, _points.size(), 0);
 	return _points[p_index].right_tangent;
 }
 
 Curve::TangentMode Curve::get_point_left_mode(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, _points.size(), TANGENT_FREE);
+	ERR_FAIL_INDEX_V((uint32_t)p_index, _points.size(), TANGENT_FREE);
 	return _points[p_index].left_mode;
 }
 
 Curve::TangentMode Curve::get_point_right_mode(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, _points.size(), TANGENT_FREE);
+	ERR_FAIL_INDEX_V((uint32_t)p_index, _points.size(), TANGENT_FREE);
 	return _points[p_index].right_mode;
 }
 
 void Curve::_remove_point(int p_index, bool p_mark_dirty) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, _points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, _points.size());
 	_points.remove_at(p_index);
 	if (p_mark_dirty) {
 		mark_dirty();
@@ -259,14 +259,14 @@ void Curve::clear_points() {
 }
 
 void Curve::set_point_value(int p_index, real_t p_position) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, _points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, _points.size());
 	_points[p_index].position.y = p_position;
 	update_auto_tangents(p_index);
 	mark_dirty();
 }
 
 int Curve::set_point_offset(int p_index, real_t p_offset) {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, _points.size(), -1);
+	ERR_FAIL_INDEX_V((uint32_t)p_index, _points.size(), -1);
 	Point p = _points[p_index];
 	_remove_point(p_index, false);
 	int i = _add_point(Vector2(p_offset, p.position.y), p.left_tangent, p.right_tangent, p.left_mode, p.right_mode, false);
@@ -279,12 +279,12 @@ int Curve::set_point_offset(int p_index, real_t p_offset) {
 }
 
 Vector2 Curve::get_point_position(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, _points.size(), Vector2(0, 0));
+	ERR_FAIL_INDEX_V((uint32_t)p_index, _points.size(), Vector2(0, 0));
 	return _points[p_index].position;
 }
 
 Curve::Point Curve::get_point(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, _points.size(), Point());
+	ERR_FAIL_INDEX_V((uint32_t)p_index, _points.size(), Point());
 	return _points[p_index];
 }
 
@@ -709,43 +709,43 @@ void Curve2D::add_point(const Vector2 &p_position, const Vector2 &p_in, const Ve
 }
 
 void Curve2D::set_point_position(int p_index, const Vector2 &p_position) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 
 	points[p_index].position = p_position;
 	mark_dirty();
 }
 
 Vector2 Curve2D::get_point_position(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, points.size(), Vector2());
+	ERR_FAIL_INDEX_V((uint32_t)p_index, points.size(), Vector2());
 	return points[p_index].position;
 }
 
 void Curve2D::set_point_in(int p_index, const Vector2 &p_in) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 
 	points[p_index].in = p_in;
 	mark_dirty();
 }
 
 Vector2 Curve2D::get_point_in(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, points.size(), Vector2());
+	ERR_FAIL_INDEX_V((uint32_t)p_index, points.size(), Vector2());
 	return points[p_index].in;
 }
 
 void Curve2D::set_point_out(int p_index, const Vector2 &p_out) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 
 	points[p_index].out = p_out;
 	mark_dirty();
 }
 
 Vector2 Curve2D::get_point_out(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, points.size(), Vector2());
+	ERR_FAIL_INDEX_V((uint32_t)p_index, points.size(), Vector2());
 	return points[p_index].out;
 }
 
 void Curve2D::_remove_point(int p_index) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 	points.remove_at(p_index);
 	mark_dirty();
 }
@@ -1402,55 +1402,55 @@ void Curve3D::add_point(const Vector3 &p_position, const Vector3 &p_in, const Ve
 }
 
 void Curve3D::set_point_position(int p_index, const Vector3 &p_position) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 
 	points[p_index].position = p_position;
 	mark_dirty();
 }
 
 Vector3 Curve3D::get_point_position(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, points.size(), Vector3());
+	ERR_FAIL_INDEX_V((uint32_t)p_index, points.size(), Vector3());
 	return points[p_index].position;
 }
 
 void Curve3D::set_point_tilt(int p_index, real_t p_tilt) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 
 	points[p_index].tilt = p_tilt;
 	mark_dirty();
 }
 
 real_t Curve3D::get_point_tilt(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, points.size(), 0);
+	ERR_FAIL_INDEX_V((uint32_t)p_index, points.size(), 0);
 	return points[p_index].tilt;
 }
 
 void Curve3D::set_point_in(int p_index, const Vector3 &p_in) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 
 	points[p_index].in = p_in;
 	mark_dirty();
 }
 
 Vector3 Curve3D::get_point_in(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, points.size(), Vector3());
+	ERR_FAIL_INDEX_V((uint32_t)p_index, points.size(), Vector3());
 	return points[p_index].in;
 }
 
 void Curve3D::set_point_out(int p_index, const Vector3 &p_out) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 
 	points[p_index].out = p_out;
 	mark_dirty();
 }
 
 Vector3 Curve3D::get_point_out(int p_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)p_index, points.size(), Vector3());
+	ERR_FAIL_INDEX_V((uint32_t)p_index, points.size(), Vector3());
 	return points[p_index].out;
 }
 
 void Curve3D::_remove_point(int p_index) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 	points.remove_at(p_index);
 	mark_dirty();
 }

@@ -82,7 +82,7 @@ Vector3 NavMeshQueries3D::polygons_get_random_point(const LocalVector<Polygon> &
 		RBMap<real_t, uint32_t>::Iterator region_E = region_area_map.find_closest(region_area_map_pos);
 		ERR_FAIL_COND_V(!region_E, Vector3());
 		uint32_t rrp_polygon_index = region_E->value;
-		ERR_FAIL_UNSIGNED_INDEX_V(rrp_polygon_index, region_polygons.size(), Vector3());
+		ERR_FAIL_INDEX_V(rrp_polygon_index, region_polygons.size(), Vector3());
 
 		const Polygon &rr_polygon = region_polygons[rrp_polygon_index];
 
@@ -108,7 +108,7 @@ Vector3 NavMeshQueries3D::polygons_get_random_point(const LocalVector<Polygon> &
 		RBMap<real_t, uint32_t>::Iterator polygon_E = polygon_area_map.find_closest(polygon_area_map_pos);
 		ERR_FAIL_COND_V(!polygon_E, Vector3());
 		uint32_t rrp_face_index = polygon_E->value;
-		ERR_FAIL_UNSIGNED_INDEX_V(rrp_face_index, rr_polygon.vertices.size(), Vector3());
+		ERR_FAIL_INDEX_V(rrp_face_index, rr_polygon.vertices.size(), Vector3());
 
 		const Face3 face(rr_polygon.vertices[0], rr_polygon.vertices[rrp_face_index - 1], rr_polygon.vertices[rrp_face_index]);
 
@@ -1079,7 +1079,7 @@ Vector3 NavMeshQueries3D::map_iteration_get_random_point(const NavMapIteration3D
 		RBMap<real_t, uint32_t>::Iterator E = accessible_regions_area_map.find_closest(random_accessible_regions_area_map);
 		ERR_FAIL_COND_V(!E, Vector3());
 		uint32_t random_region_index = E->value;
-		ERR_FAIL_UNSIGNED_INDEX_V(random_region_index, accessible_regions.size(), Vector3());
+		ERR_FAIL_INDEX_V(random_region_index, accessible_regions.size(), Vector3());
 
 		const Ref<NavRegionIteration3D> &random_region = p_map_iteration.region_iterations[accessible_regions[random_region_index]];
 

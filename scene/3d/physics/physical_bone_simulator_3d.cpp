@@ -88,7 +88,7 @@ void PhysicalBoneSimulator3D::_pose_updated() {
 }
 
 void PhysicalBoneSimulator3D::_bone_pose_updated(Skeleton3D *p_skeleton, int p_bone_id) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_bone_id, bones.size());
+	ERR_FAIL_INDEX((uint32_t)p_bone_id, bones.size());
 	bones[p_bone_id].global_pose = p_skeleton->get_bone_global_pose(p_bone_id);
 }
 

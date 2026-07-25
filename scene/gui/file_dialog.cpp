@@ -1717,7 +1717,7 @@ void FileDialog::_sort_option_selected(int p_option) {
 }
 
 void FileDialog::_favorite_selected(int p_item) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_item, global_favorites.size());
+	ERR_FAIL_INDEX((uint32_t)p_item, global_favorites.size());
 	_change_dir(favorite_list->get_item_metadata(p_item));
 	_push_history();
 }
@@ -1853,7 +1853,7 @@ void FileDialog::_update_fav_buttons() {
 }
 
 void FileDialog::_recent_selected(int p_item) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_item, global_recents.size());
+	ERR_FAIL_INDEX((uint32_t)p_item, global_recents.size());
 	_change_dir(recent_list->get_item_metadata(p_item));
 	_push_history();
 }

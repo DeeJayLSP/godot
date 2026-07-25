@@ -597,7 +597,7 @@ bool OpenXRRenderModelExtension::render_model_is_animatable_node_visible(RID p_r
 	RenderModel *render_model = render_model_owner.get_or_null(p_render_model);
 	ERR_FAIL_NULL_V(render_model, false);
 
-	ERR_FAIL_UNSIGNED_INDEX_V(p_index, render_model->animatable_node_count, false);
+	ERR_FAIL_INDEX_V(p_index, render_model->animatable_node_count, false);
 
 	if (render_model->node_states.is_empty()) {
 		// Never allocated (don't spam errors here).
@@ -614,7 +614,7 @@ Transform3D OpenXRRenderModelExtension::render_model_get_animatable_node_transfo
 	RenderModel *render_model = render_model_owner.get_or_null(p_render_model);
 	ERR_FAIL_NULL_V(render_model, Transform3D());
 
-	ERR_FAIL_UNSIGNED_INDEX_V(p_index, render_model->animatable_node_count, Transform3D());
+	ERR_FAIL_INDEX_V(p_index, render_model->animatable_node_count, Transform3D());
 
 	if (render_model->node_states.is_empty()) {
 		// Never allocated (don't spam errors here).
@@ -783,7 +783,7 @@ PackedStringArray OpenXRRenderModelData::get_node_names() const {
 }
 
 const String OpenXRRenderModelData::get_node_name(uint32_t p_node_index) const {
-	ERR_FAIL_UNSIGNED_INDEX_V(p_node_index, node_names.size(), String());
+	ERR_FAIL_INDEX_V(p_node_index, node_names.size(), String());
 
 	return node_names[p_node_index];
 }

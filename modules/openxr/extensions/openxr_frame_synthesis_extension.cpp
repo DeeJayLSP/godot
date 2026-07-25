@@ -130,7 +130,7 @@ void *OpenXRFrameSynthesisExtension::set_view_configuration_and_get_next_pointer
 	}
 
 	// Called during initialization, we can safely access this.
-	ERR_FAIL_UNSIGNED_INDEX_V(p_view, render_state.config_views.size(), nullptr);
+	ERR_FAIL_INDEX_V(p_view, render_state.config_views.size(), nullptr);
 
 	XrFrameSynthesisConfigViewEXT &config_view = render_state.config_views[p_view];
 	config_view.next = p_next_pointer;

@@ -2874,7 +2874,7 @@ thread_local GDScriptLanguage::CallLevel *GDScriptLanguage::_call_stack = nullpt
 thread_local uint32_t GDScriptLanguage::_call_stack_size = 0;
 
 GDScriptLanguage::CallLevel *GDScriptLanguage::_get_stack_level(uint32_t p_level) {
-	ERR_FAIL_UNSIGNED_INDEX_V(p_level, _call_stack_size, nullptr);
+	ERR_FAIL_INDEX_V(p_level, _call_stack_size, nullptr);
 	CallLevel *level = _call_stack; // Start from top
 	uint32_t level_index = 0;
 	while (p_level > level_index) {

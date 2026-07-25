@@ -158,12 +158,12 @@ int OpenXRCompositionLayerExtension::get_composition_layer_count() {
 }
 
 XrCompositionLayerBaseHeader *OpenXRCompositionLayerExtension::get_composition_layer(int p_index) {
-	ERR_FAIL_UNSIGNED_INDEX_V((unsigned int)p_index, registered_composition_layers.size(), nullptr);
+	ERR_FAIL_INDEX_V((unsigned int)p_index, registered_composition_layers.size(), nullptr);
 	return registered_composition_layers[p_index]->get_composition_layer();
 }
 
 int OpenXRCompositionLayerExtension::get_composition_layer_order(int p_index) {
-	ERR_FAIL_UNSIGNED_INDEX_V((unsigned int)p_index, registered_composition_layers.size(), 1);
+	ERR_FAIL_INDEX_V((unsigned int)p_index, registered_composition_layers.size(), 1);
 	return registered_composition_layers[p_index]->sort_order;
 }
 

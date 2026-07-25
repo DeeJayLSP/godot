@@ -175,7 +175,7 @@ void Gradient::add_point(float p_offset, const Color &p_color) {
 }
 
 void Gradient::remove_point(int p_index) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)p_index, points.size());
+	ERR_FAIL_INDEX((uint32_t)p_index, points.size());
 	ERR_FAIL_COND(points.size() <= 1);
 	points.remove_at(p_index);
 	emit_changed();
@@ -192,7 +192,7 @@ void Gradient::reverse() {
 }
 
 void Gradient::set_offset(int pos, const float offset) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)pos, points.size());
+	ERR_FAIL_INDEX((uint32_t)pos, points.size());
 	_update_sorting();
 	points[pos].offset = offset;
 	is_sorted = false;
@@ -200,20 +200,20 @@ void Gradient::set_offset(int pos, const float offset) {
 }
 
 float Gradient::get_offset(int pos) {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)pos, points.size(), 0.0);
+	ERR_FAIL_INDEX_V((uint32_t)pos, points.size(), 0.0);
 	_update_sorting();
 	return points[pos].offset;
 }
 
 void Gradient::set_color(int pos, const Color &color) {
-	ERR_FAIL_UNSIGNED_INDEX((uint32_t)pos, points.size());
+	ERR_FAIL_INDEX((uint32_t)pos, points.size());
 	_update_sorting();
 	points[pos].color = color;
 	emit_changed();
 }
 
 Color Gradient::get_color(int pos) {
-	ERR_FAIL_UNSIGNED_INDEX_V((uint32_t)pos, points.size(), Color());
+	ERR_FAIL_INDEX_V((uint32_t)pos, points.size(), Color());
 	_update_sorting();
 	return points[pos].color;
 }

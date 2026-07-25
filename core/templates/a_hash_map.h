@@ -623,7 +623,7 @@ public:
 	}
 
 	KeyValue<TKey, TValue> &get_by_index(uint32_t p_index) _LIFETIME_BOUND_ {
-		CRASH_BAD_UNSIGNED_INDEX(p_index, _size);
+		CRASH_BAD_INDEX(p_index, _size);
 		return _elements[p_index];
 	}
 
