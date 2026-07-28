@@ -2532,7 +2532,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					*dst = E->value->call(p_instance, (const Variant **)argptrs, argc, err);
 				} else if (gds->native.ptr()) {
 					if (*methodname != GDScriptLanguage::get_singleton()->strings._init) {
-						const MethodBind *mb = ClassDB::get_method(gds->native->get_name(), *methodname);
+						const MethodBind *mb = *gds->native->get_gdtype()->get_method_map().getptr(*methodname);
 						if (!mb) {
 							err.error = Callable::CallError::CALL_ERROR_INVALID_METHOD;
 						} else {
