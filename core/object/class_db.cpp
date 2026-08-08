@@ -259,6 +259,22 @@ void ClassDB::get_class_list(LocalVector<StringName> &p_classes) {
 	sorter.sort(&p_classes[p_classes.size() - classes.size()], classes.size());
 }
 
+void ClassDB::get_gdtype_list(LocalVector<const GDType *> &p_gdtypes) {
+	Locker::Lock lock(Locker::STATE_READ);
+
+	if (classes.is_empty()) {
+		return;
+	}
+
+	p_gdtypes.reserve(p_gdtypes.size() + classes.size());
+	for (const KeyValue<StringName, ClassInfo> &cls : classes) {
+		p_gdtypes.push_back(cls.value.gdtype);
+	}
+
+	SortArray<const GDType *, GDType::AlphCompare> sorter;
+	sorter.sort(&p_gdtypes[p_gdtypes.size() - classes.size()], classes.size());
+}
+
 #ifdef TOOLS_ENABLED
 // This function only sorts items added by this function.
 // If `p_classes` is not empty before calling and a global sort is needed, caller must handle that separately.
@@ -297,6 +313,22 @@ void ClassDB::get_extension_class_list(const Ref<GDExtension> &p_extension, List
 	}
 
 	p_classes->sort_custom<StringName::AlphCompare>();
+}
+
+void ClassDB::get_extension_gdtype_list(const Ref<GDExtension> &p_extension, LocalVector<const GDType *> *p_gdtypes) {
+	Locker::Lock lock(Locker::STATE_READ);
+
+	for (const KeyValue<StringName, ClassInfo> &E : classes) {
+		if (E.value.api != API_EXTENSION && E.value.api != API_EDITOR_EXTENSION) {
+			continue;
+		}
+		if (!E.value.gdextension || E.value.gdextension->library != p_extension.ptr()) {
+			continue;
+		}
+		p_gdtypes->push_back(E.value.gdtype);
+	}
+
+	p_gdtypes->sort_custom<GDType::AlphCompare>();
 }
 #endif
 

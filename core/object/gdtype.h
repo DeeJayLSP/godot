@@ -71,6 +71,16 @@ public:
 	GDType(const GDType *p_super_type, StringName p_name);
 	~GDType();
 
+	struct AlphCompare {
+		template <typename LT, typename RT>
+		_FORCE_INLINE_ bool operator()(const LT &p_left, const RT &p_right) const {
+			return compare(p_left, p_right);
+		}
+		_FORCE_INLINE_ static bool compare(const GDType *p_left, const GDType *p_right) {
+			return str_compare(p_left->name.get_data(), p_right->name.get_data()) < 0;
+		}
+	};
+
 	InitState get_init_state() const { return init_state; }
 	void initialize();
 
