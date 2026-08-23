@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "core/templates/vector.h"
+#include "core/templates/local_vector.h"
 #include "core/typedefs.h"
 
 /**
@@ -41,7 +41,7 @@
  */
 template <typename T>
 class _WARN_UNUSED_ VSet {
-	Vector<T> _data;
+	LocalVector<T, uint64_t> _data;
 
 protected:
 	_FORCE_INLINE_ int _find(const T &p_val, bool &r_exact) const {
@@ -50,7 +50,7 @@ protected:
 			return 0;
 		}
 
-		int64_t pos = _data.span().bisect(p_val, true);
+		uint64_t pos = _data.span().bisect(p_val, true);
 
 		if (pos < _data.size() && !(p_val < _data[pos]) && !(_data[pos] < p_val)) {
 			r_exact = true;
@@ -63,7 +63,7 @@ protected:
 			return -1;
 		}
 
-		int64_t pos = _data.span().bisect(p_val, true);
+		uint64_t pos = _data.span().bisect(p_val, true);
 
 		if (pos < _data.size() && !(p_val < _data[pos]) && !(_data[pos] < p_val)) {
 			return pos;
@@ -99,10 +99,10 @@ public:
 
 	_FORCE_INLINE_ bool is_empty() const { return _data.is_empty(); }
 
-	_FORCE_INLINE_ int size() const { return _data.size(); }
+	_FORCE_INLINE_ uint64_t size() const { return _data.size(); }
 
 	inline T &operator[](int p_index) {
-		return _data.write[p_index];
+		return _data[p_index];
 	}
 
 	inline const T &operator[](int p_index) const {

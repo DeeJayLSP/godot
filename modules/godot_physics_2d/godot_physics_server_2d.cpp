@@ -923,7 +923,7 @@ void GodotPhysicsServer2D::body_get_collision_exceptions(RID p_body, List<RID> *
 	GodotBody2D *body = body_owner.get_or_null(p_body);
 	ERR_FAIL_NULL(body);
 
-	for (int i = 0; i < body->get_exceptions().size(); i++) {
+	for (uint64_t i = 0; i < body->get_exceptions().size(); i++) {
 		p_exceptions->push_back(body->get_exceptions()[i]);
 	}
 }

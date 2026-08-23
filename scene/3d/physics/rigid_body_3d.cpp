@@ -51,7 +51,7 @@ void RigidBody3D::_body_enter_tree(ObjectID p_id) {
 
 	emit_signal(SceneStringName(body_entered), node);
 
-	for (int i = 0; i < E->value.shapes.size(); i++) {
+	for (uint64_t i = 0; i < E->value.shapes.size(); i++) {
 		emit_signal(SceneStringName(body_shape_entered), E->value.rid, node, E->value.shapes[i].body_shape, E->value.shapes[i].local_shape);
 	}
 
@@ -72,7 +72,7 @@ void RigidBody3D::_body_exit_tree(ObjectID p_id) {
 
 	emit_signal(SceneStringName(body_exited), node);
 
-	for (int i = 0; i < E->value.shapes.size(); i++) {
+	for (uint64_t i = 0; i < E->value.shapes.size(); i++) {
 		emit_signal(SceneStringName(body_shape_exited), E->value.rid, node, E->value.shapes[i].body_shape, E->value.shapes[i].local_shape);
 	}
 
@@ -193,7 +193,7 @@ void RigidBody3D::_body_state_changed(PhysicsDirectBodyState3D *p_state) {
 		//untag all
 		int rc = 0;
 		for (KeyValue<ObjectID, BodyState> &E : contact_monitor->body_map) {
-			for (int i = 0; i < E.value.shapes.size(); i++) {
+			for (uint64_t i = 0; i < E.value.shapes.size(); i++) {
 				E.value.shapes[i].tagged = false;
 				rc++;
 			}
@@ -239,7 +239,7 @@ void RigidBody3D::_body_state_changed(PhysicsDirectBodyState3D *p_state) {
 		//put the ones to remove
 
 		for (const KeyValue<ObjectID, BodyState> &E : contact_monitor->body_map) {
-			for (int i = 0; i < E.value.shapes.size(); i++) {
+			for (uint64_t i = 0; i < E.value.shapes.size(); i++) {
 				if (!E.value.shapes[i].tagged) {
 					toremove[toremove_count].rid = E.value.rid;
 					toremove[toremove_count].body_id = E.key;

@@ -878,7 +878,7 @@ void GodotPhysicsServer3D::body_get_collision_exceptions(RID p_body, List<RID> *
 	GodotBody3D *body = body_owner.get_or_null(p_body);
 	ERR_FAIL_NULL(body);
 
-	for (int i = 0; i < body->get_exceptions().size(); i++) {
+	for (uint64_t i = 0; i < body->get_exceptions().size(); i++) {
 		p_exceptions->push_back(body->get_exceptions()[i]);
 	}
 }
@@ -1058,7 +1058,7 @@ void GodotPhysicsServer3D::soft_body_get_collision_exceptions(RID p_body, List<R
 	GodotSoftBody3D *soft_body = soft_body_owner.get_or_null(p_body);
 	ERR_FAIL_NULL(soft_body);
 
-	for (int i = 0; i < soft_body->get_exceptions().size(); i++) {
+	for (uint64_t i = 0; i < soft_body->get_exceptions().size(); i++) {
 		p_exceptions->push_back(soft_body->get_exceptions()[i]);
 	}
 }
