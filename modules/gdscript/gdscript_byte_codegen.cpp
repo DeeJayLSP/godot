@@ -421,7 +421,7 @@ void GDScriptByteCodeGenerator::set_signature(const String &p_signature) {
 }
 #endif
 
-void GDScriptByteCodeGenerator::set_initial_line(int p_line) {
+void GDScriptByteCodeGenerator::set_initial_line(uint32_t p_line) {
 	function->_initial_line = p_line;
 }
 
@@ -1834,7 +1834,7 @@ void GDScriptByteCodeGenerator::write_breakpoint() {
 	append_opcode(GDScriptFunction::OPCODE_BREAKPOINT);
 }
 
-void GDScriptByteCodeGenerator::write_newline(int p_line) {
+void GDScriptByteCodeGenerator::write_newline(uint32_t p_line) {
 	if (GDScriptLanguage::get_singleton()->should_track_call_stack()) {
 		// Add newline for debugger and stack tracking if enabled in the project settings.
 		append_opcode(GDScriptFunction::OPCODE_LINE);

@@ -102,7 +102,7 @@ class GDScript : public Script {
 
 public:
 	struct LambdaInfo {
-		int capture_count;
+		uint32_t capture_count;
 		bool use_self;
 	};
 
@@ -413,8 +413,8 @@ class GDScriptLanguage : public ScriptLanguage {
 		Variant *stack = nullptr;
 		GDScriptFunction *function = nullptr;
 		GDScriptInstance *instance = nullptr;
-		int *ip = nullptr;
-		int *line = nullptr;
+		uint32_t *ip = nullptr;
+		uint32_t *line = nullptr;
 		CallLevel *prev = nullptr; // Reverse linked list (stack).
 	};
 
@@ -467,7 +467,7 @@ public:
 	bool debug_break(const String &p_error, bool p_allow_continue = true);
 	bool debug_break_parse(const String &p_file, int p_line, const String &p_error);
 
-	_FORCE_INLINE_ void enter_function(CallLevel *call_level, GDScriptInstance *p_instance, GDScriptFunction *p_function, Variant *p_stack, int *p_ip, int *p_line) {
+	_FORCE_INLINE_ void enter_function(CallLevel *call_level, GDScriptInstance *p_instance, GDScriptFunction *p_function, Variant *p_stack, uint32_t *p_ip, uint32_t *p_line) {
 		if (!track_call_stack) {
 			return;
 		}
@@ -564,7 +564,7 @@ public:
 
 	_FORCE_INLINE_ bool should_track_call_stack() const { return track_call_stack; }
 	_FORCE_INLINE_ bool should_track_locals() const { return track_locals; }
-	_FORCE_INLINE_ int get_global_array_size() const { return global_array.size(); }
+	_FORCE_INLINE_ uint32_t get_global_array_size() const { return global_array.size(); }
 	_FORCE_INLINE_ Variant *get_global_array() { return global_array.ptr(); }
 	_FORCE_INLINE_ const HashMap<StringName, int> &get_global_map() const { return globals; }
 	_FORCE_INLINE_ const HashMap<StringName, Variant> &get_named_globals_map() const { return named_globals; }

@@ -101,7 +101,7 @@ static String _disassemble_address(const GDScript *p_script, const GDScriptFunct
 void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 #define DADDR(m_ip) (_disassemble_address(_script, *this, _code_ptr[ip + m_ip]))
 
-	for (int ip = 0; ip < _code_size;) {
+	for (uint32_t ip = 0; ip < _code_size;) {
 		StringBuilder text;
 		int incr = 0;
 
@@ -115,7 +115,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 		switch (opcode) {
 			case OPCODE_OPERATOR: {
 				constexpr int _pointer_size = sizeof(Variant::ValidatedOperatorEvaluator) / sizeof(*_code_ptr);
-				int operation = _code_ptr[ip + 4];
+				uint32_t operation = _code_ptr[ip + 4];
 
 				text += "operator ";
 
@@ -512,16 +512,16 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr += 4;
 			} break;
 			case OPCODE_CONSTRUCT: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 				Variant::Type t = Variant::Type(_code_ptr[ip + 3 + instr_var_args]);
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 
 				text += "construct ";
 				text += DADDR(1 + argc);
 				text += " = ";
 
 				text += Variant::get_type_name(t) + "(";
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -532,8 +532,8 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr = 3 + instr_var_args;
 			} break;
 			case OPCODE_CONSTRUCT_VALIDATED: {
-				int instr_var_args = _code_ptr[++ip];
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t instr_var_args = _code_ptr[++ip];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 
 				text += "construct validated ";
 				text += DADDR(1 + argc);
@@ -541,7 +541,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 
 				text += constructors_names[_code_ptr[ip + 3 + argc]];
 				text += "(";
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -552,13 +552,13 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr = 3 + instr_var_args;
 			} break;
 			case OPCODE_CONSTRUCT_ARRAY: {
-				int instr_var_args = _code_ptr[++ip];
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t instr_var_args = _code_ptr[++ip];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				text += "make_array ";
 				text += DADDR(1 + argc);
 				text += " = [";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -570,8 +570,8 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr += 3 + argc;
 			} break;
 			case OPCODE_CONSTRUCT_TYPED_ARRAY: {
-				int instr_var_args = _code_ptr[++ip];
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t instr_var_args = _code_ptr[++ip];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 
 				Ref<Script> script_type = get_constant(_code_ptr[ip + argc + 2] & ADDR_MASK);
 				Variant::Type builtin_type = (Variant::Type)_code_ptr[ip + argc + 4];
@@ -593,7 +593,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				text += DADDR(1 + argc);
 				text += " = [";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -605,13 +605,13 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr += 6 + argc;
 			} break;
 			case OPCODE_CONSTRUCT_DICTIONARY: {
-				int instr_var_args = _code_ptr[++ip];
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t instr_var_args = _code_ptr[++ip];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				text += "make_dict ";
 				text += DADDR(1 + argc * 2);
 				text += " = {";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -625,8 +625,8 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr += 3 + argc * 2;
 			} break;
 			case OPCODE_CONSTRUCT_TYPED_DICTIONARY: {
-				int instr_var_args = _code_ptr[++ip];
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t instr_var_args = _code_ptr[++ip];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 
 				Ref<Script> key_script_type = get_constant(_code_ptr[ip + argc * 2 + 2] & ADDR_MASK);
 				Variant::Type key_builtin_type = (Variant::Type)_code_ptr[ip + argc * 2 + 5];
@@ -663,7 +663,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				text += DADDR(1 + argc * 2);
 				text += " = {";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -682,7 +682,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				bool ret = (_code_ptr[ip]) == OPCODE_CALL_RETURN;
 				bool async = (_code_ptr[ip]) == OPCODE_CALL_ASYNC;
 
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 
 				if (ret) {
 					text += "call-ret ";
@@ -692,7 +692,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 					text += "call ";
 				}
 
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				if (ret || async) {
 					text += DADDR(2 + argc) + " = ";
 				}
@@ -701,7 +701,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				text += String(_global_names_ptr[_code_ptr[ip + 2 + instr_var_args]]);
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -714,7 +714,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 			case OPCODE_CALL_METHOD_BIND:
 			case OPCODE_CALL_METHOD_BIND_RET: {
 				bool ret = (_code_ptr[ip]) == OPCODE_CALL_METHOD_BIND_RET;
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 
 				if (ret) {
 					text += "call-method_bind-ret ";
@@ -724,7 +724,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2 + instr_var_args]];
 
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				if (ret) {
 					text += DADDR(2 + argc) + " = ";
 				}
@@ -733,7 +733,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				text += method->get_name();
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -744,9 +744,9 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr = 5 + argc;
 			} break;
 			case OPCODE_CALL_BUILTIN_STATIC: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 				Variant::Type type = (Variant::Type)_code_ptr[ip + 1 + instr_var_args];
-				int argc = _code_ptr[ip + 3 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 3 + instr_var_args];
 
 				text += "call built-in method static ";
 				text += DADDR(1 + argc);
@@ -756,7 +756,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				text += _global_names_ptr[_code_ptr[ip + 2 + instr_var_args]].string();
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -767,9 +767,9 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr += 5 + argc;
 			} break;
 			case OPCODE_CALL_NATIVE_STATIC: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 1 + instr_var_args]];
-				int argc = _code_ptr[ip + 2 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 2 + instr_var_args];
 
 				text += "call native method static ";
 				text += DADDR(1 + argc);
@@ -779,7 +779,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				text += method->get_name();
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -791,16 +791,16 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 			} break;
 
 			case OPCODE_CALL_NATIVE_STATIC_VALIDATED_RETURN: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 				text += "call native static method validated (return) ";
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2 + instr_var_args]];
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				text += DADDR(1 + argc) + " = ";
 				text += method->get_instance_class();
 				text += ".";
 				text += method->get_name();
 				text += "(";
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -811,20 +811,20 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 			} break;
 
 			case OPCODE_CALL_NATIVE_STATIC_VALIDATED_NO_RETURN: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 
 				text += "call native static method validated (no return) ";
 
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2 + instr_var_args]];
 
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 
 				text += method->get_instance_class();
 				text += ".";
 				text += method->get_name();
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -836,15 +836,15 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 			} break;
 
 			case OPCODE_CALL_METHOD_BIND_VALIDATED_RETURN: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 				text += "call method-bind validated (return) ";
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2 + instr_var_args]];
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				text += DADDR(2 + argc) + " = ";
 				text += DADDR(1 + argc) + ".";
 				text += method->get_name();
 				text += "(";
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -855,19 +855,19 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 			} break;
 
 			case OPCODE_CALL_METHOD_BIND_VALIDATED_NO_RETURN: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 
 				text += "call method-bind validated (no return) ";
 
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2 + instr_var_args]];
 
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 
 				text += DADDR(1 + argc) + ".";
 				text += method->get_name();
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -879,8 +879,8 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 			} break;
 
 			case OPCODE_CALL_BUILTIN_TYPE_VALIDATED: {
-				int instr_var_args = _code_ptr[++ip];
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t instr_var_args = _code_ptr[++ip];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 
 				text += "call-builtin-method validated ";
 
@@ -891,7 +891,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -902,17 +902,17 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr = 5 + argc;
 			} break;
 			case OPCODE_CALL_UTILITY: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 
 				text += "call-utility ";
 
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				text += DADDR(1 + argc) + " = ";
 
 				text += _global_names_ptr[_code_ptr[ip + 2 + instr_var_args]];
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -923,17 +923,17 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr = 4 + argc;
 			} break;
 			case OPCODE_CALL_UTILITY_VALIDATED: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 
 				text += "call-utility validated ";
 
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				text += DADDR(1 + argc) + " = ";
 
 				text += utilities_names[_code_ptr[ip + 3 + argc]];
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -944,17 +944,17 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr = 4 + argc;
 			} break;
 			case OPCODE_CALL_GDSCRIPT_UTILITY: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 
 				text += "call-gdscript-utility ";
 
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				text += DADDR(1 + argc) + " = ";
 
 				text += gds_utilities_names[_code_ptr[ip + 3 + argc]];
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -965,17 +965,17 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr = 4 + argc;
 			} break;
 			case OPCODE_CALL_SELF_BASE: {
-				int instr_var_args = _code_ptr[++ip];
+				uint32_t instr_var_args = _code_ptr[++ip];
 
 				text += "call-self-base ";
 
-				int argc = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t argc = _code_ptr[ip + 1 + instr_var_args];
 				text += DADDR(2 + argc) + " = ";
 
 				text += _global_names_ptr[_code_ptr[ip + 2 + instr_var_args]];
 				text += "(";
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -998,8 +998,8 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr = 2;
 			} break;
 			case OPCODE_CREATE_LAMBDA: {
-				int instr_var_args = _code_ptr[++ip];
-				int captures_count = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t instr_var_args = _code_ptr[++ip];
+				uint32_t captures_count = _code_ptr[ip + 1 + instr_var_args];
 				GDScriptFunction *lambda = _lambdas_ptr[_code_ptr[ip + 2 + instr_var_args]];
 
 				text += DADDR(1 + captures_count);
@@ -1007,7 +1007,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				text += lambda->name.string();
 				text += "function, captures (";
 
-				for (int i = 0; i < captures_count; i++) {
+				for (uint32_t i = 0; i < captures_count; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -1018,8 +1018,8 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr = 4 + captures_count;
 			} break;
 			case OPCODE_CREATE_SELF_LAMBDA: {
-				int instr_var_args = _code_ptr[++ip];
-				int captures_count = _code_ptr[ip + 1 + instr_var_args];
+				uint32_t instr_var_args = _code_ptr[++ip];
+				uint32_t captures_count = _code_ptr[ip + 1 + instr_var_args];
 				GDScriptFunction *lambda = _lambdas_ptr[_code_ptr[ip + 2 + instr_var_args]];
 
 				text += DADDR(1 + captures_count);
@@ -1027,7 +1027,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				text += lambda->name.string();
 				text += "function, captures (";
 
-				for (int i = 0; i < captures_count; i++) {
+				for (uint32_t i = 0; i < captures_count; i++) {
 					if (i > 0) {
 						text += ", ";
 					}
@@ -1242,7 +1242,7 @@ void GDScriptFunction::disassemble(const Vector<String> &p_code_lines) const {
 				incr += 3;
 			} break;
 			case OPCODE_LINE: {
-				int line = _code_ptr[ip + 1] - 1;
+				uint32_t line = _code_ptr[ip + 1] - 1;
 				if (line >= 0 && line < p_code_lines.size()) {
 					text += "line ";
 					text += itos(line + 1);

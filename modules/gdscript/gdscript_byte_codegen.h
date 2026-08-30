@@ -78,7 +78,7 @@ class GDScriptByteCodeGenerator : public GDScriptCodeGenerator {
 	bool ended = false;
 	GDScriptFunction *function = nullptr;
 
-	LocalVector<int> opcodes;
+	LocalVector<uint32_t> opcodes;
 	List<RBMap<StringName, int>> stack_id_stack;
 	RBMap<StringName, int> stack_identifiers;
 	List<int> stack_identifiers_counts;
@@ -93,12 +93,12 @@ class GDScriptByteCodeGenerator : public GDScriptCodeGenerator {
 	RBMap<Variant::Type, List<int>> temporaries_pool;
 
 	List<GDScriptFunction::StackDebug> stack_debug;
-	List<RBMap<StringName, int>> block_identifier_stack;
-	RBMap<StringName, int> block_identifiers;
+	List<RBMap<StringName, uint32_t>> block_identifier_stack;
+	RBMap<StringName, uint32_t> block_identifiers;
 
 	uint32_t max_locals = 0;
-	int current_line = 0;
-	int instr_args_max = 0;
+	uint32_t current_line = 0;
+	uint32_t instr_args_max = 0;
 
 	HashMap<Variant, int> constant_map;
 	RBMap<StringName, int> name_map;
@@ -175,7 +175,7 @@ class GDScriptByteCodeGenerator : public GDScriptCodeGenerator {
 		stack_identifiers_counts.push_back(locals.size());
 		stack_id_stack.push_back(stack_identifiers);
 		if (GDScriptLanguage::get_singleton()->should_track_locals()) {
-			RBMap<StringName, int> block_ids(block_identifiers);
+			RBMap<StringName, uint32_t> block_ids(block_identifiers);
 			block_identifier_stack.push_back(block_ids);
 			block_identifiers.clear();
 		}
@@ -196,7 +196,7 @@ class GDScriptByteCodeGenerator : public GDScriptCodeGenerator {
 		}
 		locals.resize(current_locals);
 		if (GDScriptLanguage::get_singleton()->should_track_locals()) {
-			for (const KeyValue<StringName, int> &E : block_identifiers) {
+			for (const KeyValue<StringName, uint32_t> &E : block_identifiers) {
 				GDScriptFunction::StackDebug sd;
 				sd.added = false;
 				sd.identifier = E.key;
@@ -374,7 +374,7 @@ class GDScriptByteCodeGenerator : public GDScriptCodeGenerator {
 		opcodes.push_back(p_code);
 	}
 
-	void append_opcode_and_argcount(GDScriptFunction::Opcode p_code, int p_argument_count) {
+	void append_opcode_and_argcount(GDScriptFunction::Opcode p_code, uint32_t p_argument_count) {
 		opcodes.push_back(p_code);
 		opcodes.push_back(p_argument_count);
 		instr_args_max = MAX(instr_args_max, p_argument_count);
@@ -472,7 +472,7 @@ public:
 #ifdef DEBUG_ENABLED
 	virtual void set_signature(const String &p_signature) override;
 #endif
-	virtual void set_initial_line(int p_line) override;
+	virtual void set_initial_line(uint32_t p_line) override;
 
 	virtual void write_type_adjust(const Address &p_target, Variant::Type p_new_type) override;
 	virtual void write_unary_operator(const Address &p_target, Variant::Operator p_operator, const Address &p_left_operand) override;
@@ -543,7 +543,7 @@ public:
 	virtual void write_break() override;
 	virtual void write_continue() override;
 	virtual void write_breakpoint() override;
-	virtual void write_newline(int p_line) override;
+	virtual void write_newline(uint32_t p_line) override;
 	virtual void write_return(const Address &p_return_value, bool p_use_conversion) override;
 	virtual void write_assert(const Address &p_test, const Address &p_message) override;
 

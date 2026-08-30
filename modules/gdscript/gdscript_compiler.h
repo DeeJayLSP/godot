@@ -53,7 +53,7 @@ class GDScriptCompiler {
 		int depth = 0;
 		//uint64_t code_hash;
 		//int code_size;
-		int capture_count = 0;
+		uint32_t capture_count = 0;
 		bool use_self = false;
 		int arg_count = 0;
 		int default_arg_count = 0;

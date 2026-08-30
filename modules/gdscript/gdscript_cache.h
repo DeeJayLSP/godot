@@ -102,7 +102,7 @@ class GDScriptCache {
 	bool cleared = false;
 
 public:
-	static const int BINARY_MUTEX_TAG = 2;
+	static const uint8_t BINARY_MUTEX_TAG = 2;
 
 private:
 	static SafeBinaryMutex<BINARY_MUTEX_TAG> mutex;

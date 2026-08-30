@@ -87,7 +87,7 @@ public:
 #ifdef DEBUG_ENABLED
 	virtual void set_signature(const String &p_signature) = 0;
 #endif
-	virtual void set_initial_line(int p_line) = 0;
+	virtual void set_initial_line(uint32_t p_line) = 0;
 
 	virtual void write_type_adjust(const Address &p_target, Variant::Type p_new_type) = 0;
 	virtual void write_unary_operator(const Address &p_target, Variant::Operator p_operator, const Address &p_left_operand) = 0;
@@ -157,7 +157,7 @@ public:
 	virtual void write_break() = 0;
 	virtual void write_continue() = 0;
 	virtual void write_breakpoint() = 0;
-	virtual void write_newline(int p_line) = 0;
+	virtual void write_newline(uint32_t p_line) = 0;
 	virtual void write_return(const Address &p_return_value, bool p_use_conversion) = 0;
 	virtual void write_assert(const Address &p_test, const Address &p_message) = 0;
 

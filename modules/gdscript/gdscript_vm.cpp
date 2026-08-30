@@ -496,7 +496,7 @@ void (*type_init_function_table[])(Variant *) = {
 #define METHOD_CALL_ON_NULL_VALUE_ERROR(method_pointer) "Cannot call method '" + (method_pointer)->get_name() + "' on a null value."
 #define METHOD_CALL_ON_FREED_INSTANCE_ERROR(method_pointer) "Cannot call method '" + (method_pointer)->get_name() + "' on a previously freed instance."
 
-Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_args, int p_argcount, Callable::CallError &r_err, CallState *p_state) {
+Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_args, uint32_t p_argcount, Callable::CallError &r_err, CallState *p_state) {
 	GodotProfileZoneScript(this, source, name, name, _initial_line);
 
 	OPCODES_TABLE;
@@ -507,7 +507,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 	r_err.error = Callable::CallError::CALL_OK;
 
-	static thread_local int call_depth = 0;
+	static thread_local uint16_t call_depth = 0;
 	if (unlikely(++call_depth > MAX_CALL_DEPTH)) {
 		call_depth--;
 #ifdef DEBUG_ENABLED
@@ -519,7 +519,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		if (!_script->local_name.is_empty()) {
 			err_func = _script->local_name.string() + "." + err_func;
 		}
-		int err_line = _initial_line;
+		uint32_t err_line = _initial_line;
 		const char *err_text = "Stack overflow. Check for infinite recursion in your script.";
 		_err_print_error(err_func.utf8().get_data(), err_file.utf8().get_data(), err_line, err_text, false, ERR_HANDLER_SCRIPT);
 		GDScriptLanguage::get_singleton()->debug_break(err_text, false);
@@ -530,12 +530,12 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 	Variant retvalue;
 	Variant *stack = nullptr;
 	Variant **instruction_args = nullptr;
-	int defarg = 0;
+	uint32_t defarg = 0;
 
 	uint32_t alloca_size = 0;
 	GDScript *script;
-	int ip = 0;
-	int line = _initial_line;
+	uint32_t ip = 0;
+	uint32_t line = _initial_line;
 
 	if (p_state) {
 		// Use existing (supplied) state (awaited).
@@ -622,7 +622,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				memnew_placement(&stack[i + FIXED_ADDRESSES_MAX], Variant(*p_args[i]));
 			}
 		}
-		for (int i = non_vararg_arg_count + FIXED_ADDRESSES_MAX; i < _stack_size; i++) {
+		for (uint32_t i = non_vararg_arg_count + FIXED_ADDRESSES_MAX; i < _stack_size; i++) {
 			memnew_placement(&stack[i], Variant);
 		}
 
@@ -631,7 +631,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			stack[_vararg_index] = vararg;
 			if (p_argcount > _argument_count) {
 				vararg.resize(p_argcount - _argument_count);
-				for (int i = 0; i < p_argcount - _argument_count; i++) {
+				for (uint32_t i = 0; i < p_argcount - _argument_count; i++) {
 					vararg[i] = *p_args[i + _argument_count];
 				}
 			}
@@ -684,14 +684,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 #define GET_VARIANT_PTR(m_v, m_code_ofs) \
 	Variant *m_v; \
 	{ \
-		int address = _code_ptr[ip + 1 + (m_code_ofs)]; \
-		int address_type = (address & ADDR_TYPE_MASK) >> ADDR_BITS; \
-		if (unlikely(address_type < 0 || address_type >= ADDR_TYPE_MAX)) { \
+		uint32_t address = _code_ptr[ip + 1 + (m_code_ofs)]; \
+		uint32_t address_type = (address & ADDR_TYPE_MASK) >> ADDR_BITS; \
+		if (unlikely(address_type >= ADDR_TYPE_MAX)) { \
 			err_text = "Bad address type."; \
 			OPCODE_BREAK; \
 		} \
-		int address_index = address & ADDR_MASK; \
-		if (unlikely(address_index < 0 || address_index >= variant_address_limits[address_type])) { \
+		uint32_t address_index = address & ADDR_MASK; \
+		if (unlikely(address_index >= variant_address_limits[address_type])) { \
 			if (address_type == ADDR_TYPE_MEMBER && !p_instance) { \
 				err_text = "Cannot access member without instance."; \
 			} else { \
@@ -711,7 +711,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 #define GET_VARIANT_PTR(m_v, m_code_ofs) \
 	Variant *m_v; \
 	{ \
-		int address = _code_ptr[ip + 1 + (m_code_ofs)]; \
+		uint32_t address = _code_ptr[ip + 1 + (m_code_ofs)]; \
 		m_v = &variant_addresses[(address & ADDR_TYPE_MASK) >> ADDR_BITS][address & ADDR_MASK]; \
 		if (unlikely(!m_v)) \
 			OPCODE_BREAK; \
@@ -720,8 +720,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 #endif // DEBUG_ENABLED
 
 #define LOAD_INSTRUCTION_ARGS \
-	int instr_arg_count = _code_ptr[ip + 1]; \
-	for (int i = 0; i < instr_arg_count; i++) { \
+	uint32_t instr_arg_count = _code_ptr[ip + 1]; \
+	for (uint32_t i = 0; i < instr_arg_count; i++) { \
 		GET_VARIANT_PTR(v, i + 1); \
 		instruction_args[i] = v; \
 	} \
@@ -741,7 +741,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		profile.frame_call_count.increment();
 	}
 	bool exit_ok = false;
-	int variant_address_limits[ADDR_TYPE_MAX] = { _stack_size, _constant_count, p_instance ? (int)p_instance->members.size() : 0 };
+	uint32_t variant_address_limits[ADDR_TYPE_MAX] = { _stack_size, _constant_count, p_instance ? (int)p_instance->members.size() : 0u };
 #endif
 
 	bool awaited = false;
@@ -749,14 +749,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 #ifdef DEBUG_ENABLED
 	OPCODE_WHILE(ip < _code_size) {
-		int last_opcode = _code_ptr[ip];
+		uint32_t last_opcode = _code_ptr[ip];
 #else
 	OPCODE_WHILE(true) {
 #endif
 
 		OPCODE_SWITCH(_code_ptr[ip]) {
 			OPCODE(OPCODE_OPERATOR) {
-				constexpr int _pointer_size = sizeof(Variant::ValidatedOperatorEvaluator) / sizeof(*_code_ptr);
+				constexpr uint32_t _pointer_size = sizeof(Variant::ValidatedOperatorEvaluator) / sizeof(*_code_ptr);
 				CHECK_SPACE(7 + _pointer_size);
 
 				bool valid;
@@ -843,10 +843,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_OPERATOR_VALIDATED) {
-				CHECK_SPACE(5);
+				CHECK_SPACE(5u);
 
-				int operator_idx = _code_ptr[ip + 4];
-				GD_ERR_BREAK(operator_idx < 0 || operator_idx >= _operator_funcs_count);
+				uint32_t operator_idx = _code_ptr[ip + 4];
+				GD_ERR_BREAK(operator_idx >= _operator_funcs_count);
 				Variant::ValidatedOperatorEvaluator operator_func = _operator_funcs_ptr[operator_idx];
 
 				GET_VARIANT_PTR(a, 0);
@@ -860,13 +860,13 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_TYPE_TEST_BUILTIN) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(value, 1);
 
 				Variant::Type builtin_type = (Variant::Type)_code_ptr[ip + 3];
-				GD_ERR_BREAK(builtin_type < 0 || builtin_type >= Variant::VARIANT_MAX);
+				GD_ERR_BREAK(builtin_type >= Variant::VARIANT_MAX);
 
 				*dst = value->get_type() == builtin_type;
 				ip += 4;
@@ -874,15 +874,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_TYPE_TEST_ARRAY) {
-				CHECK_SPACE(6);
+				CHECK_SPACE(6u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(value, 1);
 
 				GET_VARIANT_PTR(script_type, 2);
 				Variant::Type builtin_type = (Variant::Type)_code_ptr[ip + 4];
-				int native_type_idx = _code_ptr[ip + 5];
-				GD_ERR_BREAK(native_type_idx < 0 || native_type_idx >= _global_names_count);
+				uint32_t native_type_idx = _code_ptr[ip + 5];
+				GD_ERR_BREAK(native_type_idx >= _global_names_count);
 				const StringName &native_type = _global_names_ptr[native_type_idx];
 
 				bool result = false;
@@ -897,21 +897,21 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_TYPE_TEST_DICTIONARY) {
-				CHECK_SPACE(9);
+				CHECK_SPACE(9u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(value, 1);
 
 				GET_VARIANT_PTR(key_script_type, 2);
 				Variant::Type key_builtin_type = (Variant::Type)_code_ptr[ip + 5];
-				int key_native_type_idx = _code_ptr[ip + 6];
-				GD_ERR_BREAK(key_native_type_idx < 0 || key_native_type_idx >= _global_names_count);
+				uint32_t key_native_type_idx = _code_ptr[ip + 6];
+				GD_ERR_BREAK(key_native_type_idx >= _global_names_count);
 				const StringName &key_native_type = _global_names_ptr[key_native_type_idx];
 
 				GET_VARIANT_PTR(value_script_type, 3);
 				Variant::Type value_builtin_type = (Variant::Type)_code_ptr[ip + 7];
-				int value_native_type_idx = _code_ptr[ip + 8];
-				GD_ERR_BREAK(value_native_type_idx < 0 || value_native_type_idx >= _global_names_count);
+				uint32_t value_native_type_idx = _code_ptr[ip + 8];
+				GD_ERR_BREAK(value_native_type_idx >= _global_names_count);
 				const StringName &value_native_type = _global_names_ptr[value_native_type_idx];
 
 				bool result = false;
@@ -927,13 +927,13 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_TYPE_TEST_NATIVE) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(value, 1);
 
-				int native_type_idx = _code_ptr[ip + 3];
-				GD_ERR_BREAK(native_type_idx < 0 || native_type_idx >= _global_names_count);
+				uint32_t native_type_idx = _code_ptr[ip + 3];
+				GD_ERR_BREAK(native_type_idx >= _global_names_count);
 				const StringName &native_type = _global_names_ptr[native_type_idx];
 
 				bool was_freed = false;
@@ -951,7 +951,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_TYPE_TEST_SCRIPT) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(value, 1);
@@ -987,7 +987,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_SET_KEYED) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(index, 1);
@@ -1033,14 +1033,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_SET_KEYED_VALIDATED) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(index, 1);
 				GET_VARIANT_PTR(value, 2);
 
-				int index_setter = _code_ptr[ip + 4];
-				GD_ERR_BREAK(index_setter < 0 || index_setter >= _keyed_setters_count);
+				uint32_t index_setter = _code_ptr[ip + 4];
+				GD_ERR_BREAK(index_setter >= _keyed_setters_count);
 				const Variant::ValidatedKeyedSetter setter = _keyed_setters_ptr[index_setter];
 
 				bool valid;
@@ -1067,14 +1067,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_SET_INDEXED_VALIDATED) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(index, 1);
 				GET_VARIANT_PTR(value, 2);
 
-				int index_setter = _code_ptr[ip + 4];
-				GD_ERR_BREAK(index_setter < 0 || index_setter >= _indexed_setters_count);
+				uint32_t index_setter = _code_ptr[ip + 4];
+				GD_ERR_BREAK(index_setter >= _indexed_setters_count);
 				const Variant::ValidatedIndexedSetter setter = _indexed_setters_ptr[index_setter];
 
 				int64_t int_index = *VariantInternal::get_int(index);
@@ -1103,7 +1103,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_GET_KEYED) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 
 				GET_VARIANT_PTR(src, 0);
 				GET_VARIANT_PTR(index, 1);
@@ -1139,14 +1139,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_GET_KEYED_VALIDATED) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(src, 0);
 				GET_VARIANT_PTR(key, 1);
 				GET_VARIANT_PTR(dst, 2);
 
-				int index_getter = _code_ptr[ip + 4];
-				GD_ERR_BREAK(index_getter < 0 || index_getter >= _keyed_getters_count);
+				uint32_t index_getter = _code_ptr[ip + 4];
+				GD_ERR_BREAK(index_getter >= _keyed_getters_count);
 				const Variant::ValidatedKeyedGetter getter = _keyed_getters_ptr[index_getter];
 
 				bool valid;
@@ -1175,14 +1175,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_GET_INDEXED_VALIDATED) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(src, 0);
 				GET_VARIANT_PTR(index, 1);
 				GET_VARIANT_PTR(dst, 2);
 
-				int index_getter = _code_ptr[ip + 4];
-				GD_ERR_BREAK(index_getter < 0 || index_getter >= _indexed_getters_count);
+				uint32_t index_getter = _code_ptr[ip + 4];
+				GD_ERR_BREAK(index_getter >= _indexed_getters_count);
 				const Variant::ValidatedIndexedGetter getter = _indexed_getters_ptr[index_getter];
 
 				int64_t int_index = *VariantInternal::get_int(index);
@@ -1207,14 +1207,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_SET_NAMED) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(value, 1);
 
-				int indexname = _code_ptr[ip + 3];
+				uint32_t indexname = _code_ptr[ip + 3];
 
-				GD_ERR_BREAK(indexname < 0 || indexname >= _global_names_count);
+				GD_ERR_BREAK(indexname >= _global_names_count);
 				const StringName *index = &_global_names_ptr[indexname];
 
 				bool valid;
@@ -1244,13 +1244,13 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_SET_NAMED_VALIDATED) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(value, 1);
 
-				int index_setter = _code_ptr[ip + 3];
-				GD_ERR_BREAK(index_setter < 0 || index_setter >= _setters_count);
+				uint32_t index_setter = _code_ptr[ip + 3];
+				GD_ERR_BREAK(index_setter >= _setters_count);
 				const Variant::ValidatedSetter setter = _setters_ptr[index_setter];
 
 				setter(dst, value);
@@ -1259,14 +1259,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_GET_NAMED) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(src, 0);
 				GET_VARIANT_PTR(dst, 1);
 
-				int indexname = _code_ptr[ip + 3];
+				uint32_t indexname = _code_ptr[ip + 3];
 
-				GD_ERR_BREAK(indexname < 0 || indexname >= _global_names_count);
+				GD_ERR_BREAK(indexname >= _global_names_count);
 				const StringName *index = &_global_names_ptr[indexname];
 
 				bool valid;
@@ -1289,13 +1289,13 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_GET_NAMED_VALIDATED) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 
 				GET_VARIANT_PTR(src, 0);
 				GET_VARIANT_PTR(dst, 1);
 
-				int index_getter = _code_ptr[ip + 3];
-				GD_ERR_BREAK(index_getter < 0 || index_getter >= _getters_count);
+				uint32_t index_getter = _code_ptr[ip + 3];
+				GD_ERR_BREAK(index_getter >= _getters_count);
 				const Variant::ValidatedGetter getter = _getters_ptr[index_getter];
 
 				getter(src, dst);
@@ -1304,10 +1304,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_SET_MEMBER) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 				GET_VARIANT_PTR(src, 0);
-				int indexname = _code_ptr[ip + 2];
-				GD_ERR_BREAK(indexname < 0 || indexname >= _global_names_count);
+				uint32_t indexname = _code_ptr[ip + 2];
+				GD_ERR_BREAK(indexname >= _global_names_count);
 				const StringName *index = &_global_names_ptr[indexname];
 
 				bool valid;
@@ -1328,10 +1328,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_GET_MEMBER) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 				GET_VARIANT_PTR(dst, 0);
-				int indexname = _code_ptr[ip + 2];
-				GD_ERR_BREAK(indexname < 0 || indexname >= _global_names_count);
+				uint32_t indexname = _code_ptr[ip + 2];
+				GD_ERR_BREAK(indexname >= _global_names_count);
 				const StringName *index = &_global_names_ptr[indexname];
 #ifndef DEBUG_ENABLED
 				ClassDB::get_property(p_instance->owner, *index, *dst);
@@ -1347,7 +1347,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_SET_STATIC_VARIABLE) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(value, 0);
 
@@ -1365,7 +1365,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_GET_STATIC_VARIABLE) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(target, 0);
 
@@ -1383,7 +1383,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ASSIGN) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(src, 1);
 
@@ -1394,7 +1394,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ASSIGN_NULL) {
-				CHECK_SPACE(2);
+				CHECK_SPACE(2u);
 				GET_VARIANT_PTR(dst, 0);
 
 				*dst = Variant();
@@ -1404,7 +1404,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ASSIGN_TRUE) {
-				CHECK_SPACE(2);
+				CHECK_SPACE(2u);
 				GET_VARIANT_PTR(dst, 0);
 
 				*dst = true;
@@ -1414,7 +1414,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ASSIGN_FALSE) {
-				CHECK_SPACE(2);
+				CHECK_SPACE(2u);
 				GET_VARIANT_PTR(dst, 0);
 
 				*dst = false;
@@ -1424,12 +1424,12 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ASSIGN_TYPED_BUILTIN) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(src, 1);
 
 				Variant::Type var_type = (Variant::Type)_code_ptr[ip + 3];
-				GD_ERR_BREAK(var_type < 0 || var_type >= Variant::VARIANT_MAX);
+				GD_ERR_BREAK(var_type >= Variant::VARIANT_MAX);
 
 				if (src->get_type() != var_type) {
 #ifdef DEBUG_ENABLED
@@ -1453,14 +1453,14 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ASSIGN_TYPED_ARRAY) {
-				CHECK_SPACE(6);
+				CHECK_SPACE(6u);
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(src, 1);
 
 				GET_VARIANT_PTR(script_type, 2);
 				Variant::Type builtin_type = (Variant::Type)_code_ptr[ip + 4];
-				int native_type_idx = _code_ptr[ip + 5];
-				GD_ERR_BREAK(native_type_idx < 0 || native_type_idx >= _global_names_count);
+				uint32_t native_type_idx = _code_ptr[ip + 5];
+				GD_ERR_BREAK(native_type_idx >= _global_names_count);
 				const StringName &native_type = _global_names_ptr[native_type_idx];
 
 				if (src->get_type() != Variant::ARRAY) {
@@ -1488,20 +1488,20 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ASSIGN_TYPED_DICTIONARY) {
-				CHECK_SPACE(9);
+				CHECK_SPACE(9u);
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(src, 1);
 
 				GET_VARIANT_PTR(key_script_type, 2);
 				Variant::Type key_builtin_type = (Variant::Type)_code_ptr[ip + 5];
-				int key_native_type_idx = _code_ptr[ip + 6];
-				GD_ERR_BREAK(key_native_type_idx < 0 || key_native_type_idx >= _global_names_count);
+				uint32_t key_native_type_idx = _code_ptr[ip + 6];
+				GD_ERR_BREAK(key_native_type_idx >= _global_names_count);
 				const StringName &key_native_type = _global_names_ptr[key_native_type_idx];
 
 				GET_VARIANT_PTR(value_script_type, 3);
 				Variant::Type value_builtin_type = (Variant::Type)_code_ptr[ip + 7];
-				int value_native_type_idx = _code_ptr[ip + 8];
-				GD_ERR_BREAK(value_native_type_idx < 0 || value_native_type_idx >= _global_names_count);
+				uint32_t value_native_type_idx = _code_ptr[ip + 8];
+				GD_ERR_BREAK(value_native_type_idx >= _global_names_count);
 				const StringName &value_native_type = _global_names_ptr[value_native_type_idx];
 
 				if (src->get_type() != Variant::DICTIONARY) {
@@ -1532,7 +1532,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ASSIGN_TYPED_NATIVE) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(src, 1);
 
@@ -1568,7 +1568,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ASSIGN_TYPED_SCRIPT) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 				GET_VARIANT_PTR(dst, 0);
 				GET_VARIANT_PTR(src, 1);
 
@@ -1626,12 +1626,12 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_CAST_TO_BUILTIN) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 				GET_VARIANT_PTR(src, 0);
 				GET_VARIANT_PTR(dst, 1);
 				Variant::Type to_type = (Variant::Type)_code_ptr[ip + 3];
 
-				GD_ERR_BREAK(to_type < 0 || to_type >= Variant::VARIANT_MAX);
+				GD_ERR_BREAK(to_type >= Variant::VARIANT_MAX);
 
 #ifdef DEBUG_ENABLED
 				if (src->operator Object *() && !src->get_validated_object()) {
@@ -1655,7 +1655,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_CAST_TO_NATIVE) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 				GET_VARIANT_PTR(src, 0);
 				GET_VARIANT_PTR(dst, 1);
 				GET_VARIANT_PTR(to_type, 2);
@@ -1686,7 +1686,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_CAST_TO_SCRIPT) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 				GET_VARIANT_PTR(src, 0);
 				GET_VARIANT_PTR(dst, 1);
 				GET_VARIANT_PTR(to_type, 2);
@@ -1740,7 +1740,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 
 				Variant::Type t = Variant::Type(_code_ptr[ip + 2]);
 
@@ -1767,10 +1767,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				CHECK_SPACE(2 + instr_arg_count);
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 
-				int constructor_idx = _code_ptr[ip + 2];
-				GD_ERR_BREAK(constructor_idx < 0 || constructor_idx >= _constructors_count);
+				uint32_t constructor_idx = _code_ptr[ip + 2];
+				GD_ERR_BREAK(constructor_idx >= _constructors_count);
 				Variant::ValidatedConstructor constructor = _constructors_ptr[constructor_idx];
 
 				Variant **argptrs = instruction_args;
@@ -1788,11 +1788,11 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				CHECK_SPACE(1 + instr_arg_count);
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				Array array;
 				array.resize(argc);
 
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					array[i] = *(instruction_args[i]);
 				}
 
@@ -1810,18 +1810,18 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				CHECK_SPACE(3 + instr_arg_count);
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 
 				GET_INSTRUCTION_ARG(script_type, argc + 1);
 				Variant::Type builtin_type = (Variant::Type)_code_ptr[ip + 2];
-				int native_type_idx = _code_ptr[ip + 3];
-				GD_ERR_BREAK(native_type_idx < 0 || native_type_idx >= _global_names_count);
+				uint32_t native_type_idx = _code_ptr[ip + 3];
+				GD_ERR_BREAK(native_type_idx >= _global_names_count);
 				const StringName &native_type = _global_names_ptr[native_type_idx];
 
 				Array array;
 				array.set_typed(builtin_type, native_type, *script_type);
 				array.resize(argc);
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					// Use .set instead of operator[] to handle type conversion / validation.
 					array.set(i, *(instruction_args[i]));
 				}
@@ -1841,10 +1841,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				Dictionary dict;
 				dict.reserve(argc);
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					GET_INSTRUCTION_ARG(k, i * 2 + 0);
 					GET_INSTRUCTION_ARG(v, i * 2 + 1);
 					dict[*k] = *v;
@@ -1865,24 +1865,24 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				CHECK_SPACE(6 + instr_arg_count);
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 
 				GET_INSTRUCTION_ARG(key_script_type, argc * 2 + 1);
 				Variant::Type key_builtin_type = (Variant::Type)_code_ptr[ip + 2];
-				int key_native_type_idx = _code_ptr[ip + 3];
-				GD_ERR_BREAK(key_native_type_idx < 0 || key_native_type_idx >= _global_names_count);
+				uint32_t key_native_type_idx = _code_ptr[ip + 3];
+				GD_ERR_BREAK(key_native_type_idx >= _global_names_count);
 				const StringName &key_native_type = _global_names_ptr[key_native_type_idx];
 
 				GET_INSTRUCTION_ARG(value_script_type, argc * 2 + 2);
 				Variant::Type value_builtin_type = (Variant::Type)_code_ptr[ip + 4];
-				int value_native_type_idx = _code_ptr[ip + 5];
-				GD_ERR_BREAK(value_native_type_idx < 0 || value_native_type_idx >= _global_names_count);
+				uint32_t value_native_type_idx = _code_ptr[ip + 5];
+				GD_ERR_BREAK(value_native_type_idx >= _global_names_count);
 				const StringName &value_native_type = _global_names_ptr[value_native_type_idx];
 
 				Dictionary dict;
 				dict.set_typed(key_builtin_type, key_native_type, *key_script_type, value_builtin_type, value_native_type, *value_script_type);
 				dict.reserve(argc);
-				for (int i = 0; i < argc; i++) {
+				for (uint32_t i = 0; i < argc; i++) {
 					GET_INSTRUCTION_ARG(k, i * 2 + 0);
 					GET_INSTRUCTION_ARG(v, i * 2 + 1);
 					// Use .set instead of operator[] to handle type conversion / validation.
@@ -1911,11 +1911,11 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
-				int methodname_idx = _code_ptr[ip + 2];
-				GD_ERR_BREAK(methodname_idx < 0 || methodname_idx >= _global_names_count);
+				uint32_t methodname_idx = _code_ptr[ip + 2];
+				GD_ERR_BREAK(methodname_idx >= _global_names_count);
 				const StringName *methodname = &_global_names_ptr[methodname_idx];
 
 				GodotProfileZoneScriptSystemCall(methodname, source, name, *methodname, line);
@@ -2040,9 +2040,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
-				GD_ERR_BREAK(_code_ptr[ip + 2] < 0 || _code_ptr[ip + 2] >= _methods_count);
+				GD_ERR_BREAK(_code_ptr[ip + 2] >= _methods_count);
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2]];
 
 				GodotProfileZoneScriptSystemCall(method, source, name, method->get_name(), line);
@@ -2125,16 +2125,16 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				GD_ERR_BREAK(_code_ptr[ip + 1] < 0 || _code_ptr[ip + 1] >= Variant::VARIANT_MAX);
+				GD_ERR_BREAK(_code_ptr[ip + 1] >= Variant::VARIANT_MAX);
 				Variant::Type builtin_type = (Variant::Type)_code_ptr[ip + 1];
 
-				int methodname_idx = _code_ptr[ip + 2];
-				GD_ERR_BREAK(methodname_idx < 0 || methodname_idx >= _global_names_count);
+				uint32_t methodname_idx = _code_ptr[ip + 2];
+				GD_ERR_BREAK(methodname_idx >= _global_names_count);
 				const StringName *methodname = &_global_names_ptr[methodname_idx];
 
 				GodotProfileZoneScriptSystemCall(methodname, source, name, *methodname, line);
 
-				int argc = _code_ptr[ip + 3];
+				uint32_t argc = _code_ptr[ip + 3];
 				GD_ERR_BREAK(argc < 0);
 
 				GET_INSTRUCTION_ARG(ret, argc);
@@ -2161,12 +2161,12 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				GD_ERR_BREAK(_code_ptr[ip + 1] < 0 || _code_ptr[ip + 1] >= _methods_count);
+				GD_ERR_BREAK(_code_ptr[ip + 1] >= _methods_count);
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 1]];
 
 				GodotProfileZoneScriptSystemCall(method, source, name, method->get_name(), line);
 
-				int argc = _code_ptr[ip + 2];
+				uint32_t argc = _code_ptr[ip + 2];
 				GD_ERR_BREAK(argc < 0);
 
 				GET_INSTRUCTION_ARG(ret, argc);
@@ -2208,10 +2208,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
-				GD_ERR_BREAK(_code_ptr[ip + 2] < 0 || _code_ptr[ip + 2] >= _methods_count);
+				GD_ERR_BREAK(_code_ptr[ip + 2] >= _methods_count);
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2]];
 
 				GodotProfileZoneScriptSystemCall(method, source, name, method->get_name(), line);
@@ -2246,10 +2246,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
-				GD_ERR_BREAK(_code_ptr[ip + 2] < 0 || _code_ptr[ip + 2] >= _methods_count);
+				GD_ERR_BREAK(_code_ptr[ip + 2] >= _methods_count);
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2]];
 
 				GodotProfileZoneScriptSystemCall(method, source, name, method->get_name(), line);
@@ -2284,10 +2284,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
-				GD_ERR_BREAK(_code_ptr[ip + 2] < 0 || _code_ptr[ip + 2] >= _methods_count);
+				GD_ERR_BREAK(_code_ptr[ip + 2] >= _methods_count);
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2]];
 
 				GodotProfileZoneScriptSystemCall(method, source, name, method->get_name(), line);
@@ -2338,10 +2338,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
-				GD_ERR_BREAK(_code_ptr[ip + 2] < 0 || _code_ptr[ip + 2] >= _methods_count);
+				GD_ERR_BREAK(_code_ptr[ip + 2] >= _methods_count);
 				const MethodBind *method = _methods_ptr[_code_ptr[ip + 2]];
 
 				GodotProfileZoneScriptSystemCall(method, source, name, method->get_name(), line);
@@ -2391,12 +2391,12 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
 				GET_INSTRUCTION_ARG(base, argc);
 
-				GD_ERR_BREAK(_code_ptr[ip + 2] < 0 || _code_ptr[ip + 2] >= _builtin_methods_count);
+				GD_ERR_BREAK(_code_ptr[ip + 2] >= _builtin_methods_count);
 				Variant::ValidatedBuiltInMethod method = _builtin_methods_ptr[_code_ptr[ip + 2]];
 				Variant **argptrs = instruction_args;
 
@@ -2413,10 +2413,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
-				GD_ERR_BREAK(_code_ptr[ip + 2] < 0 || _code_ptr[ip + 2] >= _global_names_count);
+				GD_ERR_BREAK(_code_ptr[ip + 2] >= _global_names_count);
 				const StringName &function = _global_names_ptr[_code_ptr[ip + 2]];
 
 				Variant **argptrs = instruction_args;
@@ -2448,10 +2448,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
-				GD_ERR_BREAK(_code_ptr[ip + 2] < 0 || _code_ptr[ip + 2] >= _utilities_count);
+				GD_ERR_BREAK(_code_ptr[ip + 2] >= _utilities_count);
 				Variant::ValidatedUtilityFunction function = _utilities_ptr[_code_ptr[ip + 2]];
 
 				Variant **argptrs = instruction_args;
@@ -2470,10 +2470,10 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
-				GD_ERR_BREAK(_code_ptr[ip + 2] < 0 || _code_ptr[ip + 2] >= _gds_utilities_count);
+				GD_ERR_BREAK(_code_ptr[ip + 2] >= _gds_utilities_count);
 				GDScriptUtilityFunctions::FunctionPtr function = _gds_utilities_ptr[_code_ptr[ip + 2]];
 
 				Variant **argptrs = instruction_args;
@@ -2505,12 +2505,12 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int argc = _code_ptr[ip + 1];
+				uint32_t argc = _code_ptr[ip + 1];
 				GD_ERR_BREAK(argc < 0);
 
-				int self_fun = _code_ptr[ip + 2];
+				uint32_t self_fun = _code_ptr[ip + 2];
 #ifdef DEBUG_ENABLED
-				if (self_fun < 0 || self_fun >= _global_names_count) {
+				if (self_fun >= _global_names_count) {
 					err_text = "compiler bug, function name not found";
 					OPCODE_BREAK;
 				}
@@ -2571,7 +2571,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_AWAIT) {
-				CHECK_SPACE(2);
+				CHECK_SPACE(2u);
 
 				// Do the one-shot connect.
 				GET_VARIANT_PTR(argobj, 0);
@@ -2619,7 +2619,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					gdfs->state.stack.resize(alloca_size);
 
 					// First `FIXED_ADDRESSES_MAX` stack addresses are special, so we just skip them here.
-					for (int i = FIXED_ADDRESSES_MAX; i < _stack_size; i++) {
+					for (uint32_t i = FIXED_ADDRESSES_MAX; i < _stack_size; i++) {
 						memnew_placement(&gdfs->state.stack[sizeof(Variant) * i], Variant(stack[i]));
 					}
 					gdfs->state.stack_size = _stack_size;
@@ -2671,7 +2671,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE; // Needed for synchronous calls (when result is immediately available).
 
 			OPCODE(OPCODE_AWAIT_RESUME) {
-				CHECK_SPACE(2);
+				CHECK_SPACE(2u);
 #ifdef DEBUG_ENABLED
 				if (!p_state) {
 					err_text = ("Invalid Resume (bug?)");
@@ -2690,16 +2690,16 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int captures_count = _code_ptr[ip + 1];
+				uint32_t captures_count = _code_ptr[ip + 1];
 				GD_ERR_BREAK(captures_count < 0);
 
-				int lambda_index = _code_ptr[ip + 2];
-				GD_ERR_BREAK(lambda_index < 0 || lambda_index >= _lambdas_count);
+				uint32_t lambda_index = _code_ptr[ip + 2];
+				GD_ERR_BREAK(lambda_index >= _lambdas_count);
 				GDScriptFunction *lambda = _lambdas_ptr[lambda_index];
 
 				TightLocalVector<Variant> captures;
 				captures.resize(captures_count);
-				for (int i = 0; i < captures_count; i++) {
+				for (uint32_t i = 0; i < captures_count; i++) {
 					GET_INSTRUCTION_ARG(arg, i);
 					captures[i] = *arg;
 				}
@@ -2721,16 +2721,16 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 				ip += instr_arg_count;
 
-				int captures_count = _code_ptr[ip + 1];
+				uint32_t captures_count = _code_ptr[ip + 1];
 				GD_ERR_BREAK(captures_count < 0);
 
-				int lambda_index = _code_ptr[ip + 2];
-				GD_ERR_BREAK(lambda_index < 0 || lambda_index >= _lambdas_count);
+				uint32_t lambda_index = _code_ptr[ip + 2];
+				GD_ERR_BREAK(lambda_index >= _lambdas_count);
 				GDScriptFunction *lambda = _lambdas_ptr[lambda_index];
 
 				TightLocalVector<Variant> captures;
 				captures.resize(captures_count);
-				for (int i = 0; i < captures_count; i++) {
+				for (uint32_t i = 0; i < captures_count; i++) {
 					GET_INSTRUCTION_ARG(arg, i);
 					captures[i] = *arg;
 				}
@@ -2750,24 +2750,24 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_JUMP) {
-				CHECK_SPACE(2);
-				int to = _code_ptr[ip + 1];
+				CHECK_SPACE(2u);
+				uint32_t to = _code_ptr[ip + 1];
 
-				GD_ERR_BREAK(to < 0 || to > _code_size);
+				GD_ERR_BREAK(to > _code_size);
 				ip = to;
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_JUMP_IF) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 
 				GET_VARIANT_PTR(test, 0);
 
 				bool result = test->booleanize();
 
 				if (result) {
-					int to = _code_ptr[ip + 2];
-					GD_ERR_BREAK(to < 0 || to > _code_size);
+					uint32_t to = _code_ptr[ip + 2];
+					GD_ERR_BREAK(to > _code_size);
 					ip = to;
 				} else {
 					ip += 3;
@@ -2776,15 +2776,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_JUMP_IF_NOT) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 
 				GET_VARIANT_PTR(test, 0);
 
 				bool result = test->booleanize();
 
 				if (!result) {
-					int to = _code_ptr[ip + 2];
-					GD_ERR_BREAK(to < 0 || to > _code_size);
+					uint32_t to = _code_ptr[ip + 2];
+					GD_ERR_BREAK(to > _code_size);
 					ip = to;
 				} else {
 					ip += 3;
@@ -2793,19 +2793,19 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_JUMP_TO_DEF_ARGUMENT) {
-				CHECK_SPACE(2);
+				CHECK_SPACE(2u);
 				ip = _default_arg_ptr[defarg];
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_JUMP_IF_SHARED) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 
 				GET_VARIANT_PTR(val, 0);
 
 				if (val->is_shared()) {
-					int to = _code_ptr[ip + 2];
-					GD_ERR_BREAK(to < 0 || to > _code_size);
+					uint32_t to = _code_ptr[ip + 2];
+					GD_ERR_BREAK(to > _code_size);
 					ip = to;
 				} else {
 					ip += 3;
@@ -2814,7 +2814,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_RETURN) {
-				CHECK_SPACE(2);
+				CHECK_SPACE(2u);
 				GET_VARIANT_PTR(r, 0);
 				retvalue = *r;
 #ifdef DEBUG_ENABLED
@@ -2824,11 +2824,11 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			}
 
 			OPCODE(OPCODE_RETURN_TYPED_BUILTIN) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 				GET_VARIANT_PTR(r, 0);
 
 				Variant::Type ret_type = (Variant::Type)_code_ptr[ip + 2];
-				GD_ERR_BREAK(ret_type < 0 || ret_type >= Variant::VARIANT_MAX);
+				GD_ERR_BREAK(ret_type >= Variant::VARIANT_MAX);
 
 				if (r->get_type() != ret_type) {
 					if (Variant::can_convert_strict(r->get_type(), ret_type)) {
@@ -2855,13 +2855,13 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			}
 
 			OPCODE(OPCODE_RETURN_TYPED_ARRAY) {
-				CHECK_SPACE(5);
+				CHECK_SPACE(5u);
 				GET_VARIANT_PTR(r, 0);
 
 				GET_VARIANT_PTR(script_type, 1);
 				Variant::Type builtin_type = (Variant::Type)_code_ptr[ip + 3];
-				int native_type_idx = _code_ptr[ip + 4];
-				GD_ERR_BREAK(native_type_idx < 0 || native_type_idx >= _global_names_count);
+				uint32_t native_type_idx = _code_ptr[ip + 4];
+				GD_ERR_BREAK(native_type_idx >= _global_names_count);
 				const StringName &native_type = _global_names_ptr[native_type_idx];
 
 				if (r->get_type() != Variant::ARRAY) {
@@ -2891,19 +2891,19 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			}
 
 			OPCODE(OPCODE_RETURN_TYPED_DICTIONARY) {
-				CHECK_SPACE(8);
+				CHECK_SPACE(8u);
 				GET_VARIANT_PTR(r, 0);
 
 				GET_VARIANT_PTR(key_script_type, 1);
 				Variant::Type key_builtin_type = (Variant::Type)_code_ptr[ip + 4];
-				int key_native_type_idx = _code_ptr[ip + 5];
-				GD_ERR_BREAK(key_native_type_idx < 0 || key_native_type_idx >= _global_names_count);
+				uint32_t key_native_type_idx = _code_ptr[ip + 5];
+				GD_ERR_BREAK(key_native_type_idx >= _global_names_count);
 				const StringName &key_native_type = _global_names_ptr[key_native_type_idx];
 
 				GET_VARIANT_PTR(value_script_type, 2);
 				Variant::Type value_builtin_type = (Variant::Type)_code_ptr[ip + 6];
-				int value_native_type_idx = _code_ptr[ip + 7];
-				GD_ERR_BREAK(value_native_type_idx < 0 || value_native_type_idx >= _global_names_count);
+				uint32_t value_native_type_idx = _code_ptr[ip + 7];
+				GD_ERR_BREAK(value_native_type_idx >= _global_names_count);
 				const StringName &value_native_type = _global_names_ptr[value_native_type_idx];
 
 				if (r->get_type() != Variant::DICTIONARY) {
@@ -2936,7 +2936,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			}
 
 			OPCODE(OPCODE_RETURN_TYPED_NATIVE) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 				GET_VARIANT_PTR(r, 0);
 
 				GET_VARIANT_PTR(type, 1);
@@ -2978,7 +2978,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			}
 
 			OPCODE(OPCODE_RETURN_TYPED_SCRIPT) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 				GET_VARIANT_PTR(r, 0);
 
 				GET_VARIANT_PTR(type, 1);
@@ -3043,7 +3043,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			}
 
 			OPCODE(OPCODE_ITERATE_BEGIN) {
-				CHECK_SPACE(8); // Space for this and a regular iterate.
+				CHECK_SPACE(8u); // Space for this and a regular iterate.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3058,8 +3058,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 						OPCODE_BREAK;
 					}
 #endif
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3077,7 +3077,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_INT) {
-				CHECK_SPACE(8); // Check space for iterate instruction too.
+				CHECK_SPACE(8u); // Check space for iterate instruction too.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3096,15 +3096,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 5;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_FLOAT) {
-				CHECK_SPACE(8); // Check space for iterate instruction too.
+				CHECK_SPACE(8u); // Check space for iterate instruction too.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3123,15 +3123,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 5;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_VECTOR2) {
-				CHECK_SPACE(8); // Check space for iterate instruction too.
+				CHECK_SPACE(8u); // Check space for iterate instruction too.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3150,15 +3150,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 5;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_VECTOR2I) {
-				CHECK_SPACE(8); // Check space for iterate instruction too.
+				CHECK_SPACE(8u); // Check space for iterate instruction too.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3177,15 +3177,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 5;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_VECTOR3) {
-				CHECK_SPACE(8); // Check space for iterate instruction too.
+				CHECK_SPACE(8u); // Check space for iterate instruction too.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3209,15 +3209,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 5;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_VECTOR3I) {
-				CHECK_SPACE(8); // Check space for iterate instruction too.
+				CHECK_SPACE(8u); // Check space for iterate instruction too.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3241,15 +3241,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 5;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_STRING) {
-				CHECK_SPACE(8); // Check space for iterate instruction too.
+				CHECK_SPACE(8u); // Check space for iterate instruction too.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3268,15 +3268,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 5;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_DICTIONARY) {
-				CHECK_SPACE(8); // Check space for iterate instruction too.
+				CHECK_SPACE(8u); // Check space for iterate instruction too.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3293,15 +3293,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 5;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_ARRAY) {
-				CHECK_SPACE(8); // Check space for iterate instruction too.
+				CHECK_SPACE(8u); // Check space for iterate instruction too.
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3319,8 +3319,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 5;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
@@ -3328,7 +3328,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 #define OPCODE_ITERATE_BEGIN_PACKED_ARRAY(m_var_type, m_elem_type, m_get_func, m_var_ret_type, m_ret_type, m_ret_get_func) \
 	OPCODE(OPCODE_ITERATE_BEGIN_PACKED_##m_var_type##_ARRAY) { \
-		CHECK_SPACE(8); \
+		CHECK_SPACE(8u); \
 		GET_VARIANT_PTR(counter, 0); \
 		GET_VARIANT_PTR(container, 1); \
 		Vector<m_elem_type> *array = VariantInternal::m_get_func(container); \
@@ -3341,8 +3341,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			*it = array->get(0); \
 			ip += 5; \
 		} else { \
-			int jumpto = _code_ptr[ip + 4]; \
-			GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size); \
+			uint32_t jumpto = _code_ptr[ip + 4]; \
+			GD_ERR_BREAK(jumpto > _code_size); \
 			ip = jumpto; \
 		} \
 	} \
@@ -3360,7 +3360,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			OPCODE_ITERATE_BEGIN_PACKED_ARRAY(VECTOR4, Vector4, get_vector4_array, VECTOR4, Vector4, get_vector4);
 
 			OPCODE(OPCODE_ITERATE_BEGIN_OBJECT) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(state, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3393,8 +3393,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				}
 #endif
 				if (!has_next.booleanize()) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					Variant *state_ptr = &(ref[0]);
@@ -3414,7 +3414,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_BEGIN_RANGE) {
-				CHECK_SPACE(6);
+				CHECK_SPACE(6u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(from_ptr, 1);
@@ -3439,15 +3439,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 					ip += 7;
 				} else {
 					// Jump to end of loop.
-					int jumpto = _code_ptr[ip + 6];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 6];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				}
 			}
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3460,8 +3460,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 						OPCODE_BREAK;
 					}
 #endif
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3479,7 +3479,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_INT) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3490,8 +3490,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				(*count)++;
 
 				if (*count >= size) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3503,7 +3503,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_FLOAT) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3514,8 +3514,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				(*count)++;
 
 				if (*count >= size) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3527,7 +3527,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_VECTOR2) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3538,8 +3538,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				(*count)++;
 
 				if (*count >= bounds->y) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3551,7 +3551,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_VECTOR2I) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3562,8 +3562,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				(*count)++;
 
 				if (*count >= bounds->y) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3575,7 +3575,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_VECTOR3) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3586,8 +3586,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				*count += bounds->z;
 
 				if ((bounds->z < 0 && *count <= bounds->y) || (bounds->z > 0 && *count >= bounds->y)) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3599,7 +3599,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_VECTOR3I) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3610,8 +3610,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				*count += bounds->z;
 
 				if ((bounds->z < 0 && *count <= bounds->y) || (bounds->z > 0 && *count >= bounds->y)) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3623,7 +3623,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_STRING) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3633,8 +3633,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				(*idx)++;
 
 				if (*idx >= str->length()) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3646,7 +3646,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_DICTIONARY) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3655,8 +3655,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				const Variant *next = dict->next(counter);
 
 				if (!next) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3669,7 +3669,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_ARRAY) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3679,8 +3679,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				(*idx)++;
 
 				if (*idx >= array->size()) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 2);
@@ -3693,15 +3693,15 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 #define OPCODE_ITERATE_PACKED_ARRAY(m_var_type, m_elem_type, m_get_func, m_ret_get_func) \
 	OPCODE(OPCODE_ITERATE_PACKED_##m_var_type##_ARRAY) { \
-		CHECK_SPACE(4); \
+		CHECK_SPACE(4u); \
 		GET_VARIANT_PTR(counter, 0); \
 		GET_VARIANT_PTR(container, 1); \
 		const Vector<m_elem_type> *array = VariantInternal::m_get_func((const Variant *)container); \
 		int64_t *idx = VariantInternal::get_int(counter); \
 		(*idx)++; \
 		if (*idx >= array->size()) { \
-			int jumpto = _code_ptr[ip + 4]; \
-			GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size); \
+			uint32_t jumpto = _code_ptr[ip + 4]; \
+			GD_ERR_BREAK(jumpto > _code_size); \
 			ip = jumpto; \
 		} else { \
 			GET_VARIANT_PTR(iterator, 2); \
@@ -3723,7 +3723,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			OPCODE_ITERATE_PACKED_ARRAY(VECTOR4, Vector4, get_vector4_array, get_vector4);
 
 			OPCODE(OPCODE_ITERATE_OBJECT) {
-				CHECK_SPACE(4);
+				CHECK_SPACE(4u);
 
 				GET_VARIANT_PTR(state, 0);
 				GET_VARIANT_PTR(container, 1);
@@ -3752,8 +3752,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				}
 #endif
 				if (!has_next.booleanize()) {
-					int jumpto = _code_ptr[ip + 4];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 4];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					// For _iter_get(): get a pointer to the single element in the array.
@@ -3774,7 +3774,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_ITERATE_RANGE) {
-				CHECK_SPACE(5);
+				CHECK_SPACE(5u);
 
 				GET_VARIANT_PTR(counter, 0);
 				GET_VARIANT_PTR(to_ptr, 1);
@@ -3788,8 +3788,8 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 				*count += step;
 
 				if ((step < 0 && *count <= to) || (step > 0 && *count >= to)) {
-					int jumpto = _code_ptr[ip + 5];
-					GD_ERR_BREAK(jumpto < 0 || jumpto > _code_size);
+					uint32_t jumpto = _code_ptr[ip + 5];
+					GD_ERR_BREAK(jumpto > _code_size);
 					ip = jumpto;
 				} else {
 					GET_VARIANT_PTR(iterator, 3);
@@ -3801,9 +3801,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_STORE_GLOBAL) {
-				CHECK_SPACE(3);
-				int global_idx = _code_ptr[ip + 2];
-				GD_ERR_BREAK(global_idx < 0 || global_idx >= GDScriptLanguage::get_singleton()->get_global_array_size());
+				CHECK_SPACE(3u);
+				uint32_t global_idx = _code_ptr[ip + 2];
+				GD_ERR_BREAK(global_idx >= GDScriptLanguage::get_singleton()->get_global_array_size());
 
 				GET_VARIANT_PTR(dst, 0);
 				*dst = GDScriptLanguage::get_singleton()->get_global_array()[global_idx];
@@ -3813,9 +3813,9 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_STORE_NAMED_GLOBAL) {
-				CHECK_SPACE(3);
-				int globalname_idx = _code_ptr[ip + 2];
-				GD_ERR_BREAK(globalname_idx < 0 || globalname_idx >= _global_names_count);
+				CHECK_SPACE(3u);
+				uint32_t globalname_idx = _code_ptr[ip + 2];
+				GD_ERR_BREAK(globalname_idx >= _global_names_count);
 				const StringName *globalname = &_global_names_ptr[globalname_idx];
 				if (unlikely(!GDScriptLanguage::get_singleton()->get_named_globals_map().has(*globalname))) {
 #ifdef DEBUG_ENABLED
@@ -3833,7 +3833,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 
 #define OPCODE_TYPE_ADJUST(m_v_type, m_c_type) \
 	OPCODE(OPCODE_TYPE_ADJUST_##m_v_type) { \
-		CHECK_SPACE(2); \
+		CHECK_SPACE(2u); \
 		GET_VARIANT_PTR(arg, 0); \
 		VariantTypeAdjust<m_c_type>::adjust(arg); \
 		ip += 2; \
@@ -3880,7 +3880,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			OPCODE_TYPE_ADJUST(PACKED_VECTOR4_ARRAY, PackedVector4Array);
 
 			OPCODE(OPCODE_ASSERT) {
-				CHECK_SPACE(3);
+				CHECK_SPACE(3u);
 
 #ifdef DEBUG_ENABLED
 				GET_VARIANT_PTR(test, 0);
@@ -3919,7 +3919,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			DISPATCH_OPCODE;
 
 			OPCODE(OPCODE_LINE) {
-				CHECK_SPACE(2);
+				CHECK_SPACE(2u);
 
 				line = _code_ptr[ip + 1];
 				ip += 2;
@@ -3980,7 +3980,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 		if (!_script->local_name.is_empty()) {
 			err_func = _script->local_name.string() + "." + err_func;
 		}
-		int err_line = line;
+		uint32_t err_line = line;
 		if (err_text.is_empty()) {
 			err_text = "Internal script error! Opcode: " + itos(last_opcode) + " (please report).";
 		}
@@ -4027,7 +4027,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 	stack[ADDR_STACK_SELF].~Variant();
 	stack[ADDR_STACK_NIL].~Variant();
 
-	for (int i = FIXED_ADDRESSES_MAX; i < _stack_size; i++) {
+	for (uint32_t i = FIXED_ADDRESSES_MAX; i < _stack_size; i++) {
 		stack[i].~Variant();
 	}
 

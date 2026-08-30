@@ -176,7 +176,7 @@ struct _GDFKCS {
 	}
 };
 
-void GDScriptFunction::debug_get_stack_member_state(int p_line, List<Pair<StringName, int>> *r_stackvars) const {
+void GDScriptFunction::debug_get_stack_member_state(uint32_t p_line, List<Pair<StringName, int>> *r_stackvars) const {
 	int oc = 0;
 	HashMap<StringName, _GDFKC> sdmap;
 	for (const StackDebug &sd : stack_debug) {
@@ -324,7 +324,7 @@ void GDScriptFunctionState::_clear_stack() {
 		Variant *stack = (Variant *)state.stack.ptr();
 		// First `GDScriptFunction::FIXED_ADDRESSES_MAX` stack addresses are special
 		// and not copied to the state, so we skip them here.
-		for (int i = GDScriptFunction::FIXED_ADDRESSES_MAX; i < state.stack_size; i++) {
+		for (uint32_t i = GDScriptFunction::FIXED_ADDRESSES_MAX; i < state.stack_size; i++) {
 			stack[i].~Variant();
 		}
 		state.stack_size = 0;

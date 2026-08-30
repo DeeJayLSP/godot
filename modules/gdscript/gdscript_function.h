@@ -330,8 +330,8 @@ public:
 	};
 
 	struct StackDebug {
-		int line;
-		int pos;
+		uint32_t line;
+		uint32_t pos;
 		bool added;
 		StringName identifier;
 	};
@@ -351,19 +351,19 @@ private:
 	Variant rpc_config;
 
 	GDScript *_script = nullptr;
-	int _initial_line = 0;
-	int _argument_count = 0;
+	uint32_t _initial_line = 0;
+	uint32_t _argument_count = 0;
 	int _vararg_index = -1;
-	int _stack_size = 0;
-	int _instruction_args_size = 0;
+	uint32_t _stack_size = 0;
+	uint32_t _instruction_args_size = 0;
 
 	SelfList<GDScriptFunction> function_list{ this };
 	mutable Variant nil;
 	TightLocalVector<Pair<int, Variant::Type>> temporary_slots;
 	List<StackDebug> stack_debug;
 
-	LocalVector<int> code;
-	LocalVector<int> default_arguments;
+	LocalVector<uint32_t> code;
+	LocalVector<uint32_t> default_arguments;
 	LocalVector<Variant> constants;
 	HashMap<StringName, Variant> constant_map;
 	LocalVector<StringName> global_names;
@@ -381,26 +381,26 @@ private:
 	LocalVector<const MethodBind *> methods;
 	LocalVector<GDScriptFunction *> lambdas;
 
-	int _code_size = 0;
-	int _default_arg_count = 0;
-	int _constant_count = 0;
-	int _global_names_count = 0;
-	int _operator_funcs_count = 0;
-	int _setters_count = 0;
-	int _getters_count = 0;
-	int _keyed_setters_count = 0;
-	int _keyed_getters_count = 0;
-	int _indexed_setters_count = 0;
-	int _indexed_getters_count = 0;
-	int _builtin_methods_count = 0;
-	int _constructors_count = 0;
-	int _utilities_count = 0;
-	int _gds_utilities_count = 0;
-	int _methods_count = 0;
-	int _lambdas_count = 0;
+	uint32_t _code_size = 0;
+	uint32_t _default_arg_count = 0;
+	uint32_t _constant_count = 0;
+	uint32_t _global_names_count = 0;
+	uint32_t _operator_funcs_count = 0;
+	uint32_t _setters_count = 0;
+	uint32_t _getters_count = 0;
+	uint32_t _keyed_setters_count = 0;
+	uint32_t _keyed_getters_count = 0;
+	uint32_t _indexed_setters_count = 0;
+	uint32_t _indexed_getters_count = 0;
+	uint32_t _builtin_methods_count = 0;
+	uint32_t _constructors_count = 0;
+	uint32_t _utilities_count = 0;
+	uint32_t _gds_utilities_count = 0;
+	uint32_t _methods_count = 0;
+	uint32_t _lambdas_count = 0;
 
-	int *_code_ptr = nullptr;
-	const int *_default_arg_ptr = nullptr;
+	uint32_t *_code_ptr = nullptr;
+	const uint32_t *_default_arg_ptr = nullptr;
 	mutable Variant *_constants_ptr = nullptr;
 	const StringName *_global_names_ptr = nullptr;
 	const Variant::ValidatedOperatorEvaluator *_operator_funcs_ptr = nullptr;
@@ -456,7 +456,7 @@ private:
 	Variant _get_default_variant_for_data_type(const GDScriptDataType &p_data_type);
 
 public:
-	static constexpr int MAX_CALL_DEPTH = 2048; // Limit to try to avoid crash because of a stack overflow.
+	static constexpr uint16_t MAX_CALL_DEPTH = 2048; // Limit to try to avoid crash because of a stack overflow.
 
 	struct CallState {
 		Signal completed;
@@ -467,10 +467,10 @@ public:
 		String script_path;
 #endif
 		TightLocalVector<uint8_t> stack;
-		int stack_size = 0;
-		int ip = 0;
-		int line = 0;
-		int defarg = 0;
+		uint32_t stack_size = 0;
+		uint32_t ip = 0;
+		uint32_t line = 0;
+		uint32_t defarg = 0;
 		Variant result;
 	};
 
@@ -487,8 +487,8 @@ public:
 	Variant get_constant(uint32_t p_idx) const;
 	StringName get_global_name(uint32_t p_idx) const;
 
-	Variant call(GDScriptInstance *p_instance, const Variant **p_args, int p_argcount, Callable::CallError &r_err, CallState *p_state = nullptr);
-	void debug_get_stack_member_state(int p_line, List<Pair<StringName, int>> *r_stackvars) const;
+	Variant call(GDScriptInstance *p_instance, const Variant **p_args, uint32_t p_argcount, Callable::CallError &r_err, CallState *p_state = nullptr);
+	void debug_get_stack_member_state(uint32_t p_line, List<Pair<StringName, int>> *r_stackvars) const;
 
 #ifdef DEBUG_ENABLED
 	void _profile_native_call(uint64_t p_t_taken, const String &p_function_name, const String &p_instance_class_name = String());
