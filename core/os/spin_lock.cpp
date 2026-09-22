@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  spin_lock.h                                                           */
+/*  spin_lock.cpp                                                         */
 /**************************************************************************/
 /*                         This file is part of:                          */
 /*                             GODOT ENGINE                               */
@@ -28,106 +28,26 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#pragma once
+#if defined(_MSC_VER)
+#include "spin_lock.h"
 
-#include "core/os/thread.h"
-#include "core/typedefs.h"
+#include <windows.h> // Can't be included in spin_lock.h due to global space pollution.
 
-#ifdef THREADS_ENABLED
+static_assert(sizeof(CRITICAL_SECTION) < Thread::CACHE_LINE_BYTES);
 
-// Note the implementations below avoid false sharing by ensuring their
-// sizes match the assumed cache line. We can't use align attributes
-// because these objects may end up unaligned in semi-tightly packed arrays.
+void SpinLock::lock() const {
+	EnterCriticalSection((CRITICAL_SECTION *)&_lock);
+}
 
-#if defined(_WIN32) || defined(_WIN64) || defined(_WINDOWS)
+void SpinLock::unlock() const {
+	LeaveCriticalSection((CRITICAL_SECTION *)&_lock);
+}
 
-class SpinLock {
-#if defined(_MSC_VER) // Delegated to spin_lock.cpp.
-	mutable char _lock[Thread::CACHE_LINE_BYTES];
+SpinLock::SpinLock() {
+	InitializeCriticalSectionAndSpinCount((CRITICAL_SECTION *)&_lock, 2000); // Matches SDL.
+}
 
-public:
-	void lock() const;
-	void unlock() const;
-
-	SpinLock();
-	~SpinLock();
-
-#else
-	// Not MSVC. May be implemented directly.
-	// While functionally identical to the one in spin_lock.cpp, this allows always inlining.
-	static_assert(sizeof(CRITICAL_SECTION) < Thread::CACHE_LINE_BYTES);
-	union {
-		mutable CRITICAL_SECTION _lock;
-		mutable char aligner[Thread::CACHE_LINE_BYTES];
-	};
-
-public:
-	_ALWAYS_INLINE_ void lock() const {
-		EnterCriticalSection(&_lock);
-	}
-
-	_ALWAYS_INLINE_ void unlock() const {
-		LeaveCriticalSection(&_lock);
-	}
-
-	SpinLock() { InitializeCriticalSectionAndSpinCount(&_lock, 2000); } // Matches SDL.
-
-	~SpinLock() { DeleteCriticalSection(&_lock); }
-
-#endif // _MSC_VER
-};
-
-#elif defined(__APPLE__)
-
-#include <os/lock.h>
-
-class SpinLock {
-	union {
-		mutable os_unfair_lock _lock = OS_UNFAIR_LOCK_INIT;
-		char aligner[Thread::CACHE_LINE_BYTES];
-	};
-
-public:
-	_ALWAYS_INLINE_ void lock() const {
-		os_unfair_lock_lock(&_lock);
-	}
-
-	_ALWAYS_INLINE_ void unlock() const {
-		os_unfair_lock_unlock(&_lock);
-	}
-};
-
-#else
-
-#include <pthread.h>
-
-class SpinLock {
-	union {
-		mutable pthread_spinlock_t _lock;
-		char aligner[Thread::CACHE_LINE_BYTES];
-	};
-
-public:
-	_ALWAYS_INLINE_ void lock() const {
-		pthread_spin_lock(&_lock);
-	}
-
-	_ALWAYS_INLINE_ void unlock() const {
-		pthread_spin_unlock(&_lock);
-	}
-
-	SpinLock() { pthread_spin_init(&_lock, PTHREAD_PROCESS_PRIVATE); }
-	~SpinLock() { pthread_spin_destroy(&_lock); }
-};
-
+SpinLock::~SpinLock() {
+	DeleteCriticalSection((CRITICAL_SECTION *)_lock);
+}
 #endif
-
-#else // THREADS_ENABLED
-
-class SpinLock {
-public:
-	void lock() const {}
-	void unlock() const {}
-};
-
-#endif // THREADS_ENABLED
