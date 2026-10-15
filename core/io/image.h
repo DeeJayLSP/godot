@@ -61,6 +61,9 @@ typedef Vector<uint8_t> (*SaveEXRBufferFunc)(const Ref<Image> &p_img, bool p_gra
 typedef Error (*SaveDDSFunc)(const String &p_path, const Ref<Image> &p_img);
 typedef Vector<uint8_t> (*SaveDDSBufferFunc)(const Ref<Image> &p_img);
 
+typedef Error (*SaveJXLFunc)(const String &p_path, const Ref<Image> &p_img, const float p_quality);
+typedef Vector<uint8_t> (*SaveJXLBufferFunc)(const Ref<Image> &p_img, const float p_quality);
+
 class Image : public Resource {
 	GDCLASS(Image, Resource);
 
@@ -225,11 +228,13 @@ public:
 	static inline SaveEXRFunc save_exr_func = nullptr;
 	static inline SaveWebPFunc save_webp_func = nullptr;
 	static inline SaveDDSFunc save_dds_func = nullptr;
+	static inline SaveJXLFunc save_jxl_func = nullptr;
 	static inline SavePNGBufferFunc save_png_buffer_func = nullptr;
 	static inline SaveEXRBufferFunc save_exr_buffer_func = nullptr;
 	static inline SaveJPGBufferFunc save_jpg_buffer_func = nullptr;
 	static inline SaveWebPBufferFunc save_webp_buffer_func = nullptr;
 	static inline SaveDDSBufferFunc save_dds_buffer_func = nullptr;
+	static inline SaveJXLBufferFunc save_jxl_buffer_func = nullptr;
 
 	// External loader function pointers.
 
@@ -243,6 +248,7 @@ public:
 	static inline ImageMemLoadFunc _ktx_mem_loader_func = nullptr;
 	static inline ImageMemLoadFunc _dds_mem_loader_func = nullptr;
 	static inline ImageMemLoadFunc _exr_mem_loader_func = nullptr;
+	static inline ImageMemLoadFunc _jxl_mem_loader_func = nullptr;
 
 	// External VRAM compression function pointers.
 
@@ -265,11 +271,13 @@ public:
 
 	// External packer function pointers.
 
+	static Vector<uint8_t> (*jxl_packer)(const Ref<Image> &p_image, float p_quality);
 	static Vector<uint8_t> (*webp_lossy_packer)(const Ref<Image> &p_image, float p_quality);
 	static Vector<uint8_t> (*webp_lossless_packer)(const Ref<Image> &p_image);
 	static Vector<uint8_t> (*png_packer)(const Ref<Image> &p_image);
 	static Vector<uint8_t> (*basis_universal_packer)(const Ref<Image> &p_image, UsedChannels p_channels, const BasisUniversalPackerParams &p_basisu_params);
 
+	static Ref<Image> (*jxl_unpacker)(const Vector<uint8_t> &p_buffer);
 	static Ref<Image> (*webp_unpacker)(const Vector<uint8_t> &p_buffer);
 	static Ref<Image> (*png_unpacker)(const Vector<uint8_t> &p_buffer);
 	static Ref<Image> (*basis_universal_unpacker)(const Vector<uint8_t> &p_buffer);
@@ -404,6 +412,8 @@ public:
 	Error save_exr(const String &p_path, bool p_grayscale = false, bool p_color_image = false, float p_max_value = -1.0f) const;
 	Error save_webp(const String &p_path, const bool p_lossy = false, const float p_quality = 0.75f) const;
 	Vector<uint8_t> save_webp_to_buffer(const bool p_lossy = false, const float p_quality = 0.75f) const;
+	Error save_jxl(const String &p_path, const float p_quality = 0.90f) const;
+	Vector<uint8_t> save_jxl_to_buffer(const float p_quality = 0.90f) const;
 
 	static Ref<Image> create_empty(int p_width, int p_height, bool p_use_mipmaps, Format p_format);
 	static Ref<Image> create_from_data(int p_width, int p_height, bool p_use_mipmaps, Format p_format, const Vector<uint8_t> &p_data);
@@ -470,6 +480,7 @@ public:
 	Error load_ktx_from_buffer(const Vector<uint8_t> &p_array);
 	Error load_dds_from_buffer(const Vector<uint8_t> &p_array);
 	Error load_exr_from_buffer(const Vector<uint8_t> &p_array);
+	Error load_jxl_from_buffer(const Vector<uint8_t> &p_array);
 
 	Error load_svg_from_buffer(const Vector<uint8_t> &p_array, float p_scale = 1.0);
 	Error load_svg_from_string(const String &p_svg_str, float p_scale = 1.0);

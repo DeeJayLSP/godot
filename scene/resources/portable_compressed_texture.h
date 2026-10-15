@@ -44,6 +44,7 @@ public:
 		DATA_FORMAT_PNG,
 		DATA_FORMAT_WEBP,
 		DATA_FORMAT_BASIS_UNIVERSAL,
+		DATA_FORMAT_JXL,
 	};
 
 	enum CompressionMode {

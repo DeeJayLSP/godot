@@ -313,8 +313,8 @@ Ref<Image> CompressedTexture2D::load_image_from_file(Ref<FileAccess> f) {
 	uint32_t mipmaps = f->get_32();
 	Image::Format format = Image::Format(f->get_32());
 
-	if (data_format == DATA_FORMAT_PNG || data_format == DATA_FORMAT_WEBP) {
-		//look for a PNG or WebP file inside
+	if (data_format == DATA_FORMAT_PNG || data_format == DATA_FORMAT_WEBP || data_format == DATA_FORMAT_JXL) {
+		//look for a PNG, WebP or JPEG XL file inside
 		//mipmaps need to be read independently, they will be later combined
 		Vector<Ref<Image>> mipmap_images;
 		uint64_t total_size = 0;
@@ -334,6 +334,8 @@ Ref<Image> CompressedTexture2D::load_image_from_file(Ref<FileAccess> f) {
 				img = Image::png_unpacker(pv);
 			} else if (data_format == DATA_FORMAT_WEBP && Image::webp_unpacker) {
 				img = Image::webp_unpacker(pv);
+			} else if (data_format == DATA_FORMAT_JXL && Image::jxl_unpacker) {
+				img = Image::jxl_unpacker(pv);
 			}
 
 			if (img.is_null() || img->is_empty()) {

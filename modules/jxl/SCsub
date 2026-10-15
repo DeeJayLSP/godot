@@ -1,0 +1,227 @@
+#!/usr/bin/env python
+from misc.utility.scons_hints import *
+
+Import("env")
+Import("env_modules")
+import methods
+
+env_jxl = env_modules.Clone()
+
+# Thirdparty source files
+
+thirdparty_obj = []
+
+if env["builtin_libjxl"]:
+    # Highway library
+    highway_dir = "#thirdparty/highway/"
+    highway_sources = [
+        "abort.cc",
+        "aligned_allocator.cc",
+        "nanobenchmark.cc",
+        "perf_counters.cc",
+        "per_target.cc",
+        "print.cc",
+        "profiler.cc",
+        "stats.cc",
+        "targets.cc",
+        "timer.cc",
+    ]
+    highway_sources = [highway_dir + "hwy/" + file for file in highway_sources]
+
+    # Little-CMS library
+    lcms_dir = "#thirdparty/little-cms/"
+    lcms_sources = [
+        "src/cmsalpha.c",
+        "src/cmscam02.c",
+        "src/cmscgats.c",
+        "src/cmscnvrt.c",
+        "src/cmserr.c",
+        "src/cmsgamma.c",
+        "src/cmsgmt.c",
+        "src/cmshalf.c",
+        "src/cmsintrp.c",
+        "src/cmsio0.c",
+        "src/cmsio1.c",
+        "src/cmslut.c",
+        "src/cmsmd5.c",
+        "src/cmsmtrx.c",
+        "src/cmsnamed.c",
+        "src/cmsopt.c",
+        "src/cmspack.c",
+        "src/cmspcs.c",
+        "src/cmsplugin.c",
+        "src/cmsps2.c",
+        "src/cmssamp.c",
+        "src/cmssm.c",
+        "src/cmstypes.c",
+        "src/cmsvirt.c",
+        "src/cmswtpnt.c",
+        "src/cmsxform.c",
+    ]
+    lcms_sources = [lcms_dir + file for file in lcms_sources]
+
+    thirdparty_dir = "#thirdparty/libjxl/"
+    thirdparty_dir_lib = thirdparty_dir + "lib/"
+    thirdparty_sources_dir = thirdparty_dir_lib + "jxl/"
+    thirdparty_sources = [
+        "butteraugli/butteraugli.cc",
+        "cms/jxl_cms.cc",
+        "jpeg/dec_jpeg_data.cc",
+        "jpeg/dec_jpeg_data_writer.cc",
+        "jpeg/enc_jpeg_data.cc",
+        "jpeg/enc_jpeg_data_reader.cc",
+        "jpeg/enc_jpeg_huffman_decode.cc",
+        "jpeg/jpeg_data.cc",
+        "modular/encoding/dec_ma.cc",
+        "modular/encoding/enc_debug_tree.cc",
+        "modular/encoding/enc_encoding.cc",
+        "modular/encoding/enc_ma.cc",
+        "modular/encoding/encoding.cc",
+        "modular/transform/enc_palette.cc",
+        "modular/transform/enc_rct.cc",
+        "modular/transform/enc_squeeze.cc",
+        "modular/transform/enc_transform.cc",
+        "modular/transform/palette.cc",
+        "modular/transform/rct.cc",
+        "modular/transform/squeeze.cc",
+        "modular/transform/squeeze_params.cc",
+        "modular/transform/transform.cc",
+        "modular/modular_image.cc",
+        "render_pipeline/low_memory_render_pipeline.cc",
+        "render_pipeline/render_pipeline.cc",
+        "render_pipeline/render_pipeline_stage.cc",
+        "render_pipeline/simple_render_pipeline.cc",
+        "render_pipeline/stage_blending.cc",
+        "render_pipeline/stage_chroma_upsampling.cc",
+        "render_pipeline/stage_cms.cc",
+        "render_pipeline/stage_epf.cc",
+        "render_pipeline/stage_from_linear.cc",
+        "render_pipeline/stage_gaborish.cc",
+        "render_pipeline/stage_noise.cc",
+        "render_pipeline/stage_patches.cc",
+        "render_pipeline/stage_splines.cc",
+        "render_pipeline/stage_spot.cc",
+        "render_pipeline/stage_to_linear.cc",
+        "render_pipeline/stage_tone_mapping.cc",
+        "render_pipeline/stage_upsampling.cc",
+        "render_pipeline/stage_write.cc",
+        "render_pipeline/stage_xyb.cc",
+        "render_pipeline/stage_ycbcr.cc",
+        "ac_strategy.cc",
+        "alpha.cc",
+        "ans_common.cc",
+        "blending.cc",
+        "box_content_decoder.cc",
+        "chroma_from_luma.cc",
+        "coeff_order.cc",
+        "color_encoding_internal.cc",
+        "compressed_dc.cc",
+        "convolve_slow.cc",
+        "convolve_symmetric5.cc",
+        "dct_scales.cc",
+        "dec_ans.cc",
+        "dec_bit_reader.cc",
+        "dec_cache.cc",
+        "dec_context_map.cc",
+        "dec_external_image.cc",
+        "dec_frame.cc",
+        "dec_group.cc",
+        "dec_group_border.cc",
+        "dec_huffman.cc",
+        "dec_modular.cc",
+        "dec_noise.cc",
+        "dec_patch_dictionary.cc",
+        "dec_xyb.cc",
+        "decode.cc",
+        "enc_ac_strategy.cc",
+        "enc_adaptive_quantization.cc",
+        "enc_ans.cc",
+        "enc_ans_simd.cc",
+        "enc_aux_out.cc",
+        "enc_bit_writer.cc",
+        "enc_butteraugli_comparator.cc",
+        "enc_cache.cc",
+        "enc_chroma_from_luma.cc",
+        "enc_cluster.cc",
+        "enc_coeff_order.cc",
+        "enc_comparator.cc",
+        "enc_context_map.cc",
+        "enc_convolve_separable5.cc",
+        "enc_debug_image.cc",
+        "enc_detect_dots.cc",
+        "enc_dot_dictionary.cc",
+        "enc_entropy_coder.cc",
+        "enc_external_image.cc",
+        "enc_fast_lossless.cc",
+        "enc_fields.cc",
+        "enc_frame.cc",
+        "enc_gaborish.cc",
+        "enc_group.cc",
+        "enc_heuristics.cc",
+        "enc_huffman.cc",
+        "enc_huffman_tree.cc",
+        "enc_icc_codec.cc",
+        "enc_image_bundle.cc",
+        "enc_linalg.cc",
+        "enc_lz77.cc",
+        "enc_modular.cc",
+        "enc_modular_simd.cc",
+        "enc_noise.cc",
+        "enc_patch_dictionary.cc",
+        "enc_photon_noise.cc",
+        "enc_progressive_split.cc",
+        "enc_quant_weights.cc",
+        "enc_splines.cc",
+        "enc_toc.cc",
+        "enc_transforms.cc",
+        "enc_xyb.cc",
+        "encode.cc",
+        "entropy_coder.cc",
+        "epf.cc",
+        "fields.cc",
+        "frame_header.cc",
+        "headers.cc",
+        "huffman_table.cc",
+        "icc_codec.cc",
+        "icc_codec_common.cc",
+        "image.cc",
+        "image_bundle.cc",
+        "image_metadata.cc",
+        "image_ops.cc",
+        "loop_filter.cc",
+        "luminance.cc",
+        "memory_manager_internal.cc",
+        "opsin_params.cc",
+        "passes_state.cc",
+        "quant_weights.cc",
+        "quantizer.cc",
+        "simd_util.cc",
+        "splines.cc",
+        "toc.cc",
+    ]
+    thirdparty_sources = [thirdparty_sources_dir + file for file in thirdparty_sources]
+    thirdparty_sources = thirdparty_sources + highway_sources + lcms_sources
+
+    env_jxl.Append(CPPDEFINES=[("JPEGXL_ENABLE_TRANSCODE_JPEG", 0)])
+    if env.msvc:
+        env_jxl.Append(CPPDEFINES=["_CRT_SECURE_NO_WARNINGS"])
+        if methods.using_clang(env):
+            env_jxl.AppendUnique(CXXFLAGS=["-Wno-c++11-narrowing"])
+        else:
+            env_jxl.Append(CCFLAGS=["/fp:precise"])
+    env_jxl.Prepend(CPPPATH=[highway_dir, lcms_dir + "include/", thirdparty_dir, thirdparty_dir_lib + "include/"])
+
+    env_thirdparty = env_jxl.Clone()
+    env_thirdparty.disable_warnings()
+    env_thirdparty.add_source_files(thirdparty_obj, thirdparty_sources)
+    env.modules_sources += thirdparty_obj
+
+# Godot source files
+
+module_obj = []
+
+env_jxl.add_source_files(module_obj, "*.cpp")
+env.modules_sources += module_obj
+
+# Needed to force rebuilding the module files when the thirdparty library is updated.
+env.Depends(module_obj, thirdparty_obj)

@@ -363,6 +363,11 @@ Copyright: 2010-2022, Google, Inc.
  2013-2015, Alexei Podtelezhnikov
 License: HarfBuzz
 
+Files: thirdparty/highway/*
+Comment: Highway
+Copyright: The Highway Project Authors
+License: Apache-2.0 or BSD-3-clause
+
 Files: thirdparty/icu4c/*
 Comment: International Components for Unicode
 Copyright: 2016-2024, Unicode, Inc.
@@ -384,6 +389,11 @@ Copyright: 2009-2025, D. R. Commander
  2015, Viktor Szathmáry.
  1991-2020, Thomas G. Lane, Guido Vollbeding
 License: BSD-3-clause and IJG
+
+Files: thirdparty/libjxl/*
+Comment: libjxl
+Copyright: the JPEG XL Project Authors
+License: BSD-3-clause
 
 Files: thirdparty/libktx/*
 Comment: KTX
@@ -419,6 +429,11 @@ Files: thirdparty/libwebp/*
 Comment: WebP codec
 Copyright: 2010, Google Inc.
 License: BSD-3-clause
+
+Files: thirdparty/little-cms/*
+Comment: Little CMS
+Copyright: 2023, Marti Maria Saguer
+License: Expat
 
 Files: thirdparty/manifold/*
 Comment: Manifold

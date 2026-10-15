@@ -3679,7 +3679,10 @@ void RenderingServer::init() {
 	GLOBAL_DEF("rendering/textures/vram_compression/compress_with_gpu", true);
 	GLOBAL_DEF("rendering/textures/vram_compression/cache_gpu_compressor", true);
 
-	GLOBAL_DEF("rendering/textures/lossless_compression/force_png", false);
+	GLOBAL_DEF(PropertyInfo(Variant::INT, "rendering/textures/lossless_compression/format", PROPERTY_HINT_ENUM, "JPEG XL, WebP, PNG"), 0);
+	GLOBAL_DEF(PropertyInfo(Variant::INT, "rendering/textures/lossy_compression/format", PROPERTY_HINT_ENUM, "JPEG XL, WebP"), 0);
+
+	GLOBAL_DEF(PropertyInfo(Variant::INT, "rendering/textures/jpeg_xl_compression/compression_effort", PROPERTY_HINT_RANGE, "1,10,1"), 5);
 
 	GLOBAL_DEF(PropertyInfo(Variant::INT, "rendering/textures/webp_compression/compression_method", PROPERTY_HINT_RANGE, "0,6,1"), 2);
 	GLOBAL_DEF(PropertyInfo(Variant::FLOAT, "rendering/textures/webp_compression/lossless_compression_factor", PROPERTY_HINT_RANGE, "0,100,1"), 25);

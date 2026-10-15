@@ -280,7 +280,7 @@ void ResourceImporterTexture::get_import_options(const String &p_path, List<Impo
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "mipmaps/preserve_alpha_test_coverage", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_UPDATE_ALL_IF_MODIFIED), false));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::FLOAT, "mipmaps/alpha_test_threshold", PROPERTY_HINT_RANGE, "0.01,0.99,0.01"), 0.5));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "roughness/mode", PROPERTY_HINT_ENUM, "Detect,Disabled,Red,Green,Blue,Alpha,Gray"), 0));
-	r_options->push_back(ImportOption(PropertyInfo(Variant::STRING, "roughness/src_normal", PROPERTY_HINT_FILE, "*.bmp,*.dds,*.exr,*.jpeg,*.jpg,*.hdr,*.png,*.svg,*.tga,*.webp"), ""));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::STRING, "roughness/src_normal", PROPERTY_HINT_FILE, "*.bmp,*.dds,*.exr,*.jpeg,*.jpg,*.jxl,*.hdr,*.png,*.svg,*.tga,*.webp"), ""));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "process/channel_remap/red", PROPERTY_HINT_ENUM, "Red,Green,Blue,Alpha,Inverted Red,Inverted Green,Inverted Blue,Inverted Alpha,Unused,Zero,One"), 0));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "process/channel_remap/green", PROPERTY_HINT_ENUM, "Red,Green,Blue,Alpha,Inverted Red,Inverted Green,Inverted Blue,Inverted Alpha,Unused,Zero,One"), 1));
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "process/channel_remap/blue", PROPERTY_HINT_ENUM, "Red,Green,Blue,Alpha,Inverted Red,Inverted Green,Inverted Blue,Inverted Alpha,Unused,Zero,One"), 2));
@@ -292,7 +292,7 @@ void ResourceImporterTexture::get_import_options(const String &p_path, List<Impo
 	r_options->push_back(ImportOption(PropertyInfo(Variant::BOOL, "process/hdr_clamp_exposure"), false));
 
 	// Maximum bound is the highest allowed value for lossy compression (the lowest common denominator).
-	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "process/size_limit", PROPERTY_HINT_RANGE, "0,16383,1"), 0));
+	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "process/size_limit", PROPERTY_HINT_RANGE, "0,32768,1"), 0));
 
 	r_options->push_back(ImportOption(PropertyInfo(Variant::INT, "detect_3d/compress_to", PROPERTY_HINT_ENUM, "Disabled,VRAM Compressed,Basis Universal"), (p_preset == PRESET_DETECT) ? 1 : 0));
 
@@ -309,10 +309,18 @@ void ResourceImporterTexture::get_import_options(const String &p_path, List<Impo
 void ResourceImporterTexture::save_to_ctex_format(Ref<FileAccess> f, const Ref<Image> &p_image, CompressMode p_compress_mode, Image::UsedChannels p_channels, Image::CompressMode p_compress_format, Image::CompressProfile p_compress_profile, float p_lossy_quality, const Image::BasisUniversalPackerParams &p_basisu_params, Image::BPTCFormat p_bptc_format) {
 	switch (p_compress_mode) {
 		case COMPRESS_LOSSLESS: {
-			bool lossless_force_png = GLOBAL_GET("rendering/textures/lossless_compression/force_png") || !Image::_webp_mem_loader_func; // WebP module disabled or png is forced.
-			bool use_webp = !lossless_force_png && p_image->get_width() <= 16383 && p_image->get_height() <= 16383; // WebP has a size limit.
+			int image_format = GLOBAL_GET_CACHED(int, "rendering/textures/lossless_compression/format");
+			CompressedTexture2D::DataFormat data_format;
 
-			f->store_32(use_webp ? CompressedTexture2D::DATA_FORMAT_WEBP : CompressedTexture2D::DATA_FORMAT_PNG);
+			if (image_format == 0 && Image::_jxl_mem_loader_func != nullptr) {
+				data_format = CompressedTexture2D::DATA_FORMAT_JXL;
+			} else if (image_format == 1 && Image::_webp_mem_loader_func != nullptr && p_image->get_width() <= 16383 && p_image->get_height() <= 16383) {
+				data_format = CompressedTexture2D::DATA_FORMAT_WEBP;
+			} else {
+				data_format = CompressedTexture2D::DATA_FORMAT_PNG;
+			}
+
+			f->store_32(data_format);
 			f->store_16(p_image->get_width());
 			f->store_16(p_image->get_height());
 			f->store_32(p_image->get_mipmap_count());
@@ -320,30 +328,47 @@ void ResourceImporterTexture::save_to_ctex_format(Ref<FileAccess> f, const Ref<I
 
 			for (int i = 0; i < p_image->get_mipmap_count() + 1; i++) {
 				Vector<uint8_t> data;
-				if (use_webp) {
+				if (data_format == CompressedTexture2D::DATA_FORMAT_JXL) {
+					data = Image::jxl_packer(i ? p_image->get_image_from_mipmap(i) : p_image, 1.0f);
+				} else if (data_format == CompressedTexture2D::DATA_FORMAT_WEBP) {
 					data = Image::webp_lossless_packer(i ? p_image->get_image_from_mipmap(i) : p_image);
 				} else {
 					data = Image::png_packer(i ? p_image->get_image_from_mipmap(i) : p_image);
 				}
 
 				const uint64_t data_size = data.size();
-
 				f->store_32(data_size);
 				f->store_buffer(data.ptr(), data_size);
 			}
 
 		} break;
 		case COMPRESS_LOSSY: {
-			f->store_32(CompressedTexture2D::DATA_FORMAT_WEBP);
+			int image_format = GLOBAL_GET_CACHED(int, "rendering/textures/lossy_compression/format");
+			CompressedTexture2D::DataFormat data_format;
+
+			if (image_format == 0 && Image::_jxl_mem_loader_func != nullptr) {
+				data_format = CompressedTexture2D::DATA_FORMAT_JXL;
+			} else if (image_format == 1 && Image::_webp_mem_loader_func != nullptr && p_image->get_width() <= 16383 && p_image->get_height() <= 16383) {
+				data_format = CompressedTexture2D::DATA_FORMAT_WEBP;
+			} else {
+				ERR_FAIL_MSG("JPEG XL or WebP module are not available for lossy compression.");
+			}
+
+			f->store_32(data_format);
 			f->store_16(p_image->get_width());
 			f->store_16(p_image->get_height());
 			f->store_32(p_image->get_mipmap_count());
 			f->store_32(p_image->get_format());
 
 			for (int i = 0; i < p_image->get_mipmap_count() + 1; i++) {
-				Vector<uint8_t> data = Image::webp_lossy_packer(i ? p_image->get_image_from_mipmap(i) : p_image, p_lossy_quality);
-				const uint64_t data_size = data.size();
+				Vector<uint8_t> data;
+				if (data_format == CompressedTexture2D::DATA_FORMAT_JXL) {
+					data = Image::jxl_packer(i ? p_image->get_image_from_mipmap(i) : p_image, p_lossy_quality);
+				} else {
+					data = Image::webp_lossy_packer(i ? p_image->get_image_from_mipmap(i) : p_image, p_lossy_quality);
+				}
 
+				const uint64_t data_size = data.size();
 				f->store_32(data_size);
 				f->store_buffer(data.ptr(), data_size);
 			}
@@ -772,10 +797,6 @@ Error ResourceImporterTexture::import(ResourceUID::ID p_source_id, const String 
 		using_fallback_size_limit = true;
 		// If no size limit is defined, use a fallback size limit to prevent textures from looking incorrect or failing to import.
 		switch (compress_mode) {
-			case COMPRESS_LOSSY:
-				// Maximum WebP size on either axis.
-				size_limit = 16383;
-				break;
 			case COMPRESS_BASIS_UNIVERSAL:
 				// Maximum Basis Universal size on either axis.
 				size_limit = 16384;

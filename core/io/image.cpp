@@ -114,11 +114,13 @@ void (*Image::_image_decompress_astc)(Image *) = nullptr;
 
 // External packer function pointers.
 
+Vector<uint8_t> (*Image::jxl_packer)(const Ref<Image> &, float) = nullptr;
 Vector<uint8_t> (*Image::webp_lossy_packer)(const Ref<Image> &, float) = nullptr;
 Vector<uint8_t> (*Image::webp_lossless_packer)(const Ref<Image> &) = nullptr;
 Vector<uint8_t> (*Image::png_packer)(const Ref<Image> &) = nullptr;
 Vector<uint8_t> (*Image::basis_universal_packer)(const Ref<Image> &, Image::UsedChannels, const BasisUniversalPackerParams &) = nullptr;
 
+Ref<Image> (*Image::jxl_unpacker)(const Vector<uint8_t> &) = nullptr;
 Ref<Image> (*Image::webp_unpacker)(const Vector<uint8_t> &) = nullptr;
 Ref<Image> (*Image::png_unpacker)(const Vector<uint8_t> &) = nullptr;
 Ref<Image> (*Image::basis_universal_unpacker)(const Vector<uint8_t> &) = nullptr;
@@ -2986,6 +2988,24 @@ Vector<uint8_t> Image::save_webp_to_buffer(const bool p_lossy, const float p_qua
 	return save_webp_buffer_func(Ref<Image>((Image *)this), p_lossy, p_quality);
 }
 
+Error Image::save_jxl(const String &p_path, const float p_quality) const {
+	if (save_jxl_func == nullptr) {
+		return ERR_UNAVAILABLE;
+	}
+	ERR_FAIL_COND_V_MSG(!(0.0f <= p_quality && p_quality <= 1.0f), ERR_INVALID_PARAMETER, vformat("The JXL quality was set to %f, which is not valid. JXL quality must be between 0.0 and 1.0 (inclusive).", p_quality));
+
+	return save_jxl_func(p_path, Ref<Image>((Image *)this), p_quality);
+}
+
+Vector<uint8_t> Image::save_jxl_to_buffer(const float p_quality) const {
+	if (save_jxl_buffer_func == nullptr) {
+		return Vector<uint8_t>();
+	}
+	ERR_FAIL_COND_V_MSG(!(0.0f <= p_quality && p_quality <= 1.0f), Vector<uint8_t>(), vformat("The JXL quality was set to %f, which is not valid. JXL quality must be between 0.0 and 1.0 (inclusive).", p_quality));
+
+	return save_jxl_buffer_func(Ref<Image>((Image *)this), p_quality);
+}
+
 int64_t Image::get_image_data_size(int p_width, int p_height, Format p_format, bool p_mipmaps) {
 	int mm;
 	return _get_dst_image_size(p_width, p_height, p_format, mm, p_mipmaps ? -1 : 0);
@@ -4014,6 +4034,9 @@ void Image::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("save_webp", "path", "lossy", "quality"), &Image::save_webp, DEFVAL(false), DEFVAL(0.75f));
 	ClassDB::bind_method(D_METHOD("save_webp_to_buffer", "lossy", "quality"), &Image::save_webp_to_buffer, DEFVAL(false), DEFVAL(0.75f));
 
+	ClassDB::bind_method(D_METHOD("save_jxl", "path", "quality"), &Image::save_jxl, DEFVAL(0.90f));
+	ClassDB::bind_method(D_METHOD("save_jxl_to_buffer", "quality"), &Image::save_jxl_to_buffer, DEFVAL(0.90f));
+
 	ClassDB::bind_method(D_METHOD("detect_alpha"), &Image::detect_alpha);
 	ClassDB::bind_method(D_METHOD("is_invisible"), &Image::is_invisible);
 
@@ -4060,6 +4083,7 @@ void Image::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("load_png_from_buffer", "buffer"), &Image::load_png_from_buffer);
 	ClassDB::bind_method(D_METHOD("load_jpg_from_buffer", "buffer"), &Image::load_jpg_from_buffer);
+	ClassDB::bind_method(D_METHOD("load_jxl_from_buffer", "buffer"), &Image::load_jxl_from_buffer);
 	ClassDB::bind_method(D_METHOD("load_webp_from_buffer", "buffer"), &Image::load_webp_from_buffer);
 	ClassDB::bind_method(D_METHOD("load_tga_from_buffer", "buffer"), &Image::load_tga_from_buffer);
 	ClassDB::bind_method(D_METHOD("load_bmp_from_buffer", "buffer"), &Image::load_bmp_from_buffer);
@@ -4661,6 +4685,14 @@ Error Image::load_exr_from_buffer(const Vector<uint8_t> &p_array) {
 			ERR_UNAVAILABLE,
 			"The TinyEXR module isn't enabled. Recompile the Godot editor or export template binary with the `module_tinyexr_enabled=yes` SCons option.");
 	return _load_from_buffer(p_array, _exr_mem_loader_func);
+}
+
+Error Image::load_jxl_from_buffer(const Vector<uint8_t> &p_array) {
+	ERR_FAIL_NULL_V_MSG(
+			_jxl_mem_loader_func,
+			ERR_UNAVAILABLE,
+			"The JPEG XL module isn't enabled. Recompile the Godot editor or export template binary with the `module_jxl_enabled=yes` SCons option.");
+	return _load_from_buffer(p_array, _jxl_mem_loader_func);
 }
 
 Error Image::load_webp_from_buffer(const Vector<uint8_t> &p_array) {

@@ -317,6 +317,9 @@ def configure(env: "SConsEnvironment"):
     if not env["builtin_libjpeg_turbo"]:
         env.ParseConfig("pkg-config libturbojpeg --cflags --libs")
 
+    if not env["builtin_libjxl"]:
+        env.ParseConfig("pkg-config libjxl --cflags --libs")
+
     if not env["builtin_mbedtls"]:
         env.ParseConfig("pkg-config mbedtls mbedcrypto mbedx509 --cflags --libs")
 

@@ -84,6 +84,8 @@ void PortableCompressedTexture2D::_set_data(const Vector<uint8_t> &p_data) {
 				loader_func = Image::_png_mem_unpacker_func;
 			} else if (data_format == DATA_FORMAT_WEBP) {
 				loader_func = Image::_webp_mem_loader_func;
+			} else if (data_format == DATA_FORMAT_JXL) {
+				loader_func = Image::_jxl_mem_loader_func;
 			} else {
 				ERR_FAIL();
 			}
@@ -99,7 +101,7 @@ void PortableCompressedTexture2D::_set_data(const Vector<uint8_t> &p_data) {
 						? memnew(Image(data, data_size))
 						: Ref<Image>(loader_func(data, data_size));
 				ERR_FAIL_COND(img->is_empty());
-				if (img->get_format() != format) { // May happen due to webp/png in the tiny mipmaps.
+				if (img->get_format() != format) { // May happen due to webp/png/jxl in the tiny mipmaps.
 					img->convert(format);
 				}
 				image_data.append_array(img->get_data());
@@ -167,16 +169,26 @@ void PortableCompressedTexture2D::create_from_image(const Ref<Image> &p_image, C
 	switch (p_compression_mode) {
 		case COMPRESSION_MODE_LOSSLESS:
 		case COMPRESSION_MODE_LOSSY: {
-			bool lossless_force_png = GLOBAL_GET_CACHED(bool, "rendering/textures/lossless_compression/force_png") ||
-					!Image::_webp_mem_loader_func; // WebP module disabled.
-			bool use_webp = !lossless_force_png && p_image->get_width() <= 16383 && p_image->get_height() <= 16383; // WebP has a size limit.
 			for (int i = 0; i < p_image->get_mipmap_count() + 1; i++) {
 				Vector<uint8_t> data;
+				// JPEG XL and WebP only work if their respective modules are enabled.
 				if (p_compression_mode == COMPRESSION_MODE_LOSSY) {
-					data = Image::webp_lossy_packer(i ? p_image->get_image_from_mipmap(i) : p_image, p_lossy_quality);
-					encode_uint16(DATA_FORMAT_WEBP, buffer.ptrw() + 2);
+					int image_format = GLOBAL_GET_CACHED(int, "rendering/textures/lossy_compression/format");
+					if (image_format == 0 && Image::_jxl_mem_loader_func != nullptr) {
+						data = Image::jxl_packer(i ? p_image->get_image_from_mipmap(i) : p_image, p_lossy_quality);
+						encode_uint16(DATA_FORMAT_JXL, buffer.ptrw() + 2);
+					} else if (image_format == 1 && Image::_webp_mem_loader_func != nullptr) {
+						data = Image::webp_lossy_packer(i ? p_image->get_image_from_mipmap(i) : p_image, p_lossy_quality);
+						encode_uint16(DATA_FORMAT_WEBP, buffer.ptrw() + 2);
+					} else {
+						ERR_FAIL_MSG("JPEG XL or WebP module are not available for lossy compression.");
+					}
 				} else {
-					if (use_webp) {
+					int image_format = GLOBAL_GET_CACHED(int, "rendering/textures/lossless_compression/format");
+					if (image_format == 0 && Image::_jxl_mem_loader_func != nullptr) {
+						data = Image::jxl_packer(i ? p_image->get_image_from_mipmap(i) : p_image, 1.0f);
+						encode_uint16(DATA_FORMAT_JXL, buffer.ptrw() + 2);
+					} else if (image_format == 1 && Image::_webp_mem_loader_func != nullptr && p_image->get_width() <= 16383 && p_image->get_height() <= 16383) {
 						data = Image::webp_lossless_packer(i ? p_image->get_image_from_mipmap(i) : p_image);
 						encode_uint16(DATA_FORMAT_WEBP, buffer.ptrw() + 2);
 					} else {

@@ -382,6 +382,13 @@
 				Loads an image from the binary contents of a JPEG file.
 			</description>
 		</method>
+		<method name="load_jxl_from_buffer">
+			<return type="int" enum="Error" />
+			<param index="0" name="buffer" type="PackedByteArray" />
+			<description>
+				Loads an image from the binary contents of a JPEG XL file.
+			</description>
+		</method>
 		<method name="load_ktx_from_buffer">
 			<return type="int" enum="Error" />
 			<param index="0" name="buffer" type="PackedByteArray" />
@@ -532,6 +539,21 @@
 			<description>
 				Saves the image as a JPEG file to a byte array with the specified [param quality] between [code]0.01[/code] and [code]1.0[/code] (inclusive). Higher [param quality] values result in better-looking output at the cost of larger byte array sizes (and therefore memory usage). Recommended [param quality] values are between [code]0.75[/code] and [code]0.90[/code]. Even at quality [code]1.00[/code], JPEG compression remains lossy.
 				[b]Note:[/b] JPEG does not save an alpha channel. If the [Image] contains an alpha channel, the image will still be saved, but the resulting byte array won't contain the alpha channel.
+			</description>
+		</method>
+		<method name="save_jxl" qualifiers="const">
+			<return type="int" enum="Error" />
+			<param index="0" name="path" type="String" />
+			<param index="1" name="quality" type="float" default="0.9" />
+			<description>
+				Saves the image as a JPEG XL file to [param path] with the specified [param quality] between [code]0.01[/code] and [code]1.0[/code] (inclusive). Higher [param quality] values result in better-looking output at the cost of larger file sizes. Recommended [param quality] values are between [code]0.68[/code] and [code]0.96[/code]. Use quality [code]1.0[/code] for lossless.
+			</description>
+		</method>
+		<method name="save_jxl_to_buffer" qualifiers="const">
+			<return type="PackedByteArray" />
+			<param index="0" name="quality" type="float" default="0.9" />
+			<description>
+				Saves the image as a JPEG XL file to a byte array with the specified [param quality] between [code]0.01[/code] and [code]1.0[/code] (inclusive). Higher [param quality] values result in better-looking output at the cost of larger file sizes. Recommended [param quality] values are between [code]0.68[/code] and [code]0.96[/code]. Use quality [code]1.0[/code] for lossless.
 			</description>
 		</method>
 		<method name="save_png" qualifiers="const">

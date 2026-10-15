@@ -3532,11 +3532,17 @@
 			If [code]true[/code], uses nearest-neighbor mipmap filtering when using mipmaps (also called "bilinear filtering"), which will result in visible seams appearing between mipmap stages. This may increase performance in mobile as less memory bandwidth is used. If [code]false[/code], linear mipmap filtering (also called "trilinear filtering") is used.
 			[b]Note:[/b] This property is only read when the project starts. There is currently no way to change this setting at run-time.
 		</member>
+		<member name="rendering/textures/jpeg_xl_compression/compression_effort" type="int" setter="" getter="" default="5">
+			The default compression effort for JPEG XL. A higher value results in smaller files at the cost of compression speed. Decompression speed is mostly unaffected by the compression method. Supported values are 1 to 10. Note that compression methods above 7 can be extremely slow for large images.
+		</member>
 		<member name="rendering/textures/light_projectors/filter" type="int" setter="" getter="" default="3" keywords="nearest, linear, anisotropic">
 			The filtering quality to use for [OmniLight3D] and [SpotLight3D] projectors. When using one of the anisotropic filtering modes, the anisotropic filtering level is controlled by [member rendering/textures/default_filters/anisotropic_filtering_level].
 		</member>
-		<member name="rendering/textures/lossless_compression/force_png" type="bool" setter="" getter="" default="false">
-			If [code]true[/code], the texture importer will import lossless textures using the PNG format. Otherwise, it will default to using WebP.
+		<member name="rendering/textures/lossless_compression/format" type="int" setter="" getter="" default="0">
+			The format used by the texture importer to store lossless textures. Falls back to PNG if the respective modules aren't enabled.
+		</member>
+		<member name="rendering/textures/lossy_compression/format" type="int" setter="" getter="" default="0">
+			The format used by the texture importer to store lossy textures. Fails if the respective modules aren't enabled.
 		</member>
 		<member name="rendering/textures/streaming/enabled" type="bool" setter="" getter="" default="false">
 			If [code]true[/code], enables texture streaming. This system dynamically loads and unloads texture mipmaps based on visibility, reducing VRAM usage. Useful for projects with many large textures.

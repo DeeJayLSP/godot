@@ -101,7 +101,7 @@ Patches:
 
 Files extracted from upstream source:
 
-- `common/`, `dec/` and `include/` folders from `c/`,
+- `common/`, `dec/`, `enc/` and `include/` folders from `c/`,
   minus the `dictionary.bin*` files
 - `LICENSE`
 
@@ -481,6 +481,19 @@ Files extracted from upstream source:
   - Except `main.cc`, `harfbuzz*.cc`, `harfrust.cc`, `failing-alloc.c`, `test*.cc`, `hb-gpu*.*`, `hb-wasm*.*`, `hb-harfrust.cc`, `wasm/*`, `ms-use/*`, `rust/*`
 
 
+## highway
+
+- Upstream: https://github.com/google/highway
+- Version: 1.4.0
+- License: Apache 2.0 or BSD-3-Clause
+
+Files extracted from upstream source:
+
+- All `.c`, `.h` files in `hwy/` except subfolders
+- The `ops/` subfolder in `hwy/`
+- `LICENSE`
+
+
 ## icu4c
 
 - Upstream: https://github.com/unicode-org/icu
@@ -562,6 +575,20 @@ Patches:
   * Compare with CMake-generated headers to bump version and added potential new config values.
 - `0002-disable-16bitlossless.patch` ([GH-104347](https://github.com/godotengine/godot/pull/104347))
 - `0003-remove-bmp-ppm-support.patch` ([GH-104347](https://github.com/godotengine/godot/pull/104347))
+
+
+## libjxl
+
+- Upstream: https://github.com/libjxl/libjxl
+- Version: v0.12.0
+- License: BSD-3-Clause
+
+Files extracted from upstream source:
+
+- Run `cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_SHARED_LIBS=OFF -DJPEGXL_ENABLE_BENCHMARK=OFF` once to generate additional headers
+- From the `lib` folder:
+  - All `.cc` and `.h` files in `include` and `jxl` and their subfolders except `*test*.cc`, `*gbench*.cc` and `*test*.h` files
+- `AUTHORS`, `LICENSE`, `PATENTS`
 
 
 ## libktx
@@ -663,6 +690,18 @@ Patches:
 ## linuxbsd_headers
 
 See `linuxbsd_headers/README.md`.
+
+
+## little-cms
+
+- Upstream: https://github.com/mm2/little-cms
+- Version: 2.19.1
+- License: MIT
+
+Files extracted from upstream source:
+
+- `include/` and `src/` but only `.c` and `.h` files
+- `AUTHORS` and `LICENSE`
 
 
 ## manifold
