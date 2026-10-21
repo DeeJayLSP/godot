@@ -24,8 +24,9 @@ void nut_framecode_generate(const nut_stream_header_tt s[], nut_frame_table_inpu
 		e_consume_h264,
 		e_consume_video,
 		e_consume_vorbis,
-	} consume[stream_count];
+	} consume[NUT_MAX_STREAMS];
 
+	assert(stream_count <= NUT_MAX_STREAMS);
 	for (i = 0; i < stream_count; i++) consume[i] = e_consume_none;
 
 	// the basic framecodes.                                                flag,  pts, stream, mul, size, count

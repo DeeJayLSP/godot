@@ -1158,10 +1158,10 @@
 			[b]Note:[/b] [member editor/movie_writer/disable_vsync] has no effect if the operating system or graphics driver forces V-Sync with no way for applications to disable it.
 		</member>
 		<member name="editor/movie_writer/ffmpeg/binary_path" type="String" setter="" getter="" default="&quot;&quot;">
-			Absolute path to the FFmpeg binary.
+			Absolute path to the FFmpeg binary. Required if the file extension in [member ProjectSettings.editor/movie_writer/movie_file] is `.mkv`.
 		</member>
 		<member name="editor/movie_writer/ffmpeg/encoder_arguments" type="String" setter="" getter="" default="&quot;&quot;">
-			FFmpeg encoder arguments. Crashes the program if invalid.
+			FFmpeg encoder arguments. Fails to write if invalid.
 			If not specified, it uses [code]-c:v libx264 -preset veryfast -crf 31 -c:a aac[/code].
 		</member>
 		<member name="editor/movie_writer/fps" type="int" setter="" getter="" default="60">

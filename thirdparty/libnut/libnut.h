@@ -16,6 +16,8 @@
 /// @{
 #define NUT_VERSION 2 ///< Version of NUT specification this library implements.
 
+#define NUT_MAX_STREAMS 16
+
 /// Stream class values, only one can be set. Higher values are not legal.
 enum nut_stream_class_tt {
 	NUT_VIDEO_CLASS    = 0, ///< = 0

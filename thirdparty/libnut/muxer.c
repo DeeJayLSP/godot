@@ -276,9 +276,10 @@ static void put_syncpoint(nut_context_tt * nut) {
 	uint64_t pts = 0;
 	int timebase = 0;
 	int back_ptr = 0;
-	int keys[nut->stream_count];
+	int keys[NUT_MAX_STREAMS];
 	syncpoint_list_tt * s = &nut->syncpoints;
 
+	assert(nut->stream_count <= NUT_MAX_STREAMS);
 	nut->last_syncpoint = bctello(nut->o);
 
 	for (i = 0; i < nut->stream_count; i++) {
