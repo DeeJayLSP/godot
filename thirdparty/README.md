@@ -598,7 +598,7 @@ Files extracted from upstream source:
 
 - From `src/`:
   - COPYING
-  - All `.c` and `.h` files in `libnut/`
+  - `framecode.c`, `muxer.c` and all `.h` files from `libnut/`
 
 
 ## libogg

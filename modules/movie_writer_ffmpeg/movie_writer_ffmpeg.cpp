@@ -143,7 +143,7 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	streams[0].time_base.den = fps;
 	streams[0].fixed_fps = 1;
 
-	static uint8_t audio_fourcc[4] = { 'P', 'S', 'D', 32 };
+	static uint8_t audio_fourcc[4] = { 'P', 'S', 'D', 32 }; // Signed 32-bit PCM
 
 	// Audio stream.
 	streams[1].type = NUT_AUDIO_CLASS;
