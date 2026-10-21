@@ -82,10 +82,10 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	}
 
 	List<String> ffargs = {
-		"-hide_banner",
-		"-y", // Always overwrite.
-		"-f", "nut", // Pipe as NUT.
-		"-i", "-" // Read from stdin.
+		"-hide_banner", // Doesn't work without this for an unknown reason.
+		"-y", // Skip overwrite confirmation.
+		"-f", "nut", // NUT pipe.
+		"-i", "-" // Input from stdin.
 	};
 	if (encoder_args.is_empty()) { // Custom defaults.
 		ffargs.push_back("-c:v");
@@ -107,11 +107,7 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	Dictionary video_dict = OS::get_singleton()->execute_with_pipe(binary_path, ffargs);
 	ERR_FAIL_COND_V_MSG(video_dict.size() == 0, ERR_CANT_CREATE, "Could not execute FFmpeg for video writing.");
 	video_pipe = video_dict["stdio"];
-	video_stderr = video_dict["stderr"];
 	video_pid = video_dict["pid"];
-
-	nut_stream_header_tt streams[3] = {};
-	memset(streams, 0, sizeof(streams));
 
 	int channels = 2;
 	switch (speaker_mode) {
@@ -131,7 +127,10 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 
 	fps = p_fps;
 
-	// Fourcc sources: https://github.com/lu-zero/nut/blob/master/docs/nut4cc.txt
+	nut_stream_header_tt streams[3] = {};
+	memset(streams, 0, sizeof(streams));
+
+	// Fourcc reference: https://github.com/lu-zero/nut/blob/master/docs/nut4cc.txt
 
 	// Video stream.
 	streams[0].type = NUT_VIDEO_CLASS;
@@ -155,7 +154,7 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	streams[1].time_base.num = 1;
 	streams[1].time_base.den = mix_rate;
 
-	// End of stream.
+	// End of streams.
 	streams[2].type = -1;
 
 	nut_muxer_opts_tt opts = {};
@@ -167,6 +166,7 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	opts.realtime_stream = 1;
 	opts.max_distance = 32768;
 
+	// Write NUT header.
 	nut_ctx = nut_muxer_init(&opts, streams, nullptr);
 	Error write_error = video_pipe->get_error();
 	ERR_FAIL_COND_V_MSG(write_error != OK, write_error, "Could not write NUT header to FFmpeg pipe.");
@@ -178,9 +178,9 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 }
 
 Error MovieWriterFFmpeg::write_frame(const Ref<Image> &p_image, const int32_t *p_audio_data) {
-	ERR_FAIL_COND_V_MSG(video_pipe.is_null() || !OS::get_singleton()->is_process_running(video_pid) || video_pipe->get_error() != OK, ERR_FILE_CANT_WRITE, "Failed to write: Broken pipe or FFmpeg terminated.");
+	ERR_FAIL_COND_V_MSG(!OS::get_singleton()->is_process_running(video_pid) || video_pipe->get_error() != OK, ERR_FILE_CANT_WRITE, "Failed to write: Broken pipe or FFmpeg terminated.");
 
-	const Vector<uint8_t> v_data = p_image->get_data();
+	const Vector<uint8_t> &v_data = p_image->get_data();
 	nut_packet_tt vp;
 	vp.stream = 0;
 	vp.len = v_data.size();

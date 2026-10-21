@@ -52,9 +52,7 @@ class MovieWriterFFmpeg : public MovieWriter {
 	String encoder_args;
 
 	nut_context_tt *nut_ctx;
-
 	Ref<FileAccess> video_pipe;
-	Ref<FileAccess> video_stderr;
 	int video_pid;
 
 protected:

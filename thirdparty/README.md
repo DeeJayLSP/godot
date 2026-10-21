@@ -600,6 +600,10 @@ Files extracted from upstream source:
   - COPYING
   - `framecode.c`, `muxer.c` and all `.h` files from `libnut/`
 
+Patches:
+
+- `0001-no-vlas.patch` ([GH-tbd](https://github.com/godotengine/godot/pull/tbd))
+
 
 ## libogg
 
