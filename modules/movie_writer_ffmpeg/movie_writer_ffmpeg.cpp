@@ -74,6 +74,7 @@ bool MovieWriterFFmpeg::handles_file(const String &p_path) const {
 }
 
 Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps, const String &p_base_path) {
+	// TODO: Maybe attempt to find FFmpeg binary from PATH.
 	ERR_FAIL_COND_V_MSG(!FileAccess::exists(binary_path), ERR_FILE_NOT_FOUND, "Invalid FFmpeg binary.");
 
 	base_path = p_base_path.get_basename();
@@ -131,7 +132,6 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	memset(streams, 0, sizeof(streams));
 
 	// Fourcc reference: https://github.com/lu-zero/nut/blob/master/docs/nut4cc.txt
-
 	// Video stream.
 	streams[0].type = NUT_VIDEO_CLASS;
 	streams[0].fourcc_len = 4;
@@ -178,7 +178,7 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 }
 
 Error MovieWriterFFmpeg::write_frame(const Ref<Image> &p_image, const int32_t *p_audio_data) {
-	ERR_FAIL_COND_V_MSG(!OS::get_singleton()->is_process_running(video_pid) || video_pipe->get_error() != OK, ERR_FILE_CANT_WRITE, "Failed to write: Broken pipe or FFmpeg terminated.");
+	ERR_FAIL_COND_V_MSG(!OS::get_singleton()->is_process_running(video_pid) || video_pipe->get_error() != OK, ERR_FILE_CANT_WRITE, "Failed to write to FFmpeg: Broken pipe.");
 
 	const Vector<uint8_t> &v_data = p_image->get_data();
 	nut_packet_tt vp;
