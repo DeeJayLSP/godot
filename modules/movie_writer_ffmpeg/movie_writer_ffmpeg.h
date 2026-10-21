@@ -30,8 +30,12 @@
 
 #pragma once
 
-#include "servers/movie_writer/movie_writer.h"
 #include "core/io/file_access.h"
+#include "servers/movie_writer/movie_writer.h"
+
+extern "C" {
+#include <thirdparty/libnut/libnut.h>
+}
 
 class MovieWriterFFmpeg : public MovieWriter {
 	GDCLASS(MovieWriterFFmpeg, MovieWriter)
@@ -39,22 +43,19 @@ class MovieWriterFFmpeg : public MovieWriter {
 	uint32_t mix_rate = 48000;
 	AuSE::SpeakerMode speaker_mode = AuSE::SPEAKER_MODE_STEREO;
 	String base_path;
-	uint32_t frame_count = 0;
+	uint64_t frame_count = 0;
 	uint32_t fps = 0;
 
 	uint32_t audio_block_size = 0;
 
 	String binary_path;
-	String video_args;
-	String audio_args;
+	String encoder_args;
+
+	nut_context_tt *nut_ctx;
 
 	Ref<FileAccess> video_pipe;
 	Ref<FileAccess> video_stderr;
 	int video_pid;
-
-	Ref<FileAccess> audio_pipe;
-	Ref<FileAccess> audio_stderr;
-	int audio_pid;
 
 protected:
 	virtual uint32_t get_audio_mix_rate() const override;

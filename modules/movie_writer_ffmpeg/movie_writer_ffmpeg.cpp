@@ -33,6 +33,30 @@
 #include "core/config/project_settings.h"
 #include "core/os/os.h"
 
+// libnut FileAccess handler.
+int nut_write_to_pipe(void *p_priv, size_t p_size, const uint8_t *p_buf) {
+	FileAccess *pipe = static_cast<FileAccess *>(p_priv);
+	if (!pipe->store_buffer(p_buf, p_size)) {
+		return -1;
+	}
+	return p_size;
+}
+
+// Allocation callbacks.
+static void *nut_malloc(size_t size) {
+	return memalloc(size);
+}
+
+static void *nut_realloc(void *ptr, size_t size) {
+	return memrealloc(ptr, size);
+}
+
+static void nut_free(void *ptr) {
+	if (ptr) {
+		memfree(ptr);
+	}
+}
+
 uint32_t MovieWriterFFmpeg::get_audio_mix_rate() const {
 	return mix_rate;
 }
@@ -53,35 +77,43 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	ERR_FAIL_COND_V_MSG(!FileAccess::exists(binary_path), ERR_FILE_NOT_FOUND, "Invalid FFmpeg binary.");
 
 	base_path = p_base_path.get_basename();
-	if (base_path.is_relative_path()) { // FFmpeg doesn't handle res://, so it needs to be global.
+	if (base_path.is_relative_path()) { // FFmpeg doesn't handle res://, it needs to be global.
 		base_path = ProjectSettings::get_singleton()->globalize_path(base_path);
 	}
 
-	fps = p_fps;
-
-	List<String> varg = {
-		"-y",
-		"-f", "rawvideo",
-		"-pixel_format", "rgba",
-		"-video_size", itos(p_movie_size.width) + "x" + itos(p_movie_size.height),
-		"-r", itos(fps),
-		"-i", "-"
+	List<String> ffargs = {
+		"-hide_banner",
+		"-y", // Always overwrite.
+		"-f", "nut", // Pipe as NUT.
+		"-i", "-" // Read from stdin.
 	};
-
-	const PackedStringArray video_args_split = video_args.split(" ");
-
-	for (const String &s: video_args_split){
-		varg.push_back(s);
+	if (encoder_args.is_empty()) { // Custom defaults.
+		ffargs.push_back("-c:v");
+		ffargs.push_back("libx264");
+		ffargs.push_back("-preset");
+		ffargs.push_back("veryfast");
+		ffargs.push_back("-crf");
+		ffargs.push_back("31");
+		ffargs.push_back("-c:a");
+		ffargs.push_back("aac");
+	} else {
+		const PackedStringArray video_args_split = encoder_args.split(" ");
+		for (const String &s : video_args_split) {
+			ffargs.push_back(s);
+		}
 	}
-	varg.push_back(base_path + ".mkv");
+	ffargs.push_back(base_path + ".mkv");
 
-	Dictionary video_dict = OS::get_singleton()->execute_with_pipe(binary_path, varg/*, false */);
+	Dictionary video_dict = OS::get_singleton()->execute_with_pipe(binary_path, ffargs);
 	ERR_FAIL_COND_V_MSG(video_dict.size() == 0, ERR_CANT_CREATE, "Could not execute FFmpeg for video writing.");
 	video_pipe = video_dict["stdio"];
 	video_stderr = video_dict["stderr"];
 	video_pid = video_dict["pid"];
 
-	uint32_t channels = 2;
+	nut_stream_header_tt streams[3] = {};
+	memset(streams, 0, sizeof(streams));
+
+	int channels = 2;
 	switch (speaker_mode) {
 		case AuSE::SPEAKER_MODE_STEREO:
 			channels = 2;
@@ -97,26 +129,47 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 			break;
 	}
 
-	List<String> aarg = {
-		"-y",
-		"-f", "s32le",
-		"-ar", itos(mix_rate),
-		"-ac", itos(channels),
-		"-i", "-"
-	};
+	fps = p_fps;
 
-	const PackedStringArray audio_args_split = audio_args.split(" ");
+	// Fourcc sources: https://github.com/lu-zero/nut/blob/master/docs/nut4cc.txt
 
-	for (const String &s: audio_args_split){
-		aarg.push_back(s);
-	}
-	aarg.push_back(base_path + ".mka");
+	// Video stream.
+	streams[0].type = NUT_VIDEO_CLASS;
+	streams[0].fourcc_len = 4;
+	streams[0].fourcc = (uint8_t *)"RGBA";
+	streams[0].width = p_movie_size.width;
+	streams[0].height = p_movie_size.height;
+	streams[0].time_base.num = 1;
+	streams[0].time_base.den = fps;
+	streams[0].fixed_fps = 1;
 
-	Dictionary audio_dict = OS::get_singleton()->execute_with_pipe(binary_path, aarg/*, false */);
-	ERR_FAIL_COND_V_MSG(audio_dict.size() == 0, ERR_CANT_CREATE, "Could not execute FFmpeg for audio writing.");
-	audio_pipe = audio_dict["stdio"];
-	audio_stderr = audio_dict["stderr"];
-	audio_pid = audio_dict["pid"];
+	static uint8_t audio_fourcc[4] = { 'P', 'S', 'D', 32 };
+
+	// Audio stream.
+	streams[1].type = NUT_AUDIO_CLASS;
+	streams[1].fourcc_len = 4;
+	streams[1].fourcc = audio_fourcc;
+	streams[1].samplerate_num = mix_rate;
+	streams[1].samplerate_denom = 1;
+	streams[1].channel_count = channels;
+	streams[1].time_base.num = 1;
+	streams[1].time_base.den = mix_rate;
+
+	// End of stream.
+	streams[2].type = -1;
+
+	nut_muxer_opts_tt opts = {};
+	opts.output.priv = video_pipe.ptr();
+	opts.output.write = nut_write_to_pipe;
+	opts.alloc.malloc = nut_malloc;
+	opts.alloc.realloc = nut_realloc;
+	opts.alloc.free = nut_free;
+	opts.realtime_stream = 1;
+	opts.max_distance = 32768;
+
+	nut_ctx = nut_muxer_init(&opts, streams, nullptr);
+	Error write_error = video_pipe->get_error();
+	ERR_FAIL_COND_V_MSG(write_error != OK, write_error, "Could not write NUT header to FFmpeg pipe.");
 
 	const int blockalign = 4 * channels;
 	audio_block_size = (mix_rate / fps) * blockalign;
@@ -125,21 +178,40 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 }
 
 Error MovieWriterFFmpeg::write_frame(const Ref<Image> &p_image, const int32_t *p_audio_data) {
-	const Vector<uint8_t> image_data = p_image->get_data();
-	ERR_FAIL_COND_V_MSG(!video_pipe->store_buffer(image_data.ptr(), image_data.size()), ERR_FILE_CANT_WRITE, video_stderr->get_as_text());
-	ERR_FAIL_COND_V_MSG(!audio_pipe->store_buffer((const uint8_t*)p_audio_data, audio_block_size), ERR_FILE_CANT_WRITE, audio_stderr->get_as_text());
+	ERR_FAIL_COND_V_MSG(video_pipe.is_null() || !OS::get_singleton()->is_process_running(video_pid) || video_pipe->get_error() != OK, ERR_FILE_CANT_WRITE, "Failed to write: Broken pipe or FFmpeg terminated.");
+
+	const Vector<uint8_t> v_data = p_image->get_data();
+	nut_packet_tt vp;
+	vp.stream = 0;
+	vp.len = v_data.size();
+	vp.pts = frame_count;
+	vp.flags = NUT_FLAG_KEY;
+	nut_write_frame(nut_ctx, &vp, v_data.ptr());
+
+	nut_packet_tt ap;
+	ap.stream = 1;
+	ap.len = audio_block_size;
+	ap.pts = (uint64_t)frame_count * (mix_rate / fps);
+	ap.flags = 0;
+	nut_write_frame(nut_ctx, &ap, (const uint8_t *)p_audio_data);
+
+	frame_count++;
 	return OK;
 }
 
 void MovieWriterFFmpeg::write_end() {
-	video_pipe->close();
-	audio_pipe->close();
+	if (nut_ctx) {
+		nut_muxer_uninit(nut_ctx);
+		nut_ctx = nullptr;
+	}
+	if (video_pipe.is_valid()) {
+		video_pipe->close();
+	}
 }
 
 MovieWriterFFmpeg::MovieWriterFFmpeg() {
 	binary_path = GLOBAL_GET("editor/movie_writer/ffmpeg/binary_path");
 	mix_rate = GLOBAL_GET("editor/movie_writer/mix_rate");
 	speaker_mode = AuSE::SpeakerMode(int(GLOBAL_GET("editor/movie_writer/speaker_mode")));
-	video_args = GLOBAL_GET("editor/movie_writer/ffmpeg/video_arguments");
-	audio_args = GLOBAL_GET("editor/movie_writer/ffmpeg/audio_arguments");
+	encoder_args = GLOBAL_GET("editor/movie_writer/ffmpeg/encoder_arguments");
 }
