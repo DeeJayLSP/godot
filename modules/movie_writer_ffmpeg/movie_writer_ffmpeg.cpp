@@ -91,7 +91,7 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 		"-f", "nut", // NUT format.
 		"-i", "-", // Input from stdin.
 	};
-	if (encoder_args.is_empty()) { // Custom defaults tuned for speed and not so low quality.
+	if (encoder_args.is_empty()) { // Custom defaults tuned for speed.
 		ffargs.push_back("-c:v");
 		if (base_extension == "webm") {
 			ffargs.push_back("libvpx-vp9");
@@ -110,7 +110,7 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 			ffargs.push_back("-pix_fmt");
 			ffargs.push_back("yuv420p");
 			ffargs.push_back("-preset");
-			ffargs.push_back("ultrafast");
+			ffargs.push_back("veryfast");
 		}
 		ffargs.push_back("-crf");
 		ffargs.push_back(itos(base_extension == "webm" ? 43 : 31));
