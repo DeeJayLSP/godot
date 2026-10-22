@@ -53,6 +53,7 @@ class MovieWriterFFmpeg : public MovieWriter {
 
 	nut_context_tt *nut_ctx;
 	Ref<FileAccess> video_pipe;
+	Ref<FileAccess> video_out;
 	int video_pid;
 
 protected:

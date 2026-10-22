@@ -67,10 +67,12 @@ AuSE::SpeakerMode MovieWriterFFmpeg::get_audio_speaker_mode() const {
 
 void MovieWriterFFmpeg::get_supported_extensions(List<String> *r_extensions) const {
 	r_extensions->push_back("mkv");
+	r_extensions->push_back("mp4");
+	r_extensions->push_back("webm");
 }
 
 bool MovieWriterFFmpeg::handles_file(const String &p_path) const {
-	return p_path.has_extension("mkv");
+	return p_path.has_extension("mkv") || p_path.has_extension("mp4") || p_path.has_extension("webm");
 }
 
 Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps, const String &p_base_path) {
@@ -78,6 +80,7 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	ERR_FAIL_COND_V_MSG(!FileAccess::exists(binary_path), ERR_FILE_NOT_FOUND, "Invalid FFmpeg binary.");
 
 	base_path = p_base_path.get_basename();
+	String base_extension = p_base_path.get_extension();
 	if (base_path.is_relative_path()) { // FFmpeg doesn't handle res://, it needs to be global.
 		base_path = ProjectSettings::get_singleton()->globalize_path(base_path);
 	}
@@ -85,29 +88,50 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	List<String> ffargs = {
 		"-hide_banner", // Doesn't work without this for an unknown reason.
 		"-y", // Skip overwrite confirmation.
-		"-f", "nut", // NUT pipe.
-		"-i", "-" // Input from stdin.
+		"-f", "nut", // NUT format.
+		"-i", "-", // Input from stdin.
 	};
-	if (encoder_args.is_empty()) { // Custom defaults.
+	if (encoder_args.is_empty()) { // Custom defaults tuned for speed and not so low quality.
 		ffargs.push_back("-c:v");
-		ffargs.push_back("libx264");
-		ffargs.push_back("-preset");
-		ffargs.push_back("veryfast");
+		if (base_extension == "webm") {
+			ffargs.push_back("libvpx-vp9");
+			ffargs.push_back("-pix_fmt");
+			ffargs.push_back("yuv420p");
+			ffargs.push_back("-b:v");
+			ffargs.push_back("0"); // Needs to be explicit for CRF.
+			ffargs.push_back("-deadline");
+			ffargs.push_back("realtime");
+			ffargs.push_back("-cpu-used");
+			ffargs.push_back("8");
+			ffargs.push_back("-row-mt");
+			ffargs.push_back("1");
+		} else {
+			ffargs.push_back("libx264");
+			ffargs.push_back("-pix_fmt");
+			ffargs.push_back("yuv420p");
+			ffargs.push_back("-preset");
+			ffargs.push_back("ultrafast");
+		}
 		ffargs.push_back("-crf");
-		ffargs.push_back("31");
+		ffargs.push_back(itos(base_extension == "webm" ? 43 : 31));
+		ffargs.push_back("-g");
+		ffargs.push_back(itos(2 * p_fps)); // One keyframe every two seconds.
 		ffargs.push_back("-c:a");
-		ffargs.push_back("aac");
+		ffargs.push_back(base_extension == "webm" ? "libopus" : "aac");
+		ffargs.push_back("-b:a");
+		ffargs.push_back(base_extension == "webm" ? "64k" : "160k");
 	} else {
 		const PackedStringArray video_args_split = encoder_args.split(" ");
 		for (const String &s : video_args_split) {
 			ffargs.push_back(s);
 		}
 	}
-	ffargs.push_back(base_path + ".mkv");
+	ffargs.push_back(base_path + "." + base_extension);
 
 	Dictionary video_dict = OS::get_singleton()->execute_with_pipe(binary_path, ffargs);
 	ERR_FAIL_COND_V_MSG(video_dict.size() == 0, ERR_CANT_CREATE, "Could not execute FFmpeg for video writing.");
 	video_pipe = video_dict["stdio"];
+	video_out = video_dict["stderr"];
 	video_pid = video_dict["pid"];
 
 	int channels = 2;
@@ -178,7 +202,10 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 }
 
 Error MovieWriterFFmpeg::write_frame(const Ref<Image> &p_image, const int32_t *p_audio_data) {
-	ERR_FAIL_COND_V_MSG(!OS::get_singleton()->is_process_running(video_pid) || video_pipe->get_error() != OK, ERR_FILE_CANT_WRITE, "Failed to write to FFmpeg: Broken pipe.");
+	if (unlikely(!OS::get_singleton()->is_process_running(video_pid) || video_pipe->get_error() != OK)) {
+		ERR_PRINT_ONCE(video_out->get_as_text());
+		ERR_FAIL_V_MSG(ERR_FILE_CANT_WRITE, "Failed to write to FFmpeg: Broken pipe.");
+	}
 
 	const Vector<uint8_t> &v_data = p_image->get_data();
 	nut_packet_tt vp;
