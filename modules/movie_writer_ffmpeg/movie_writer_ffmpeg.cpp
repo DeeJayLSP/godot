@@ -88,8 +88,10 @@ Error MovieWriterFFmpeg::write_begin(const Size2i &p_movie_size, uint32_t p_fps,
 	List<String> ffargs = {
 		"-hide_banner", // Doesn't work without this for an unknown reason.
 		"-y", // Skip overwrite confirmation.
-		"-f", "nut", // NUT format.
-		"-i", "-", // Input from stdin.
+		"-f",
+		"nut", // NUT format.
+		"-i",
+		"-", // Input from stdin.
 	};
 	if (encoder_args.is_empty()) { // Custom defaults tuned for speed.
 		ffargs.push_back("-c:v");
