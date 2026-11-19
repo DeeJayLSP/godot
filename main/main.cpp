@@ -2126,6 +2126,22 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 		}
 	}
 
+#ifdef TOOLS_ENABLED
+	if (!editor) {
+		// If we didn't find a project, we fall back to the project manager.
+		project_manager = !found_project && !cmdline_tool;
+	}
+#endif
+
+	// Request game mode (must be done before WorkerThreadPool initialization).
+#ifdef TOOLS_ENABLED
+	if (!project_manager && !editor) {
+#else
+	{
+#endif
+		OS::get_singleton()->request_game_mode();
+	}
+
 	// Initialize WorkerThreadPool.
 	{
 #ifdef THREADS_ENABLED
@@ -2142,11 +2158,6 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 	}
 
 #ifdef TOOLS_ENABLED
-	if (!project_manager && !editor) {
-		// If we didn't find a project, we fall back to the project manager.
-		project_manager = !found_project && !cmdline_tool;
-	}
-
 	{
 		// Synced with https://github.com/baldurk/renderdoc/blob/2b01465c7/renderdoc/driver/vulkan/vk_layer.cpp#L118-L165
 		LocalVector<String> layers_to_disable = {

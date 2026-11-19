@@ -118,6 +118,7 @@ public:
 
 #ifdef __linux__
 	virtual int get_default_thread_pool_size() const override;
+	virtual void request_game_mode() override;
 #endif
 
 	virtual String get_unique_id() const override;

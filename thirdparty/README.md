@@ -847,6 +847,10 @@ Collection of single-file libraries used in Godot components.
   * License: MIT
   * Patches:
     - `FastNoiseLite-0001-namespace-warnings.patch` ([GH-88526](https://github.com/godotengine/godot/pull/88526))
+- `gamemode_client.h`
+  * Upstream: https://github.com/FeralInteractive/gamemode (`lib/gamemode_client.h`)
+  * Version: 1.8.2
+  * License: BSD-3-Clause
 - `ifaddrs-android.{cc,h}`
   * Upstream: https://chromium.googlesource.com/external/webrtc/stable/talk/+/master/base/ifaddrs-android.h
   * Version: git (fbb1efa61417540336cf52976d4ff4394bfa795b, 2013)

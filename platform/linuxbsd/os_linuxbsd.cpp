@@ -89,7 +89,14 @@
 #endif
 
 #ifdef __linux__
+namespace GameMode {
+#include <thirdparty/misc/gamemode_client.h>
+}
+
+#include "core/config/project_settings.h"
+
 #include <sched.h>
+int gamemode_status = -1;
 #endif
 
 #ifdef FONTCONFIG_ENABLED
@@ -205,6 +212,19 @@ int OS_LinuxBSD::get_default_thread_pool_size() const {
 	}
 	return get_processor_count();
 }
+
+void OS_LinuxBSD::request_game_mode() {
+	if (GLOBAL_GET("application/run/use_game_mode")) {
+		gamemode_status = GameMode::gamemode_request_start_for(get_process_id());
+		if (gamemode_status >= 0) {
+			print_verbose("GameMode: Enabled successfully.");
+		} else {
+			WARN_VERBOSE("GameMode: Failed to enable (check if the daemon is installed and running).");
+		}
+	} else {
+		print_verbose("GameMode: Not enabling, as the project has it disabled.");
+	}
+}
 #endif
 
 String OS_LinuxBSD::get_unique_id() const {
@@ -285,6 +305,12 @@ void OS_LinuxBSD::finalize() {
 
 #ifdef SDL_ENABLED
 	memdelete(joypad_sdl);
+#endif
+
+#ifdef __linux__
+	if (gamemode_status == 0) {
+		GameMode::gamemode_request_end_for(get_process_id());
+	}
 #endif
 }
 
