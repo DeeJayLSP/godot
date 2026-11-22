@@ -239,6 +239,7 @@ public:
 
 	virtual String expand_path(const String &p_path) const override;
 
+	virtual int get_allowed_processor_count() const override;
 	virtual String get_unique_id() const override;
 
 	virtual Error shell_open(const String &p_uri) override;

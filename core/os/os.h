@@ -362,7 +362,7 @@ public:
 
 	virtual int get_processor_count() const;
 	virtual String get_processor_name() const;
-	virtual int get_default_thread_pool_size() const { return get_processor_count(); }
+	virtual int get_allowed_processor_count() const { return get_processor_count(); }
 
 	virtual String get_unique_id() const;
 

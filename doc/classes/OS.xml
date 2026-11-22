@@ -176,6 +176,13 @@
 				See also [method get_keycode_string].
 			</description>
 		</method>
+		<method name="get_allowed_processor_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the processor count the engine is allowed to use.
+				[b]Note:[/b] This method is only implemented on Windows, Linux, FreeBSD and Web. On other platforms, this falls back to [method get_processor_count].
+			</description>
+		</method>
 		<method name="get_cache_dir" qualifiers="const">
 			<return type="String" />
 			<description>
@@ -466,6 +473,7 @@
 			<return type="int" />
 			<description>
 				Returns the number of [i]logical[/i] CPU cores available on the host machine. On CPUs with HyperThreading enabled, this number will be greater than the number of [i]physical[/i] CPU cores.
+				[b]Note:[/b] Some platforms may have mechanisms to limit how many processors the engine is allowed to use, which this function doesn't take into account. Consider using [method get_allowed_processor_count] for safety instead.
 			</description>
 		</method>
 		<method name="get_processor_name" qualifiers="const">

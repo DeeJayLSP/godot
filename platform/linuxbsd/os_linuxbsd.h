@@ -116,6 +116,10 @@ public:
 
 	virtual Error shell_open(const String &p_uri) override;
 
+#if defined(__linux__) || defined(__FreeBSD__)
+	virtual int get_allowed_processor_count() const override;
+#endif
+
 	virtual String get_unique_id() const override;
 	virtual String get_processor_name() const override;
 

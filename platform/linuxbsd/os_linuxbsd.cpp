@@ -88,6 +88,15 @@
 #include <sys/sysctl.h>
 #endif
 
+#if defined(__linux__) || defined(__FreeBSD__)
+#include <sched.h>
+#if defined(__linux__)
+#define get_affinity sched_getaffinity
+#elif defined(__FreeBSD__)
+#define get_affinity cpuset_getaffinity
+#endif
+#endif
+
 #ifdef FONTCONFIG_ENABLED
 #ifdef SOWRAP_ENABLED
 #include "fontconfig-so_wrap.h"
@@ -189,6 +198,20 @@ void OS_LinuxBSD::initialize_joypads() {
 	}
 #endif
 }
+
+#if defined(__linux__) || defined(__FreeBSD__)
+int OS_LinuxBSD::get_allowed_processor_count() const {
+	cpu_set_t set;
+	if (get_affinity(0, sizeof(cpu_set_t), &set) == 0) {
+		int count = CPU_COUNT(&set);
+		if (count > 0) {
+			return count;
+		}
+	}
+	// Zero means no affinity.
+	return get_processor_count();
+}
+#endif
 
 String OS_LinuxBSD::get_unique_id() const {
 	static String machine_id;

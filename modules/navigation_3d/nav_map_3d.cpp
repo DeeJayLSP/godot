@@ -859,7 +859,7 @@ NavMap3D::NavMap3D() {
 
 	path_query_slots_max = GLOBAL_GET("navigation/pathfinding/max_threads");
 
-	int processor_count = OS::get_singleton()->get_processor_count();
+	int processor_count = OS::get_singleton()->get_allowed_processor_count();
 	if (path_query_slots_max < 0) {
 		path_query_slots_max = processor_count;
 	}

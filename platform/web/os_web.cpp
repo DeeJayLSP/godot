@@ -155,7 +155,7 @@ String OS_Web::get_unique_id() const {
 	ERR_FAIL_V_MSG("", "OS::get_unique_id() is not available on the Web platform.");
 }
 
-int OS_Web::get_default_thread_pool_size() const {
+int OS_Web::get_allowed_processor_count() const {
 #ifdef THREADS_ENABLED
 	return godot_js_os_thread_pool_size_get();
 #else // No threads.

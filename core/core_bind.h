@@ -282,6 +282,7 @@ public:
 
 	int get_processor_count() const;
 	String get_processor_name() const;
+	int get_allowed_processor_count() const;
 
 	enum SystemDir {
 		SYSTEM_DIR_DESKTOP,

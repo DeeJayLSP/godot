@@ -646,6 +646,10 @@ String OS::get_processor_name() const {
 	return ::OS::get_singleton()->get_processor_name();
 }
 
+int OS::get_allowed_processor_count() const {
+	return ::OS::get_singleton()->get_allowed_processor_count();
+}
+
 bool OS::is_stdout_verbose() const {
 	return ::OS::get_singleton()->is_stdout_verbose();
 }
@@ -782,6 +786,7 @@ void OS::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_processor_count"), &OS::get_processor_count);
 	ClassDB::bind_method(D_METHOD("get_processor_name"), &OS::get_processor_name);
+	ClassDB::bind_method(D_METHOD("get_allowed_processor_count"), &OS::get_allowed_processor_count);
 
 	ClassDB::bind_method(D_METHOD("get_system_fonts"), &OS::get_system_fonts);
 	ClassDB::bind_method(D_METHOD("get_system_font_path", "font_name", "weight", "stretch", "italic"), &OS::get_system_font_path, DEFVAL(400), DEFVAL(100), DEFVAL(false));

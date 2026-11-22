@@ -2566,6 +2566,37 @@ String OS_Windows::get_unique_id() const {
 	return String::ascii(Span<char>(HwProfInfo.szHwProfileGuid, strnlen(HwProfInfo.szHwProfileGuid, HW_PROFILE_GUIDLEN)));
 }
 
+// May be replaced with std::popcount() on C++20.
+#if defined(_MSC_VER)
+#include <intrin.h>
+#if defined(_WIN64)
+#define popcount_ptr(x) __popcnt64(static_cast<uint64_t>(x))
+#else
+#define popcount_ptr(x) __popcnt(static_cast<uint32_t>(x))
+#endif
+#elif defined(__GNUC__) || defined(__clang__)
+#if defined(_WIN64)
+#define popcount_ptr(x) __builtin_popcountll(static_cast<uint64_t>(x))
+#else
+#define popcount_ptr(x) __builtin_popcount(static_cast<uint32_t>(x))
+#endif
+#else
+#error Unsupported compiler
+#endif
+
+int OS_Windows::get_allowed_processor_count() const {
+	DWORD_PTR process_mask = 0, system_mask = 0;
+
+	if (GetProcessAffinityMask(GetCurrentProcess(), &process_mask, &system_mask)) {
+		int count = popcount_ptr(process_mask);
+		if (count > 0) {
+			return static_cast<int>(count);
+		}
+	}
+	// Zero means no affinity.
+	return get_processor_count();
+}
+
 bool OS_Windows::_check_internal_feature_support(const String &p_feature) {
 	if (p_feature == "system_fonts") {
 		return dwrite_init;
